@@ -9,7 +9,7 @@
 
 #ifndef _ackerman_h_                              /* include file only once */
 #define _ackerman_h_
-#include "BuddyAllocator.h"
+#include "../BuddyAllocator.h"
 #include <iostream>
 using namespace std;
 
