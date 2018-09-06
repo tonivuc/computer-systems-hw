@@ -13,29 +13,11 @@
 #ifndef _BuddyAllocator_h_                   // include file only once
 #define _BuddyAllocator_h_
 #include <iostream>
+
 using namespace std;
 typedef unsigned int uint;
 
 /* declare types as you need */
-
-class BlockHeader{
-	// decide what goes here
-	// hint: obviously block size will go here
-};
-
-class LinkedList{
-	// this is a special linked list that is made out of BlockHeader s. 
-private:
-	BlockHeader* head;		// you need a head of the list
-public:
-	void insert (BlockHeader* b){	// adds a block to the list
-
-	}
-
-	void remove (BlockHeader* b){  // removes a block from the list
-
-	}
-};
 
 
 class BuddyAllocator{
