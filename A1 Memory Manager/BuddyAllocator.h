@@ -13,6 +13,8 @@
 #ifndef _BuddyAllocator_h_                   // include file only once
 #define _BuddyAllocator_h_
 #include <iostream>
+#include "LinkedList.h"
+#include <vector>
 
 using namespace std;
 typedef unsigned int uint;
@@ -23,6 +25,8 @@ typedef unsigned int uint;
 class BuddyAllocator{
 private:
 	/* declare member variables as necessary */
+	//A vector of LinkedLists?
+	vector<LinkedList> headers;
 
 private:
 	/* private function you are required to implement
