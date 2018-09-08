@@ -16,6 +16,16 @@ class BlockHeader{
     // hint: obviously block size will go here
 
 private:
-    int blocksize = 128; //bytes
+    bool free = true;
+    int blocksize = 128; //byte
+
+public:
+    BlockHeader(bool free, int blocksize);
+    BlockHeader();
+
+    bool isFree() const;
+    void setFree(bool free);
+    void setBlocksize(int blocksize);
+    int getBlocksize();
 };
 

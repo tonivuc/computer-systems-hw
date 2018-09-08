@@ -26,7 +26,7 @@ class BuddyAllocator{
 private:
 	/* declare member variables as necessary */
 	//A vector of LinkedLists?
-	vector<LinkedList> headers;
+	vector<LinkedList> FreeLists;
 
 private:
 	/* private function you are required to implement
@@ -71,8 +71,12 @@ public:
 
 	int free(char* _a); 
 	/* Frees the section of physical memory previously allocated 
-	   using ’my_malloc’. Returns 0 if everything ok. */ 
-   
+	   using ’my_malloc’. Returns 0 if everything ok. */
+
+	//Just the "legacy" methods we started with
+	char* allocForAcker(uint _length);
+	int freeForAcker(char* _a);
+
 	void debug ();
 	/* Mainly used for debugging purposes and running short test cases */
 	/* This function should print how many free blocks of each size belong to the allocator
