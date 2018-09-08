@@ -5,7 +5,7 @@
 #ifndef LINKEDLIST_H
 #define LINKEDLIST_H
 
-#endif //A1_MEMORY_MANAGER_LINKEDLIST_H
+
 
 #include "BlockHeader.h"
 /*
@@ -22,7 +22,7 @@ class LinkedList{
     // this is a special linked list that is made out of BlockHeader s.
 private:
     BlockHeader* firstHeader;		// you need a head of the list
-	LinkedList nextListHead;
+	LinkedList* nextListHead;
 	unsigned int blockSize = 128; //default 128 bytes. Might want to change this to char array later.
 
 public:
@@ -41,11 +41,15 @@ public:
 
 	void setFirstHeader(BlockHeader *firstHeader);
 
-	LinkedList &getNextHead();
+	//LinkedList &getNextHead();
 
-	void setNextHead(LinkedList &nextHead);
+	//void setNextHead(LinkedList &nextHead);
+	LinkedList *getNextListHead() const;
+
+	void setNextListHead(LinkedList *nextListHead);
 
 	unsigned int getBlockSize() const;
 
 	void setBlockSize(unsigned int blockSize);
 };
+#endif //A1_MEMORY_MANAGER_LINKEDLIST_H

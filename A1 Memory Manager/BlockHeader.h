@@ -6,10 +6,10 @@
  * This header marks the start of a new memory block.
  */
 
-#ifndef A1_MEMORY_MANAGER_BLOCKHEADER_H
-#define A1_MEMORY_MANAGER_BLOCKHEADER_H
+#ifndef BLOCKHEADER_H
+#define BLOCKHEADER_H
 
-#endif //A1_MEMORY_MANAGER_BLOCKHEADER_H
+
 
 /*
 An easy solution is to use the free memory blocks
@@ -40,3 +40,4 @@ public:
     int getBlocksize();
 };
 
+#endif //A1_MEMORY_MANAGER_BLOCKHEADER_H

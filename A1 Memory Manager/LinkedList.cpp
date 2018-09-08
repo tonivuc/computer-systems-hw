@@ -34,12 +34,24 @@ void LinkedList::setFirstHeader(BlockHeader *firstHeader) {
 	LinkedList::firstHeader = firstHeader;
 }
 
+/*
 LinkedList &LinkedList::getNextHead() {
 	return nextListHead;
 }
+ */
 
+/*
 void LinkedList::setNextHead(LinkedList &nextHead) {
 	LinkedList::nextListHead = nextHead;
+}
+ */
+
+LinkedList *LinkedList::getNextListHead() const {
+	return nextListHead;
+}
+
+void LinkedList::setNextListHead(LinkedList *nextListHead) {
+	LinkedList::nextListHead = nextListHead;
 }
 
 unsigned int LinkedList::getBlockSize() const {
@@ -49,3 +61,5 @@ unsigned int LinkedList::getBlockSize() const {
 void LinkedList::setBlockSize(unsigned int blockSize) {
 	LinkedList::blockSize = blockSize;
 }
+
+
