@@ -14,7 +14,24 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
     */
 
 
-	//Make an array containing pointers to all the free blocks. Each block has
+	//Okay so I will have a LinkedList, that when traversed gives all the block sizes, and points to the header of the first
+	//free block in a list of blocks
+
+
+
+	/* Just some code I might use later
+	 * char* h = (addr - sizeOfHeader);
+	 * BlockHeader* header = (BlockHeader*)(h);
+	 * cout << header->size << endl; //this would print out the size of the block that h points to
+	 */
+
+	//First use C++ function to allocate a part of the memory (total memory size to be used by allocator)
+	char *memoryStart = new char [_total_memory_length]; //Remember to free this
+	//Make a LinkedList outside of our memory, and populate it with the pointer to the first big BlockHeader in our memory
+	LinkedList freeList;
+	BlockHeader initialBlock(true,_basic_block_size);
+	freeList.insert(&initialBlock); //is this correct? eeeeh
+
 }
 
 BuddyAllocator::~BuddyAllocator (){
@@ -40,7 +57,7 @@ char* BuddyAllocator::allocForAcker(uint _length) {
 	   the C standard library!
 	   Of course this needs to be replaced by your implementation.
 	*/
-	return new char [_length];
+	return new char [_length]; //pointer-variable = new data-type;
 }
 
 int BuddyAllocator::freeForAcker(char* _a) { //free() function does not give you the size of the block
