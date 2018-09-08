@@ -3,6 +3,8 @@
 */
 #include "BuddyAllocator.h"
 #include <iostream>
+#include <vector>
+#include "LinkedList.h"
 using namespace std;
 
 BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_length){
@@ -39,6 +41,13 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	//oooor I could have BlockHeaders for the 2nd tier
 	//Why am I not using my own LinkedList to store all the FreeLists? Because the Header is different
 	//Use C++ vector in stead
+
+	vector<LinkedList> allFreeLists(5);
+
+	LinkedList freeList1
+
+	for (int i = 1; i <= 5; i++)
+		allFreeLists.push_back(i);
 
 }
 
