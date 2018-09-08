@@ -26,7 +26,7 @@ class BuddyAllocator{
 private:
 	/* declare member variables as necessary */
 	//A vector of LinkedLists?
-	vector<LinkedList> FreeLists;
+	vector<LinkedList> allFreeLists;
 
 private:
 	/* private function you are required to implement
@@ -52,7 +52,7 @@ private:
 
 
 public:
-	BuddyAllocator (uint _basic_block_size, uint _total_memory_length); 
+	BuddyAllocator (uint _basic_block_size, uint _total_memory_length); //bytes
 	/* This initializes the memory allocator and makes a portion of 
 	   ’_total_memory_length’ bytes available. The allocator uses a ’_basic_block_size’ as 
 	   its minimal unit of allocation. The function returns the amount of 
@@ -89,6 +89,8 @@ public:
 	....
 	....
 	 which means that at point, the allocator has 5 128 byte blocks, 3 512 byte blocks and so on.*/
+
+	int returnClosestPowerOf2(unsigned int);
 };
 
 #endif 

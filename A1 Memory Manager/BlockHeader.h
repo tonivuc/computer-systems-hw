@@ -28,7 +28,7 @@ private:
 	//The point here is that the blocks should be next to each other in the memory (must be virtual memory, since real one is abstracted away)
 	//So we need to explicitly set the address?
 	//We have to find the starting address of our memory, and put the first block there
-	BlockHeader *
+	//BlockHeader *
 
 public:
     BlockHeader(bool free, int blocksize);

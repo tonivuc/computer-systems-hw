@@ -4,6 +4,7 @@
 #include "BuddyAllocator.h"
 #include <iostream>
 #include <vector>
+#include <cmath>
 #include "LinkedList.h"
 using namespace std;
 
@@ -16,38 +17,29 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
     */
 
 
-	//Okay so I will have a LinkedList, that when traversed gives all the block sizes, and points to the header of the first
-	//free block in a list of blocks
-
-
-
 	/* Just some code I might use later
 	 * char* h = (addr - sizeOfHeader);
 	 * BlockHeader* header = (BlockHeader*)(h);
 	 * cout << header->size << endl; //this would print out the size of the block that h points to
 	 */
 
+
+
+	_basic_block_size = returnClosestPowerOf2(_basic_block_size);
+
 	//First use C++ function to allocate a part of the memory (total memory size to be used by allocator)
+	//Reserve some space for the FreeLists
+	allFreeLists.reserve(5);
 	char *memoryStart = new char [_total_memory_length]; //Remember to free this
 	//Make a LinkedList outside of our memory, and populate it with the pointer to the first big BlockHeader in our memory
-	LinkedList freeList;
+
+	allFreeLists.push_back(LinkedList(_total_memory_length));
 	BlockHeader initialBlock(true,_basic_block_size);
-	freeList.insert(&initialBlock); //is this correct?
+	allFreeLists[0].insert(&initialBlock); //is this correct?
 
 	//For free blocks tracking, there will be a collection of linked lists called FreeLists, each list containing all free blocks of the same size
-
-	//So, I guess I could have a LinkedList called freeList
-	//Then this consists of other LinkedLists called ListStarters, which have the insert and remove functions
-	//oooor I could have BlockHeaders for the 2nd tier
-	//Why am I not using my own LinkedList to store all the FreeLists? Because the Header is different
-	//Use C++ vector in stead
-
-	vector<LinkedList> allFreeLists(5);
-
-	LinkedList freeList1
-
-	for (int i = 1; i <= 5; i++)
-		allFreeLists.push_back(i);
+	//Initially I'm just creating the first block.
+	//allFreeLists vector size can be whatever
 
 }
 
@@ -87,3 +79,27 @@ void BuddyAllocator::debug (){
   
 }
 
+int BuddyAllocator::returnClosestPowerOf2(unsigned int x) {
+	return (int)pow(2, ceil(log(x)/log(2))); //Source: https://stackoverflow.com/questions/466204/rounding-up-to-next-power-of-2 09.08.2018
+}
+
+//The private functions we are required to implement
+char *BuddyAllocator::getbuddy(char *addr) {
+	return nullptr;
+}
+
+bool BuddyAllocator::isvalid(char *addr) {
+	return false;
+}
+
+bool BuddyAllocator::arebuddies(char *block1, char *block2) {
+	return false;
+}
+
+char *BuddyAllocator::merge(char *block1, char *block2) {
+	return nullptr;
+}
+
+char *BuddyAllocator::split(char *block) {
+	return nullptr;
+}

@@ -4,7 +4,7 @@
 
 #include "BlockHeader.h"
 
-BlockHeader::BlockHeader(bool free, int blocksize) :  {
+BlockHeader::BlockHeader(bool free, int blocksize) {
     this->free = free;
     this->blocksize = blocksize;
 }

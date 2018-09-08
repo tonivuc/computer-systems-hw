@@ -21,8 +21,12 @@
 class LinkedList{
     // this is a special linked list that is made out of BlockHeader s.
 private:
-    BlockHeader* head;		// you need a head of the list
+    BlockHeader* firstHeader;		// you need a head of the list
+	LinkedList nextListHead;
+	unsigned int blockSize = 128; //default 128 bytes. Might want to change this to char array later.
+
 public:
+	LinkedList(unsigned int blockSize);
 	LinkedList();
 
 	void insert (BlockHeader* b);// adds a block to the list
@@ -32,4 +36,16 @@ public:
 	BlockHeader *getHead() const;
 
 	void setHead(BlockHeader *head);
+
+	BlockHeader *getFirstHeader() const;
+
+	void setFirstHeader(BlockHeader *firstHeader);
+
+	LinkedList &getNextHead();
+
+	void setNextHead(LinkedList &nextHead);
+
+	unsigned int getBlockSize() const;
+
+	void setBlockSize(unsigned int blockSize);
 };
