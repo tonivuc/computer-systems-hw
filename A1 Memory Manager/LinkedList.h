@@ -21,7 +21,7 @@
 class LinkedList{
     // this is a special linked list that is made out of BlockHeader s.
 private:
-    BlockHeader* head;		// you need a head of the list
+    //BlockHeader* head;		// you need a head of the list
 public:
     void insert (BlockHeader* b){	// adds a block to the list
 

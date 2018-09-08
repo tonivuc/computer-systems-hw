@@ -30,7 +30,15 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	//Make a LinkedList outside of our memory, and populate it with the pointer to the first big BlockHeader in our memory
 	LinkedList freeList;
 	BlockHeader initialBlock(true,_basic_block_size);
-	freeList.insert(&initialBlock); //is this correct? eeeeh
+	freeList.insert(&initialBlock); //is this correct?
+
+	//For free blocks tracking, there will be a collection of linked lists called FreeLists, each list containing all free blocks of the same size
+
+	//So, I guess I could have a LinkedList called freeList
+	//Then this consists of other LinkedLists called ListStarters, which have the insert and remove functions
+	//oooor I could have BlockHeaders for the 2nd tier
+	//Why am I not using my own LinkedList to store all the FreeLists? Because the Header is different
+	//Use C++ vector in stead
 
 }
 
