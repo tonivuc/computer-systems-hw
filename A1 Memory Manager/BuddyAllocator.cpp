@@ -33,9 +33,13 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	char *memoryStart = new char [_total_memory_length]; //Remember to free this
 	//Make a LinkedList outside of our memory, and populate it with the pointer to the first big BlockHeader in our memory
 
+	//So I make a header, and it has a pointer to it.
+
 	allFreeLists.push_back(LinkedList(_total_memory_length));
 	BlockHeader initialBlock(true,_basic_block_size);
 	allFreeLists[0].insert(&initialBlock); //is this correct?
+
+	BlockHeader* header = new BlockHeader(true,_total_memory_length);
 
 	//For free blocks tracking, there will be a collection of linked lists called FreeLists, each list containing all free blocks of the same size
 	//Initially I'm just creating the first block.
