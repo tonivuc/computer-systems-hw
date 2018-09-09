@@ -10,7 +10,6 @@
 #define BLOCKHEADER_H
 
 
-
 /*
 An easy solution is to use the free memory blocks
 themselves to store the free-list data. For example, the first bytes of each free memory block
