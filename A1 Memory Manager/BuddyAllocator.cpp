@@ -23,20 +23,25 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	 * cout << header->size << endl; //this would print out the size of the block that h points to
 	 */
 
+	vector<LinkedList> allFreeLists = initializeFreeLists(_basic_block_size, _total_memory_length)
 
 
 	_basic_block_size = returnClosestPowerOf2(_basic_block_size);
 
 	//First use C++ function to allocate a part of the memory (total memory size to be used by allocator)
 	//Reserve some space for the FreeLists
-	allFreeLists.reserve(5);
+
+
+
 	char *memoryStart = new char [_total_memory_length]; //Remember to free this
 	//Make a LinkedList outside of our memory, and populate it with the pointer to the first big BlockHeader in our memory
 
-	//So I make a header, and it has a pointer to it.
 
-	allFreeLists.push_back(LinkedList(_total_memory_length));
-	BlockHeader initialBlock(true,_basic_block_size);
+
+	BlockHeader* b = (BlockHeader*) memoryStart;
+	b->size = x, b->free= true, b->next = NULL;
+
+	BlockHeader initialBlock(true,_basic_block_size); //No point calling constructor before we have the right memory location
 	allFreeLists[0].insert(&initialBlock); //is this correct?
 
 	BlockHeader* header = new BlockHeader(true,_total_memory_length);
@@ -48,7 +53,18 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 }
 
 BuddyAllocator::~BuddyAllocator (){
-	
+	//Destructor
+}
+
+vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block_size, unsigned int _total_memory_length) {
+	vector<LinkedList> allFreeLists;
+	int blockLength = _total_memory_length;
+	//allFreeLists.reserve(5);
+	for (int i = 1; blockLength >= _basic_block_size; i*2) {
+		blockLength = blockLength/i;
+		allFreeLists.push_back(LinkedList(blockLength));
+	}
+	return allFreeLists;
 }
 
 char* BuddyAllocator::alloc(uint _length) {

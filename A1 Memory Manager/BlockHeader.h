@@ -10,6 +10,9 @@
 #define BLOCKHEADER_H
 
 
+#include "LinkedList.h"
+#include <vector>
+
 /*
 An easy solution is to use the free memory blocks
 themselves to store the free-list data. For example, the first bytes of each free memory block
@@ -24,10 +27,7 @@ class BlockHeader{
 private:
     bool free = true;
     unsigned int blocksize = 128; //byte
-	//The point here is that the blocks should be next to each other in the memory (must be virtual memory, since real one is abstracted away)
-	//So we need to explicitly set the address?
-	//We have to find the starting address of our memory, and put the first block there
-	//BlockHeader *
+	BlockHeader* nextBlock;
 
 public:
     BlockHeader(bool free, int blocksize);
@@ -37,6 +37,7 @@ public:
     void setFree(bool free);
     void setBlocksize(int blocksize);
     int getBlocksize();
+	vector<LinkedList> initializeFreeLists(unsigned int _basic_block_size, unsigned int _total_memory_length)
 };
 
-#endif //A1_MEMORY_MANAGER_BLOCKHEADER_H
+#endif
