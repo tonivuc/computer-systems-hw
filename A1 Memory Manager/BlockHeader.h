@@ -9,6 +9,8 @@
 #ifndef BLOCKHEADER_H
 #define BLOCKHEADER_H
 
+#include <stdio.h>
+
 /*
 An easy solution is to use the free memory blocks
 themselves to store the free-list data. For example, the first bytes of each free memory block
@@ -23,7 +25,7 @@ class BlockHeader{
 private:
     bool free = true;
     unsigned int blocksize = 128; //byte
-	BlockHeader* nextBlock;
+	BlockHeader* nextBlock = NULL;
 
 public:
     BlockHeader(bool free, int blocksize);
@@ -31,8 +33,14 @@ public:
 
     bool isFree() const;
     void setFree(bool free);
-    void setBlocksize(int blocksize);
-    int getBlocksize();
+    unsigned int getBlocksize();
+	void setBlocksize(unsigned int blocksize);
+
+	BlockHeader *getNextBlock() const;
+
+	void setNextBlock(BlockHeader *nextBlock);
+
+	int getAvailableSize();
 };
 
 #endif

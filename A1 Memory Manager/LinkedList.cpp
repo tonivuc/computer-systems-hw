@@ -20,8 +20,11 @@ void LinkedList::setHead(BlockHeader *head) {
 
 void LinkedList::insert(BlockHeader *b) {
 	//Change the nextHeader variable
-	BlockHeader* b = (BlockHeader*) memoryStart;
-	b->size = x, b->free= true, b->next = NULL;
+	//BlockHeader* b = (BlockHeader*) memoryStart;
+
+	b->setNextBlock(firstHeader); //Set this block to point to the previous first block in the list
+	//The order in the list isn't the order in the physical memory.
+	b->setBlocksize(blockSize), b->setFree(true), firstHeader = b; //finally set firstHeader to point to the new header block
 }
 
 void LinkedList::remove(BlockHeader *b) {
@@ -34,26 +37,6 @@ BlockHeader *LinkedList::getFirstHeader() const {
 
 void LinkedList::setFirstHeader(BlockHeader *firstHeader) {
 	LinkedList::firstHeader = firstHeader;
-}
-
-/*
-LinkedList &LinkedList::getNextHead() {
-	return nextListHead;
-}
- */
-
-/*
-void LinkedList::setNextHead(LinkedList &nextHead) {
-	LinkedList::nextListHead = nextHead;
-}
- */
-
-LinkedList *LinkedList::getNextListHead() const {
-	return nextListHead;
-}
-
-void LinkedList::setNextListHead(LinkedList *nextListHead) {
-	LinkedList::nextListHead = nextListHead;
 }
 
 unsigned int LinkedList::getBlockSize() const {

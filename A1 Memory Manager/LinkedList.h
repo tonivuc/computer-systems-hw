@@ -6,11 +6,12 @@
 #define LINKEDLIST_H
 
 #include "BlockHeader.h"
+#include <stdio.h>
 
 class LinkedList{
-    // this is a special linked list that is made out of BlockHeader s.
+    // this is a special linked list that is made out of BlockHeaders.
 private:
-    BlockHeader* firstHeader;		// you need a head of the list
+    BlockHeader* firstHeader = NULL;		// you need a head of the list
 	unsigned int blockSize = 128; //default 128 bytes. Might want to change this to char array later.
 
 public:

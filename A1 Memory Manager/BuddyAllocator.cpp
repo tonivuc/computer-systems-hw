@@ -28,14 +28,11 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	char *memoryStart = new char [_total_memory_length]; //Remember to free this
 
 
-	BlockHeader initialBlock(true,_basic_block_size); //No point calling constructor before we have the right memory location
-	allFreeLists[0].insert(&initialBlock); //is this correct?
-
-	BlockHeader* header = new BlockHeader(true,_total_memory_length);
-
-	//For free blocks tracking, there will be a collection of linked lists called FreeLists, each list containing all free blocks of the same size
-	//Initially I'm just creating the first block.
-	//allFreeLists vector size can be whatever
+	BlockHeader* initialBlock = (BlockHeader*) memoryStart; //No point calling constructor before we have the right memory location
+	allFreeLists[0].insert(initialBlock);
+	cout << allFreeLists.size() << "\n";
+	cout << " blocksiz " <<allFreeLists[0].getFirstHeader()->getBlocksize() << "\n";
+	cout << " avSiz " <<allFreeLists[0].getFirstHeader()->getAvailableSize();
 }
 
 BuddyAllocator::~BuddyAllocator (){
@@ -47,9 +44,9 @@ vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block
 	int blockLength = _total_memory_length;
 
 	for (int i = 1; blockLength > _basic_block_size; i = i*2) {
-		cout << "EEEy lmao in the function w. i= " << i << "\n";
+		//cout << "EEEy lmao in the function w. i= " << i << "\n";
 		blockLength = _total_memory_length/i;
-		cout << "Blocklength= " << blockLength << "\n";
+		//cout << "Blocklength= " << blockLength << "\n";
 		allFreeLists.push_back(LinkedList(blockLength));
 	}
 	return allFreeLists;
@@ -60,7 +57,16 @@ char* BuddyAllocator::alloc(uint _length) {
      the C standard library! 
      Of course this needs to be replaced by your implementation.
   */
-  return new char [_length];
+	//Start at bottom of FreeList and see if there is a block that can fit the data?
+
+	/*
+	for (int i = allFreeLists.size(); i > 0; i--) {
+		if ((allFreeLists[i].getFirstHeader() != NULL) && allFreeLists[i].getBlockSize() >= ) {
+
+		}
+	}
+	 */
+    return new char [_length];
 }
 
 int BuddyAllocator::free(char* _a) { //free() function does not give you the size of the block
