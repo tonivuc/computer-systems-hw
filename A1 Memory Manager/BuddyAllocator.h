@@ -90,7 +90,9 @@ public:
 	....
 	 which means that at point, the allocator has 5 128 byte blocks, 3 512 byte blocks and so on.*/
 
-	int returnClosestPowerOf2(unsigned int);
+	unsigned int returnClosestPowerOf2(unsigned int);
+
+	vector<LinkedList> initializeFreeLists(unsigned int _basic_block_size, unsigned int _total_memory_length);
 };
 
 #endif 

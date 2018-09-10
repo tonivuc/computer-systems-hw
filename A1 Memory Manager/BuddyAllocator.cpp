@@ -22,17 +22,17 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	 * BlockHeader* header = (BlockHeader*)(h);
 	 * cout << header->size << endl; //this would print out the size of the block that h points to
 	 */
-
-	vector<LinkedList> allFreeLists = initializeFreeLists(_basic_block_size, _total_memory_length)
-
-
 	_basic_block_size = returnClosestPowerOf2(_basic_block_size);
+	vector<LinkedList> allFreeLists = initializeFreeLists(_basic_block_size, _total_memory_length);
+
+
+
 
 	//First use C++ function to allocate a part of the memory (total memory size to be used by allocator)
 	//Reserve some space for the FreeLists
 
 
-
+	/**
 	char *memoryStart = new char [_total_memory_length]; //Remember to free this
 	//Make a LinkedList outside of our memory, and populate it with the pointer to the first big BlockHeader in our memory
 
@@ -49,7 +49,7 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	//For free blocks tracking, there will be a collection of linked lists called FreeLists, each list containing all free blocks of the same size
 	//Initially I'm just creating the first block.
 	//allFreeLists vector size can be whatever
-
+	*/
 }
 
 BuddyAllocator::~BuddyAllocator (){
@@ -59,9 +59,11 @@ BuddyAllocator::~BuddyAllocator (){
 vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block_size, unsigned int _total_memory_length) {
 	vector<LinkedList> allFreeLists;
 	int blockLength = _total_memory_length;
-	//allFreeLists.reserve(5);
-	for (int i = 1; blockLength >= _basic_block_size; i*2) {
-		blockLength = blockLength/i;
+
+	for (int i = 1; blockLength > _basic_block_size; i = i*2) {
+		cout << "EEEy lmao in the function w. i= " << i << "\n";
+		blockLength = _total_memory_length/i;
+		cout << "Blocklength= " << blockLength << "\n";
 		allFreeLists.push_back(LinkedList(blockLength));
 	}
 	return allFreeLists;
@@ -99,8 +101,8 @@ void BuddyAllocator::debug (){
   
 }
 
-int BuddyAllocator::returnClosestPowerOf2(unsigned int x) {
-	return (int)pow(2, ceil(log(x)/log(2))); //Source: https://stackoverflow.com/questions/466204/rounding-up-to-next-power-of-2 09.08.2018
+unsigned int BuddyAllocator::returnClosestPowerOf2(unsigned int x) {
+	return (unsigned int)pow(2, ceil(log(x)/log(2))); //Source: https://stackoverflow.com/questions/466204/rounding-up-to-next-power-of-2 09.08.2018
 }
 
 //The private functions we are required to implement

@@ -9,10 +9,6 @@
 #ifndef BLOCKHEADER_H
 #define BLOCKHEADER_H
 
-
-#include "LinkedList.h"
-#include <vector>
-
 /*
 An easy solution is to use the free memory blocks
 themselves to store the free-list data. For example, the first bytes of each free memory block
@@ -37,7 +33,6 @@ public:
     void setFree(bool free);
     void setBlocksize(int blocksize);
     int getBlocksize();
-	vector<LinkedList> initializeFreeLists(unsigned int _basic_block_size, unsigned int _total_memory_length)
 };
 
 #endif
