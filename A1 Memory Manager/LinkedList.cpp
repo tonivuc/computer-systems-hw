@@ -20,6 +20,8 @@ void LinkedList::setHead(BlockHeader *head) {
 
 void LinkedList::insert(BlockHeader *b) {
 	//Change the nextHeader variable
+	BlockHeader* b = (BlockHeader*) memoryStart;
+	b->size = x, b->free= true, b->next = NULL;
 }
 
 void LinkedList::remove(BlockHeader *b) {
