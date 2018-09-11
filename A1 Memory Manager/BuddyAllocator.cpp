@@ -175,15 +175,16 @@ char *BuddyAllocator::split(char *blockAddress) {
 	//Look into that after I make this work...
 
 	for (int i = 0; i < allFreeLists.size(); i++) {
-		//Look through allFreeLists
-		//Find FreeList with size of halfSize
-		if (allFreeLists[i].getBlockSize() == halfSize) {
-			allFreeLists[i].insert(bigBlock); //Insert the left block (It's no longer acutally big, size is set in the insert function)
-			allFreeLists[i].insert((BlockHeader*)rightBlockAddr); //Insert the right block
+		//Delete big block
+		if (allFreeLists[i].getBlockSize() == bigBlockSize) {
+			allFreeLists[i].remove((BlockHeader*)blockAddress);
+			//Insert new blocks
+			allFreeLists[i+1].insert(bigBlock); //Insert the left block (It's no longer acutally big, size is set in the insert function)
+			allFreeLists[i+1].insert((BlockHeader*)rightBlockAddr); //Insert the right block
+			return rightBlockAddr; //Return pointer to new header (the block to the right)
 		}
 	}
-
-	//Return pointer to new header (the block to the right)
+	//If error
 	return nullptr;
 }
 

@@ -29,7 +29,12 @@ void LinkedList::insert(BlockHeader *b) {
 }
 
 void LinkedList::remove(BlockHeader *b) {
+	BlockHeader* header = firstHeader->getNextBlock();
+	while (header->getNextBlock() != NULL) {
+		if (b == header) {
 
+		}
+	}
 }
 
 BlockHeader *LinkedList::getFirstHeader() const {
