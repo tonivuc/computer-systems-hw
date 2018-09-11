@@ -25,7 +25,6 @@ typedef unsigned int uint;
 class BuddyAllocator{
 private:
 	/* declare member variables as necessary */
-	//A vector of LinkedLists?
 	vector<LinkedList> allFreeLists;
 
 private:
@@ -93,6 +92,12 @@ public:
 	unsigned int returnClosestPowerOf2(unsigned int);
 
 	vector<LinkedList> initializeFreeLists(unsigned int _basic_block_size, unsigned int _total_memory_length);
+
+	int findNumSplits(uint currBlockSize, uint dataLength, int splitsSoFar);
+
+	const vector<LinkedList> &getAllFreeLists() const;
+
+	void setAllFreeLists(const vector<LinkedList> &allFreeLists);
 };
 
 #endif 

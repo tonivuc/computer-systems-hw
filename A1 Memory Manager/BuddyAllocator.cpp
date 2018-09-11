@@ -25,6 +25,8 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	_basic_block_size = returnClosestPowerOf2(_basic_block_size);
 	vector<LinkedList> allFreeLists = initializeFreeLists(_basic_block_size, _total_memory_length);
 
+	cout << "allFreeLists.size()  nr. 1 " << allFreeLists.size() << "\n";
+
 	char *memoryStart = new char [_total_memory_length]; //Remember to free this
 
 
@@ -32,7 +34,9 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	allFreeLists[0].insert(initialBlock);
 	cout << allFreeLists.size() << "\n";
 	cout << " blocksiz " <<allFreeLists[0].getFirstHeader()->getBlocksize() << "\n";
-	cout << " avSiz " <<allFreeLists[0].getFirstHeader()->getAvailableSize();
+	cout << " avSiz " <<allFreeLists[0].getFirstHeader()->getAvailableSize() << "\n";
+
+	alloc(128);
 }
 
 BuddyAllocator::~BuddyAllocator (){
@@ -53,11 +57,24 @@ vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block
 }
 
 char* BuddyAllocator::alloc(uint _length) {
+
+	cout << "allFreeLists.size()" << getAllFreeLists().size();
   /* This preliminary implementation simply hands the call over the 
      the C standard library! 
      Of course this needs to be replaced by your implementation.
   */
 	//Start at bottom of FreeList and see if there is a block that can fit the data?
+
+	for (int i = allFreeLists.size(); i > 0; i--) {
+		if (allFreeLists[i].getBlockSize() >= _length) {
+			int timesToSplit = findNumSplits(allFreeLists[i].getBlockSize(), _length, 0);
+			cout << "times to Split: " << timesToSplit;
+		}
+	}
+
+	//Check if it can fit the data if split in two?
+	//Keep checking and splitting until it can't get smaller
+	//Allocate
 
 	/*
 	for (int i = allFreeLists.size(); i > 0; i--) {
@@ -67,6 +84,16 @@ char* BuddyAllocator::alloc(uint _length) {
 	}
 	 */
     return new char [_length];
+}
+
+/*
+ * Recurring function to find how many times to split the memory
+ */
+int BuddyAllocator::findNumSplits(uint currBlockSize, uint dataLength, int splitsSoFar) {
+	if (currBlockSize/2 >= dataLength /*minus header size*/) {
+		return findNumSplits(currBlockSize/2, dataLength, (splitsSoFar+1));
+	}
+	return splitsSoFar;
 }
 
 int BuddyAllocator::free(char* _a) { //free() function does not give you the size of the block
@@ -116,4 +143,12 @@ char *BuddyAllocator::merge(char *block1, char *block2) {
 
 char *BuddyAllocator::split(char *block) {
 	return nullptr;
+}
+
+const vector<LinkedList> &BuddyAllocator::getAllFreeLists() const {
+	return allFreeLists;
+}
+
+void BuddyAllocator::setAllFreeLists(const vector<LinkedList> &allFreeLists) {
+	BuddyAllocator::allFreeLists = allFreeLists;
 }
