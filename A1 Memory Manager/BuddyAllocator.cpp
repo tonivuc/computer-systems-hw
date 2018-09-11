@@ -36,7 +36,7 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	cout << " blocksiz " <<allFreeLists[0].getFirstHeader()->getBlocksize() << "\n";
 	cout << " avSiz " <<allFreeLists[0].getFirstHeader()->getAvailableSize() << "\n";
 
-	alloc(128);
+	alloc(128, allFreeLists);
 }
 
 BuddyAllocator::~BuddyAllocator (){
@@ -56,21 +56,25 @@ vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block
 	return allFreeLists;
 }
 
-char* BuddyAllocator::alloc(uint _length) {
-
-	cout << "allFreeLists.size()" << getAllFreeLists().size();
+char* BuddyAllocator::alloc(uint _length, vector<LinkedList> allFreeLists) {
+	cout << "Alloc running!";
+	int timesToSplit = 0;
+	cout << "allFreeLists.size()" << allFreeLists.size();
   /* This preliminary implementation simply hands the call over the 
      the C standard library! 
      Of course this needs to be replaced by your implementation.
   */
 	//Start at bottom of FreeList and see if there is a block that can fit the data?
 
-	for (int i = allFreeLists.size(); i > 0; i--) {
+	for (int i = allFreeLists.size()-1; i > 0; i--) {
 		if (allFreeLists[i].getBlockSize() >= _length) {
-			int timesToSplit = findNumSplits(allFreeLists[i].getBlockSize(), _length, 0);
-			cout << "times to Split: " << timesToSplit;
+			cout << "\n allFreeLists[i].getBlockSize(): at i =  "<< i<< "  " << allFreeLists[i].getBlockSize();
+			cout << "We found a block that's big enough for 128!";
+			timesToSplit = findNumSplits(allFreeLists[i].getBlockSize(), _length, 0);
+			cout << " times to Split: " << timesToSplit;
 		}
 	}
+	cout << "Blocksize of last block: " << allFreeLists[0].getBlockSize()/timesToSplit;
 
 	//Check if it can fit the data if split in two?
 	//Keep checking and splitting until it can't get smaller
@@ -91,6 +95,7 @@ char* BuddyAllocator::alloc(uint _length) {
  */
 int BuddyAllocator::findNumSplits(uint currBlockSize, uint dataLength, int splitsSoFar) {
 	if (currBlockSize/2 >= dataLength /*minus header size*/) {
+		cout << "currBlockSize: " << currBlockSize << "\n";
 		return findNumSplits(currBlockSize/2, dataLength, (splitsSoFar+1));
 	}
 	return splitsSoFar;

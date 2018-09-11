@@ -64,7 +64,7 @@ public:
 	   There should not be any memory leakage (i.e., memory staying allocated).
 	*/ 
 
-	char* alloc(uint _length); 
+	char* alloc(uint _length, vector<LinkedList> allFreeLists);
 	/* Allocate _length number of bytes of free memory and returns the 
 		address of the allocated portion. Returns 0 when out of memory. */ 
 
