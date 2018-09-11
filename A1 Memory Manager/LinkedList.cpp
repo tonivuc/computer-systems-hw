@@ -24,7 +24,8 @@ void LinkedList::insert(BlockHeader *b) {
 
 	b->setNextBlock(firstHeader); //Set this block to point to the previous first block in the list
 	//The order in the list isn't the order in the physical memory.
-	b->setBlocksize(blockSize), b->setFree(true), firstHeader = b; //finally set firstHeader to point to the new header block
+	b->setBlocksize(blockSize), b->setFree(true);
+	firstHeader = b; //finally set firstHeader to point to the new header block
 }
 
 void LinkedList::remove(BlockHeader *b) {

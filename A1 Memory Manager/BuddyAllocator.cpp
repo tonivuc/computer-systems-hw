@@ -23,7 +23,7 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	 * cout << header->size << endl; //this would print out the size of the block that h points to
 	 */
 	_basic_block_size = returnClosestPowerOf2(_basic_block_size+sizeof(BlockHeader));
-	vector<LinkedList> allFreeLists = initializeFreeLists(_basic_block_size, _total_memory_length);
+	allFreeLists = initializeFreeLists(_basic_block_size, _total_memory_length);
 
 	cout << "allFreeLists.size()  nr. 1 " << allFreeLists.size() << "\n";
 
@@ -90,6 +90,8 @@ char* BuddyAllocator::alloc(uint _length, vector<LinkedList> allFreeLists) {
 		}
 	}
 	 */
+
+	//Remember! Offset return address by header size
     return new char [_length];
 }
 
@@ -134,6 +136,13 @@ unsigned int BuddyAllocator::returnClosestPowerOf2(unsigned int x) {
 
 //The private functions we are required to implement
 char *BuddyAllocator::getbuddy(char *addr) {
+	//Aoff = A – head_pointer, Aoff’ = Aoff XOR A->block_size
+	//Buddy address = (block address – start) XOR (block size) + start
+	//C++ operator XOR: ^
+
+	BlockHeader* blockheader = (BlockHeader*) addr;
+	//char * temp = (((char*)blockheader)-startAddress)^(blockheader->getBlocksize()) + startAddress; //This is correct, just gotta find startAddress.
+
 	return nullptr;
 }
 
@@ -149,13 +158,32 @@ char *BuddyAllocator::merge(char *block1, char *block2) {
 	return nullptr;
 }
 
-char *BuddyAllocator::split(char *block) {
-	//Return leftmost block. Only split on one side of the tree initially!
+char *BuddyAllocator::split(char *blockAddress) {
+	// splits the given block by putting a new header halfway through the block
+	// also, the original header needs to be corrected
+
 	//we get a char pointer to the big block
 	//In allFreeList I should only insert the blocks to the right, never the most leftmost block in the branch
 	//How to find the memory location of the half-block?
+	BlockHeader* bigBlock = (BlockHeader*)blockAddress;
+	int bigBlockSize = bigBlock->getBlocksize();
+	int halfSize = bigBlockSize/2;
+	char * rightBlockAddr = blockAddress + halfSize;
 
-	//XOR the current memory address with the size of the block?
+	//Can I look up the right FreeList in constant time?
+	//I have halfSize, which is the size of the FreeList we will insert into
+	//Look into that after I make this work...
+
+	for (int i = 0; i < allFreeLists.size(); i++) {
+		//Look through allFreeLists
+		//Find FreeList with size of halfSize
+		if (allFreeLists[i].getBlockSize() == halfSize) {
+			allFreeLists[i].insert(bigBlock); //Insert the left block (It's no longer acutally big, size is set in the insert function)
+			allFreeLists[i].insert((BlockHeader*)rightBlockAddr); //Insert the right block
+		}
+	}
+
+	//Return pointer to new header (the block to the right)
 	return nullptr;
 }
 
