@@ -22,7 +22,7 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	 * BlockHeader* header = (BlockHeader*)(h);
 	 * cout << header->size << endl; //this would print out the size of the block that h points to
 	 */
-	_basic_block_size = returnClosestPowerOf2(_basic_block_size);
+	_basic_block_size = returnClosestPowerOf2(_basic_block_size+sizeof(BlockHeader));
 	vector<LinkedList> allFreeLists = initializeFreeLists(_basic_block_size, _total_memory_length);
 
 	cout << "allFreeLists.size()  nr. 1 " << allFreeLists.size() << "\n";
@@ -59,18 +59,21 @@ vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block
 char* BuddyAllocator::alloc(uint _length, vector<LinkedList> allFreeLists) {
 	cout << "Alloc running!";
 	int timesToSplit = 0;
-	cout << "allFreeLists.size()" << allFreeLists.size();
+	cout << "allFreeLists.size()" << allFreeLists.size() << "\n";
   /* This preliminary implementation simply hands the call over the 
      the C standard library! 
      Of course this needs to be replaced by your implementation.
   */
-	//Start at bottom of FreeList and see if there is a block that can fit the data?
 
-	for (int i = allFreeLists.size()-1; i > 0; i--) {
-		if (allFreeLists[i].getBlockSize() >= _length) {
+	//Start at bottom of FreeList and see if there is a block that can fit the data
+	for (int i = allFreeLists.size()-1; i > -1; i--) {
+		cout << "allFreeLists[i].getFirstHeader() " << allFreeLists[i].getFirstHeader() << "\n";
+		if ((allFreeLists[i].getBlockSize() >= _length) && (allFreeLists[i].getFirstHeader() != NULL)) {
 			cout << "\n allFreeLists[i].getBlockSize(): at i =  "<< i<< "  " << allFreeLists[i].getBlockSize();
 			cout << "We found a block that's big enough for 128!";
 			timesToSplit = findNumSplits(allFreeLists[i].getBlockSize(), _length, 0);
+			//So if we don't have to split, we just return the memory address (as a char pointer)
+
 			cout << " times to Split: " << timesToSplit;
 		}
 	}
@@ -147,6 +150,12 @@ char *BuddyAllocator::merge(char *block1, char *block2) {
 }
 
 char *BuddyAllocator::split(char *block) {
+	//Return leftmost block. Only split on one side of the tree initially!
+	//we get a char pointer to the big block
+	//In allFreeList I should only insert the blocks to the right, never the most leftmost block in the branch
+	//How to find the memory location of the half-block?
+
+	//XOR the current memory address with the size of the block?
 	return nullptr;
 }
 

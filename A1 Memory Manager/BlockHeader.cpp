@@ -8,6 +8,7 @@
 BlockHeader::BlockHeader(bool free, int blocksize) {
     this->free = free;
     this->blocksize = blocksize;
+	//I've calculated previously that the total size of the BlockHeader object is 12 bytes
 }
 
 BlockHeader::BlockHeader() {
