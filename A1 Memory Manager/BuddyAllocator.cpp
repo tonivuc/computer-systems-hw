@@ -27,7 +27,7 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 
 	cout << "allFreeLists.size()  nr. 1 " << allFreeLists.size() << "\n";
 
-	char *memoryStart = new char [_total_memory_length]; //Remember to free this
+	memoryStart = new char [_total_memory_length]; //Remember to free this
 
 
 	BlockHeader* initialBlock = (BlockHeader*) memoryStart; //No point calling constructor before we have the right memory location
@@ -141,7 +141,7 @@ char *BuddyAllocator::getbuddy(char *addr) {
 	//C++ operator XOR: ^
 
 	BlockHeader* blockheader = (BlockHeader*) addr;
-	//char * temp = (((char*)blockheader)-startAddress)^(blockheader->getBlocksize()) + startAddress; //This is correct, just gotta find startAddress.
+	char * buddyAddress = (char*)((addr-memoryStart)^(blockheader->getBlocksize()) + (uint)memoryStart); //This is correct, just gotta find startAddress.
 
 	return nullptr;
 }

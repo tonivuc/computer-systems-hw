@@ -26,6 +26,7 @@ class BuddyAllocator{
 private:
 	/* declare member variables as necessary */
 	vector<LinkedList> allFreeLists;
+	char* memoryStart;
 
 private:
 	/* private function you are required to implement
