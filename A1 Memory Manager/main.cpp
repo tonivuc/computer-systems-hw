@@ -8,8 +8,10 @@ int main(int argc, char ** argv) {
     // create memory manager
     BuddyAllocator * allocator = new BuddyAllocator(basic_block_size, memory_length);
 
-	allocator->alloc(4000);
-	allocator->alloc((511 * 1024)/2);
+	char* block1 = allocator->alloc(90);
+	char* block2 = allocator->alloc(90);
+
+	allocator->free(block1);
 
 
     // test memory manager

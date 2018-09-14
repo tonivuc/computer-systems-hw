@@ -33,11 +33,6 @@ void LinkedList::insert(BlockHeader *b) {
 
 void LinkedList::remove(BlockHeader *b) {
 	std::cout << "Removing block"<< b<<"\n";
-	//std::cout << "for b: " << b << " we have that b->getNextBlock() " << b->getNextBlock() <<"\n";
-	//BlockHeader* header = firstHeader->getNextBlock();
-
-	//node = b
-	//temp = ?
 	//Previous BlockHeader points to this address.
 	//Move content from the next block into this block.
 	//Overwrites this block, and nobody points to the next block any more.
@@ -75,7 +70,6 @@ void LinkedList::remove(BlockHeader *b) {
 			std::cout << "Removing "<<header->getNextBlock()<<"\n";
 			//Turns out the next block was the block we wanted to remove.
 			header->setNextBlock(NULL);
-			std::cout << "Removed block ";
 		}
 	}
 }

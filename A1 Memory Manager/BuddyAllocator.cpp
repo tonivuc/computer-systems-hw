@@ -66,17 +66,17 @@ char* BuddyAllocator::alloc(uint _length) {
 	BlockHeader* blockToSplit;
 
 	//Start at bottom of FreeList and see if there is a block that can fit the data
-	cout << "Trying to allocate "<<_length<<" bytes of memory.";
+	//cout << "Trying to allocate "<<_length<<" bytes of memory.";
 	for (int i = allFreeLists.size()-1; i > -1; i--) {
-		cout << "available sizes are: "<<allFreeLists[i].getBlockSize()<< "\n";
+		//cout << "available sizes are: "<<allFreeLists[i].getBlockSize()<< "\n";
 		if ((allFreeLists[i].getBlockSize() >= _length) && (allFreeLists[i].getFirstHeader() != NULL)) {
-			cout << "\n allFreeLists[i].getBlockSize(): at i =  "<< i<< " s " << allFreeLists[i].getBlockSize() <<"\n";
-			cout << "We found a block that's big enough for " << _length << " !";
+			//cout << "\n allFreeLists[i].getBlockSize(): at i =  "<< i<< " s " << allFreeLists[i].getBlockSize() <<"\n";
+			//cout << "We found a block that's big enough for " << _length << " !";
 			timesToSplit = findNumSplits(allFreeLists[i].getBlockSize(), _length, 0);
 			//So if we don't have to split, we just return the memory address (as a char pointer)
 
 			blockToSplit = allFreeLists[i].getHead();
-			cout << " times to Split: " << timesToSplit<<"\n";
+			//cout << " times to Split: " << timesToSplit<<"\n";
 
 			BlockHeader* retrnAddr;
 			if (timesToSplit > 0) {
@@ -109,9 +109,62 @@ int BuddyAllocator::findNumSplits(uint currBlockSize, uint dataLength, int split
 }
 
 int BuddyAllocator::free(char* _a) { //free() function does not give you the size of the block
-  /* Same here! */
-  delete _a;
-  return 0;
+
+	BlockHeader* header = (BlockHeader*)((int)_a - sizeof(BlockHeader)); //The memory location the user got is not the header location. Find header.
+	cout << "Freeing memory location "<<(void*)_a<<" which belongs to block "<<header<<"\n";
+	int blockSize = header->getBlocksize();
+	//User is done with a piece of memory and frees it
+	//if its buddy is free, merge them
+	//If buddy is not free, simply insert a block of the size into the corresponding FreeList
+
+	//Buddy is free, initiate merge
+	char* buddyBlock = getbuddy(_a);
+
+	if(((BlockHeader*)buddyBlock)->isFree()) {
+		merge(_a,buddyBlock);
+	}
+	else {
+		//Buddy is not free
+		//We will insert a BlockHeader of the same size as the freed memory
+		for (int i = allFreeLists.size()-1; i > -1; i--) {
+			//Find a FreeList with the correct size
+			if (allFreeLists[i].getBlockSize() == blockSize) {
+				allFreeLists[i].insert(header);
+			}
+		}
+	}
+
+
+
+	/*
+	for (int i = allFreeLists.size()-1; i > -1; i--) {
+		if ((allFreeLists[i].getBlockSize() >= _length) && (allFreeLists[i].getFirstHeader() != NULL)) {
+			timesToSplit = findNumSplits(allFreeLists[i].getBlockSize(), _length, 0);
+			//So if we don't have to split, we just return the memory address (as a char pointer)
+
+			blockToSplit = allFreeLists[i].getHead();
+			//cout << " times to Split: " << timesToSplit<<"\n";
+
+			BlockHeader* retrnAddr;
+			if (timesToSplit > 0) {
+				for(int j = 0; j < timesToSplit; j++) {
+					retrnAddr = (BlockHeader*)split((char*)(blockToSplit));
+				}
+			}
+			else {
+				retrnAddr = allFreeLists[i].getFirstHeader();
+			}
+			cout << "Size of block to be returned: " << retrnAddr->getBlocksize()<<"\n";
+			return (char*)((int)retrnAddr+sizeof(BlockHeader)); //REMEMBER TO OFFSET
+		}
+	}
+
+	//Didn't find a block
+	cout << "No available blocks that are big enough for the request memory chunk!\n";
+	return nullptr;
+
+	*/
+	return 0;
 }
 
 char* BuddyAllocator::allocForAcker(uint _length) {
@@ -143,9 +196,11 @@ char *BuddyAllocator::getbuddy(char *addr) {
 	//C++ operator XOR: ^
 
 	BlockHeader* blockheader = (BlockHeader*) addr;
-	char * buddyAddress = (char*)((addr-memoryStart)^(blockheader->getBlocksize()) + (uint)memoryStart); //This is correct, just gotta find startAddress.
-
-	return nullptr;
+	cout << "(int)addr: "<<(int)addr <<"\n";
+	cout << "(int)memoryStart: "<<(int)memoryStart <<"\n";
+	cout << "This should be the offset from the virtual memory: "<< (int)addr-(int)memoryStart<<"\n";
+	char * buddyAddress = (char*)(((int)addr-(int)memoryStart)^(blockheader->getBlocksize()) + (int)memoryStart);
+	return buddyAddress;
 }
 
 bool BuddyAllocator::isvalid(char *addr) {
@@ -157,6 +212,11 @@ bool BuddyAllocator::arebuddies(char *block1, char *block2) {
 }
 
 char *BuddyAllocator::merge(char *block1, char *block2) {
+	//Assume that it has already been checked if they are buddies, as the only function that calls merge is free()
+	//Here I want to delete the two smaller blocks and insert a bigger one.
+
+
+
 	return nullptr;
 }
 
@@ -181,15 +241,16 @@ char *BuddyAllocator::split(char *blockAddress) {
 
 	for (int i = 0; i < allFreeLists.size(); i++) {
 		//Delete big block
-		cout << "Cyckle through the allFreeList blocks, now at allFreeLists["<<i<<"] with blockSize "<<allFreeLists[i].getBlockSize()<<"\n";
+		//cout << "Cyckle through the allFreeList blocks, now at allFreeLists["<<i<<"] with blockSize "<<allFreeLists[i].getBlockSize()<<"\n";
 		if (allFreeLists[i].getBlockSize() == bigBlockSize) {
-			cout << "HalfSize nowdays is "<<halfSize<<"\n";
+			//cout << "HalfSize nowdays is "<<halfSize<<"\n";
 			//When we Split, we want to remove the block we are splitting, and replace it with two smaller blocks in its memory
 			cout << "Calling remove of block " << (BlockHeader*)blockAddress << "\n";
 			allFreeLists[i].remove((BlockHeader*)blockAddress);
 			//Insert new blocks
-			cout << "Something is wrong with the (BlockHeader*)rightBlockAddr, it's now "<<(BlockHeader*)rightBlockAddr<<"\n";
-			cout << "allFreeLists[i+1].getBlockSize() "<<allFreeLists[i+1].getBlockSize()<<"\n";
+
+			//testing getBuddy
+			cout << bigBlock << " has buddy " << (BlockHeader*)rightBlockAddr << "but getbuddy returns" << (BlockHeader*)getbuddy((char*)bigBlock)<<"\ng";
 			allFreeLists[i+1].insert(bigBlock); //Insert the left block (It's no longer acutally big, size is set in the insert function)
 			allFreeLists[i+1].insert((BlockHeader*)rightBlockAddr); //Insert the right block
 			//DID NOT GENERATE ENOUGH FREELISTS FFS
