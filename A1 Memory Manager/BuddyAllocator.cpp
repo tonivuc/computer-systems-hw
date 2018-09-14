@@ -40,7 +40,7 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 
 BuddyAllocator::~BuddyAllocator (){
 	//Destructor
-	delete memoryStart;
+	delete [] memoryStart;
 }
 
 vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block_size, unsigned int _total_memory_length) {
@@ -99,7 +99,14 @@ char* BuddyAllocator::alloc(uint _length) {
 				//In the FreeList, there should be a block of the right side, inserted by Split.
 				cout << "allFreeLists[i].getHead() "<<allFreeLists[i].getHead()<<"\n";
 				cout << "allFreeLists[i].getHead()->getNextBlock() "<<allFreeLists[i].getHead()->getNextBlock()<<"\n";
-				retrnAddr = allFreeLists[i].getHead()->getNextBlock();
+				cout << "allFreeLists[i].getHead() get size " << allFreeLists[i].getHead()->getBlocksize()<<"\n";
+				retrnAddr = allFreeLists[i].getHead();
+				allFreeLists[i].remove(retrnAddr);
+				//The only reason this has a head, is because an element has been inserted, promting the list to have its head set to the address of
+				//that element.
+				//If we are inside this FreeList, it means the header was not equal to NULL.
+				//I need the address where to put this next block.
+
 				//retrnAddr = allFreeLists[i].getFirstHeader();
 			}
 			cout << "Size of block to be returned: " << retrnAddr->getBlocksize()<<"\n";
@@ -134,6 +141,9 @@ int BuddyAllocator::free(char* _a) { //free() function does not give you the siz
 
 
 	char* buddyBlock = getbuddy(_a);
+	BlockHeader* test = (BlockHeader*)buddyBlock;
+	cout<<"just bullshit\n";
+	cout << "Is buddyblock there? has size: "<<test->getBlocksize()<<"\n";
 
 	if(((BlockHeader*)buddyBlock)->isFree()) {
 		merge(_a,buddyBlock);
@@ -251,7 +261,6 @@ char *BuddyAllocator::split(char *blockAddress) {
 
 	//we get a char pointer to the big block
 	//In allFreeList I should only insert the blocks to the right, never the most leftmost block in the branch
-	//How to find the memory location of the half-block?
 	BlockHeader* bigBlock = (BlockHeader*)blockAddress;
 	int bigBlockSize = bigBlock->getBlocksize();
 	int halfSize = bigBlockSize/2;
@@ -273,7 +282,7 @@ char *BuddyAllocator::split(char *blockAddress) {
 
 			allFreeLists[i+1].insert(bigBlock); //Insert the left block (It's no longer acutally big, size is set in the insert function)
 			allFreeLists[i+1].insert((BlockHeader*)rightBlockAddr); //Insert the right block
-			cout << "The two new inserted blocks have the addresses "<< bigBlock << " and " << (BlockHeader*)rightBlockAddr << " with sizes " << bigBlock->getBlocksize() << " and "<<((BlockHeader*)rightBlockAddr)->getBlocksize() << "\n";
+			cout << "The two new inserted blocks have the addresses "<< bigBlock << " and " << (BlockHeader*)rightBlockAddr << " with sizes " << bigBlock->getBlocksize() << " and "<<((BlockHeader*)rightBlockAddr)->getBlocksize() << " and "<< bigBlock->isFree()<< " and " << ((BlockHeader*)rightBlockAddr)->isFree()<< "\n";
 			return rightBlockAddr; //Return pointer to new header (the block to the right)
 		}
 	}

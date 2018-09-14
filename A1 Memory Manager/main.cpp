@@ -9,14 +9,16 @@ int main(int argc, char ** argv) {
     BuddyAllocator * allocator = new BuddyAllocator(basic_block_size, memory_length);
 
 
-	char* block1 = allocator->alloc(90);
+	char* block1 = allocator->alloc(10);
 	cout << "OKAY NEXT ALLOC COMING UP!!!!\n\n\n\n";
-	char* block2 = allocator->alloc(90);
+
+	char* block2 = allocator->alloc(22609);
+
 
 	cout << "block1 data is stored at "<<(void*)block1<<" and block2 data is stored at "<<(void*)block2<<"\n";
 
 
-	allocator->free(block1);
+	//allocator->free(block1);
 	cout << "Done with block1\n";
 	allocator->free(block2);
 
