@@ -140,7 +140,7 @@ int BuddyAllocator::free(char* _a) { //free() function does not give you the siz
 	//If buddy is not free, simply insert a block of the size into the corresponding FreeList
 
 
-	char* buddyBlock = getbuddy(_a);
+	char* buddyBlock = getbuddy((char*)header);
 	BlockHeader* test = (BlockHeader*)buddyBlock;
 	cout<<"just bullshit\n";
 	cout << "Is buddyblock there? has size: "<<test->getBlocksize()<<"\n";

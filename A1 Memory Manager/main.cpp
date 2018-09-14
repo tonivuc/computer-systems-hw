@@ -8,7 +8,7 @@ int main(int argc, char ** argv) {
     // create memory manager
     BuddyAllocator * allocator = new BuddyAllocator(basic_block_size, memory_length);
 
-
+	/*
 	char* block1 = allocator->alloc(10);
 	cout << "OKAY NEXT ALLOC COMING UP!!!!\n\n\n\n";
 
@@ -21,10 +21,10 @@ int main(int argc, char ** argv) {
 	//allocator->free(block1);
 	cout << "Done with block1\n";
 	allocator->free(block2);
-
+	*/
     // test memory manager
-    //Ackerman* am = new Ackerman ();
-    //am->test(allocator); // this is the full-fledged test.
+    Ackerman* am = new Ackerman ();
+    am->test(allocator); // this is the full-fledged test.
 
     // destroy memory manager
     delete allocator;
