@@ -68,15 +68,16 @@ char* BuddyAllocator::alloc(uint _length) {
 	//Start at bottom of FreeList and see if there is a block that can fit the data
 	//cout << "Trying to allocate "<<_length<<" bytes of memory.";
 	for (int i = allFreeLists.size()-1; i > -1; i--) {
-		//cout << "available sizes are: "<<allFreeLists[i].getBlockSize()<< "\n";
+		cout << "available sizes are: "<<allFreeLists[i].getBlockSize()<< "\n";
 		if ((allFreeLists[i].getBlockSize() >= _length) && (allFreeLists[i].getFirstHeader() != NULL)) {
-			//cout << "\n allFreeLists[i].getBlockSize(): at i =  "<< i<< " s " << allFreeLists[i].getBlockSize() <<"\n";
-			//cout << "We found a block that's big enough for " << _length << " !";
+			cout << "\n allFreeLists[i].getBlockSize(): at i =  "<< i<< " s " << allFreeLists[i].getBlockSize() <<"\n";
+			cout << "We found a block that's big enough for " << _length << " !\n";
 			timesToSplit = findNumSplits(allFreeLists[i].getBlockSize(), _length, 0);
+			//timesToSplit = timesToSplit-1; //Might need to remove this
 			//So if we don't have to split, we just return the memory address (as a char pointer)
 
 			blockToSplit = allFreeLists[i].getHead();
-			//cout << " times to Split: " << timesToSplit<<"\n";
+			cout << " times to Split: " << timesToSplit<<"\n";
 
 			BlockHeader* retrnAddr;
 			if (timesToSplit > 0) {
@@ -85,7 +86,11 @@ char* BuddyAllocator::alloc(uint _length) {
 				}
 			}
 			else {
-				retrnAddr = allFreeLists[i].getFirstHeader();
+				//In the FreeList, there should be a block of the right side, inserted by Split.
+				cout << "allFreeLists[i].getHead() "<<allFreeLists[i].getHead()<<"\n";
+				cout << "allFreeLists[i].getHead()->getNextBlock() "<<allFreeLists[i].getHead()->getNextBlock()<<"\n";
+				retrnAddr = allFreeLists[i].getHead()->getNextBlock();
+				//retrnAddr = allFreeLists[i].getFirstHeader();
 			}
 			cout << "Size of block to be returned: " << retrnAddr->getBlocksize()<<"\n";
 			return (char*)((int)retrnAddr+sizeof(BlockHeader)); //REMEMBER TO OFFSET
@@ -117,7 +122,7 @@ int BuddyAllocator::free(char* _a) { //free() function does not give you the siz
 	//if its buddy is free, merge them
 	//If buddy is not free, simply insert a block of the size into the corresponding FreeList
 
-	//Buddy is free, initiate merge
+
 	char* buddyBlock = getbuddy(_a);
 
 	if(((BlockHeader*)buddyBlock)->isFree()) {
@@ -134,36 +139,6 @@ int BuddyAllocator::free(char* _a) { //free() function does not give you the siz
 		}
 	}
 
-
-
-	/*
-	for (int i = allFreeLists.size()-1; i > -1; i--) {
-		if ((allFreeLists[i].getBlockSize() >= _length) && (allFreeLists[i].getFirstHeader() != NULL)) {
-			timesToSplit = findNumSplits(allFreeLists[i].getBlockSize(), _length, 0);
-			//So if we don't have to split, we just return the memory address (as a char pointer)
-
-			blockToSplit = allFreeLists[i].getHead();
-			//cout << " times to Split: " << timesToSplit<<"\n";
-
-			BlockHeader* retrnAddr;
-			if (timesToSplit > 0) {
-				for(int j = 0; j < timesToSplit; j++) {
-					retrnAddr = (BlockHeader*)split((char*)(blockToSplit));
-				}
-			}
-			else {
-				retrnAddr = allFreeLists[i].getFirstHeader();
-			}
-			cout << "Size of block to be returned: " << retrnAddr->getBlocksize()<<"\n";
-			return (char*)((int)retrnAddr+sizeof(BlockHeader)); //REMEMBER TO OFFSET
-		}
-	}
-
-	//Didn't find a block
-	cout << "No available blocks that are big enough for the request memory chunk!\n";
-	return nullptr;
-
-	*/
 	return 0;
 }
 
@@ -196,10 +171,9 @@ char *BuddyAllocator::getbuddy(char *addr) {
 	//C++ operator XOR: ^
 
 	BlockHeader* blockheader = (BlockHeader*) addr;
-	cout << "(int)addr: "<<(int)addr <<"\n";
-	cout << "(int)memoryStart: "<<(int)memoryStart <<"\n";
-	cout << "This should be the offset from the virtual memory: "<< (int)addr-(int)memoryStart<<"\n";
-	char * buddyAddress = (char*)(((int)addr-(int)memoryStart)^(blockheader->getBlocksize()) + (int)memoryStart);
+
+	int kek = (addr-memoryStart)^(blockheader->getBlocksize());
+	char * buddyAddress = kek + memoryStart; //- returns int, adding a char pointer to an int returns a char pointer
 	return buddyAddress;
 }
 
@@ -213,17 +187,55 @@ bool BuddyAllocator::arebuddies(char *block1, char *block2) {
 
 char *BuddyAllocator::merge(char *block1, char *block2) {
 	//Assume that it has already been checked if they are buddies, as the only function that calls merge is free()
-	//Here I want to delete the two smaller blocks and insert a bigger one.
+	//Not quite right! Ackerman also calls merge!
+	//Double check which is free and which is not
 
+	//No need to check if the blocks should be merged. Ackerman can't call merge() directly.
 
+	//If you get two blocks, merge them no matter what!
+	BlockHeader* block1H = (BlockHeader*)block1;
+	BlockHeader* block2H = (BlockHeader*)block2;
 
-	return nullptr;
+	//Find the place where we insert the new block
+	int newSize = block1H->getBlocksize()*2;
+
+	for (int i = 0; i < allFreeLists.size(); i++) {
+		if (allFreeLists[i].getBlockSize() == newSize) {
+			if (block1H < block2H) {
+				allFreeLists[i].insert(block1H);
+			}
+			else {
+				allFreeLists[i].insert(block2H);
+			}
+		}
+		break;
+	}
+
+	for (int i = 0; i < allFreeLists.size(); i++) {
+		if (allFreeLists[i].getBlockSize() == block1H->getBlocksize()) {
+			if (block1H < block2H) {
+				allFreeLists[i].remove(block1H);
+			}
+			else {
+				allFreeLists[i].remove(block2H);
+			}
+
+		}
+		break;
+	}
+
+	if (block1 < block2) {
+		return block1;
+	}
+	else {
+		return block2;
+	}
 }
 
 //Split sort of assumes that the block we are asking to Split is always the leftmost block. But is it the case?
 //Yes it is the casee
 char *BuddyAllocator::split(char *blockAddress) {
-	cout << "\nWe are splitting block " << (BlockHeader*)blockAddress << "\n";
+	cout << "\nWe are splitting block " << (BlockHeader*)blockAddress << "which has the size "<<((BlockHeader*)blockAddress)->getBlocksize()<< "\n";
 	// splits the given block by putting a new header halfway through the block
 	// also, the original header needs to be corrected
 
@@ -240,8 +252,8 @@ char *BuddyAllocator::split(char *blockAddress) {
 	//Look into that after I make this work...
 
 	for (int i = 0; i < allFreeLists.size(); i++) {
+		cout << "allFreeLists[<<"<<i<<"].getBlockSize()"<<allFreeLists[i].getBlockSize()<<"\n";
 		//Delete big block
-		//cout << "Cyckle through the allFreeList blocks, now at allFreeLists["<<i<<"] with blockSize "<<allFreeLists[i].getBlockSize()<<"\n";
 		if (allFreeLists[i].getBlockSize() == bigBlockSize) {
 			//cout << "HalfSize nowdays is "<<halfSize<<"\n";
 			//When we Split, we want to remove the block we are splitting, and replace it with two smaller blocks in its memory
@@ -249,11 +261,8 @@ char *BuddyAllocator::split(char *blockAddress) {
 			allFreeLists[i].remove((BlockHeader*)blockAddress);
 			//Insert new blocks
 
-			//testing getBuddy
-			cout << bigBlock << " has buddy " << (BlockHeader*)rightBlockAddr << "but getbuddy returns" << (BlockHeader*)getbuddy((char*)bigBlock)<<"\ng";
 			allFreeLists[i+1].insert(bigBlock); //Insert the left block (It's no longer acutally big, size is set in the insert function)
 			allFreeLists[i+1].insert((BlockHeader*)rightBlockAddr); //Insert the right block
-			//DID NOT GENERATE ENOUGH FREELISTS FFS
 			cout << "The two new inserted blocks have the addresses "<< bigBlock << " and " << (BlockHeader*)rightBlockAddr << " with sizes " << bigBlock->getBlocksize() << " and "<<((BlockHeader*)rightBlockAddr)->getBlocksize() << "\n";
 			return rightBlockAddr; //Return pointer to new header (the block to the right)
 		}
