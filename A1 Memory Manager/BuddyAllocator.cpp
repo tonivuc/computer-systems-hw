@@ -25,6 +25,8 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	_basic_block_size = returnClosestPowerOf2(_basic_block_size+sizeof(BlockHeader));
 	allFreeLists = initializeFreeLists(_basic_block_size, _total_memory_length);
 
+	cout << "Size to be allocated: " << _basic_block_size << "\n";
+
 	cout << "allFreeLists.size()  nr. 1 " << allFreeLists.size() << "\n";
 
 	memoryStart = new char [_total_memory_length]; //Remember to free this
@@ -34,9 +36,9 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	allFreeLists[0].insert(initialBlock);
 	cout << allFreeLists.size() << "\n";
 	cout << " blocksiz " <<allFreeLists[0].getFirstHeader()->getBlocksize() << "\n";
-	cout << " avSiz " <<allFreeLists[0].getFirstHeader()->getAvailableSize() << "\n";
+	//cout << " avSiz " <<allFreeLists[0].getFirstHeader()->getAvailableSize() << "\n";
 
-	alloc(128, allFreeLists);
+	alloc(_basic_block_size, allFreeLists);
 }
 
 BuddyAllocator::~BuddyAllocator (){
@@ -60,6 +62,7 @@ char* BuddyAllocator::alloc(uint _length, vector<LinkedList> allFreeLists) {
 	cout << "Alloc running!";
 	int timesToSplit = 0;
 	cout << "allFreeLists.size()" << allFreeLists.size() << "\n";
+	BlockHeader* blockToSplit;
   /* This preliminary implementation simply hands the call over the 
      the C standard library! 
      Of course this needs to be replaced by your implementation.
@@ -67,29 +70,27 @@ char* BuddyAllocator::alloc(uint _length, vector<LinkedList> allFreeLists) {
 
 	//Start at bottom of FreeList and see if there is a block that can fit the data
 	for (int i = allFreeLists.size()-1; i > -1; i--) {
-		cout << "allFreeLists[i].getFirstHeader() " << allFreeLists[i].getFirstHeader() << "\n";
+		//cout << "allFreeLists[i].getFirstHeader() " << allFreeLists[i].getFirstHeader() << "\n";
 		if ((allFreeLists[i].getBlockSize() >= _length) && (allFreeLists[i].getFirstHeader() != NULL)) {
-			cout << "\n allFreeLists[i].getBlockSize(): at i =  "<< i<< "  " << allFreeLists[i].getBlockSize();
+			cout << "\n allFreeLists[i].getBlockSize(): at i =  "<< i<< " s " << allFreeLists[i].getBlockSize() <<"\n";
 			cout << "We found a block that's big enough for 128!";
 			timesToSplit = findNumSplits(allFreeLists[i].getBlockSize(), _length, 0);
 			//So if we don't have to split, we just return the memory address (as a char pointer)
 
+			blockToSplit = allFreeLists[i].getHead();
 			cout << " times to Split: " << timesToSplit;
-		}
-	}
-	cout << "Blocksize of last block: " << allFreeLists[0].getBlockSize()/timesToSplit;
 
-	//Check if it can fit the data if split in two?
-	//Keep checking and splitting until it can't get smaller
-	//Allocate
+			char* retrnAddr;
+			for(int j = 0; j < timesToSplit; j++) {
+				retrnAddr = split((char*)(blockToSplit));
+			}
+			BlockHeader* bluck = (BlockHeader*)retrnAddr;
+			cout << "Size of last block: " << bluck->getBlocksize()<<"\n";
 
-	/*
-	for (int i = allFreeLists.size(); i > 0; i--) {
-		if ((allFreeLists[i].getFirstHeader() != NULL) && allFreeLists[i].getBlockSize() >= ) {
+			return (char*)bluck; //REMEMBER TO OFFSET
 
 		}
 	}
-	 */
 
 	//Remember! Offset return address by header size
     return new char [_length];
@@ -99,8 +100,9 @@ char* BuddyAllocator::alloc(uint _length, vector<LinkedList> allFreeLists) {
  * Recurring function to find how many times to split the memory
  */
 int BuddyAllocator::findNumSplits(uint currBlockSize, uint dataLength, int splitsSoFar) {
+	//cout << "currBlockSize/2 " << currBlockSize/2 << "dataLength" << dataLength << "\n";
 	if (currBlockSize/2 >= dataLength /*minus header size*/) {
-		cout << "currBlockSize: " << currBlockSize << "\n";
+		//cout << "currBlockSize: " << currBlockSize << "\n";
 		return findNumSplits(currBlockSize/2, dataLength, (splitsSoFar+1));
 	}
 	return splitsSoFar;
@@ -170,6 +172,8 @@ char *BuddyAllocator::split(char *blockAddress) {
 	int halfSize = bigBlockSize/2;
 	char * rightBlockAddr = blockAddress + halfSize;
 
+	cout << "Still no getNextBlock()?\n";
+
 	//Can I look up the right FreeList in constant time?
 	//I have halfSize, which is the size of the FreeList we will insert into
 	//Look into that after I make this work...
@@ -177,7 +181,9 @@ char *BuddyAllocator::split(char *blockAddress) {
 	for (int i = 0; i < allFreeLists.size(); i++) {
 		//Delete big block
 		if (allFreeLists[i].getBlockSize() == bigBlockSize) {
+			cout << "\nCalling remove of block " << allFreeLists[i].getHead() << "\n";
 			allFreeLists[i].remove((BlockHeader*)blockAddress);
+			cout << "After first remove!\n";
 			//Insert new blocks
 			allFreeLists[i+1].insert(bigBlock); //Insert the left block (It's no longer acutally big, size is set in the insert function)
 			allFreeLists[i+1].insert((BlockHeader*)rightBlockAddr); //Insert the right block

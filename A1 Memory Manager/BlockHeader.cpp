@@ -33,6 +33,8 @@ void BlockHeader::setBlocksize(unsigned int blocksize) {
 }
 
 BlockHeader *BlockHeader::getNextBlock() const {
+	std::cout << "What's wrong with returning NULL man? \n";
+	std::cout << "The next block is: " << nextBlock << "\n";
 	return nextBlock;
 }
 
@@ -41,6 +43,6 @@ void BlockHeader::setNextBlock(BlockHeader *nextBlock) {
 }
 
 int BlockHeader::getAvailableSize() {
-	std::cout << "Size of BlockHeader: " << sizeof(this);
-	return blocksize - sizeof(this);
+	std::cout << "Size of BlockHeader: " << sizeof(BlockHeader);
+	return blocksize - sizeof(BlockHeader);
 }
