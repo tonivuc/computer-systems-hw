@@ -33,8 +33,13 @@ void BlockHeader::setBlocksize(unsigned int blocksize) {
 }
 
 BlockHeader *BlockHeader::getNextBlock() const {
-	std::cout << "What's wrong with returning NULL man? \n";
-	std::cout << "The next block is: " << nextBlock << "\n";
+
+	if (nextBlock == NULL) {
+		std::cout << "This block has no nextBlock. It's NULL.\n";
+	}
+	else {
+		//std::cout << "The next block is: " << nextBlock << "\n";
+	}
 	return nextBlock;
 }
 

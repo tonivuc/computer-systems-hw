@@ -27,6 +27,7 @@ private:
 	/* declare member variables as necessary */
 	vector<LinkedList> allFreeLists;
 	char* memoryStart;
+	unsigned int totalMemory;
 
 private:
 	/* private function you are required to implement
@@ -65,7 +66,7 @@ public:
 	   There should not be any memory leakage (i.e., memory staying allocated).
 	*/ 
 
-	char* alloc(uint _length, vector<LinkedList> allFreeLists);
+	char* alloc(uint _length);
 	/* Allocate _length number of bytes of free memory and returns the 
 		address of the allocated portion. Returns 0 when out of memory. */ 
 

@@ -16,18 +16,15 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
      it returns 0.
     */
 
+	if (_basic_block_size >= _total_memory_length) {
+		cout << "The basic block size must be smaller than the total memory length!\n";
+	}
 
-	/* Just some code I might use later
-	 * char* h = (addr - sizeOfHeader);
-	 * BlockHeader* header = (BlockHeader*)(h);
-	 * cout << header->size << endl; //this would print out the size of the block that h points to
-	 */
+	totalMemory = _total_memory_length;
 	_basic_block_size = returnClosestPowerOf2(_basic_block_size+sizeof(BlockHeader));
 	allFreeLists = initializeFreeLists(_basic_block_size, _total_memory_length);
 
-	cout << "Size to be allocated: " << _basic_block_size << "\n";
-
-	cout << "allFreeLists.size()  nr. 1 " << allFreeLists.size() << "\n";
+	cout << "Size to be allocated: " << _total_memory_length<< "\n";
 
 	memoryStart = new char [_total_memory_length]; //Remember to free this
 
@@ -37,19 +34,18 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	cout << allFreeLists.size() << "\n";
 	cout << " blocksiz " <<allFreeLists[0].getFirstHeader()->getBlocksize() << "\n";
 	//cout << " avSiz " <<allFreeLists[0].getFirstHeader()->getAvailableSize() << "\n";
-
-	alloc(_basic_block_size, allFreeLists);
 }
 
 BuddyAllocator::~BuddyAllocator (){
 	//Destructor
+	delete memoryStart;
 }
 
 vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block_size, unsigned int _total_memory_length) {
 	vector<LinkedList> allFreeLists;
 	int blockLength = _total_memory_length;
 
-	for (int i = 1; blockLength > _basic_block_size; i = i*2) {
+	for (int i = 1; blockLength >= _basic_block_size; i = i*2) {
 		//cout << "EEEy lmao in the function w. i= " << i << "\n";
 		blockLength = _total_memory_length/i;
 		//cout << "Blocklength= " << blockLength << "\n";
@@ -58,42 +54,46 @@ vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block
 	return allFreeLists;
 }
 
-char* BuddyAllocator::alloc(uint _length, vector<LinkedList> allFreeLists) {
-	cout << "Alloc running!";
+char* BuddyAllocator::alloc(uint _length) {
+	_length = returnClosestPowerOf2(_length+sizeof(BlockHeader));
+
+	if (_length > totalMemory- sizeof(BlockHeader)) {
+		cout << "Tried to allocate more memory than total available memory!";
+		return nullptr;
+	}
+
 	int timesToSplit = 0;
-	cout << "allFreeLists.size()" << allFreeLists.size() << "\n";
 	BlockHeader* blockToSplit;
-  /* This preliminary implementation simply hands the call over the 
-     the C standard library! 
-     Of course this needs to be replaced by your implementation.
-  */
 
 	//Start at bottom of FreeList and see if there is a block that can fit the data
+	cout << "Trying to allocate "<<_length<<" bytes of memory.";
 	for (int i = allFreeLists.size()-1; i > -1; i--) {
-		//cout << "allFreeLists[i].getFirstHeader() " << allFreeLists[i].getFirstHeader() << "\n";
+		cout << "available sizes are: "<<allFreeLists[i].getBlockSize()<< "\n";
 		if ((allFreeLists[i].getBlockSize() >= _length) && (allFreeLists[i].getFirstHeader() != NULL)) {
 			cout << "\n allFreeLists[i].getBlockSize(): at i =  "<< i<< " s " << allFreeLists[i].getBlockSize() <<"\n";
-			cout << "We found a block that's big enough for 128!";
+			cout << "We found a block that's big enough for " << _length << " !";
 			timesToSplit = findNumSplits(allFreeLists[i].getBlockSize(), _length, 0);
 			//So if we don't have to split, we just return the memory address (as a char pointer)
 
 			blockToSplit = allFreeLists[i].getHead();
-			cout << " times to Split: " << timesToSplit;
+			cout << " times to Split: " << timesToSplit<<"\n";
 
-			char* retrnAddr;
-			for(int j = 0; j < timesToSplit; j++) {
-				retrnAddr = split((char*)(blockToSplit));
+			BlockHeader* retrnAddr;
+			if (timesToSplit > 0) {
+				for(int j = 0; j < timesToSplit; j++) {
+					retrnAddr = (BlockHeader*)split((char*)(blockToSplit));
+				}
 			}
-			BlockHeader* bluck = (BlockHeader*)retrnAddr;
-			cout << "Size of last block: " << bluck->getBlocksize()<<"\n";
-
-			return (char*)bluck; //REMEMBER TO OFFSET
-
+			else {
+				retrnAddr = allFreeLists[i].getFirstHeader();
+			}
+			cout << "Size of block to be returned: " << retrnAddr->getBlocksize()<<"\n";
+			return (char*)((int)retrnAddr+sizeof(BlockHeader)); //REMEMBER TO OFFSET
 		}
 	}
-
-	//Remember! Offset return address by header size
-    return new char [_length];
+	//Didn't find a block
+	cout << "No available blocks that are big enough for the request memory chunk!\n";
+	return nullptr;
 }
 
 /*
@@ -160,7 +160,10 @@ char *BuddyAllocator::merge(char *block1, char *block2) {
 	return nullptr;
 }
 
+//Split sort of assumes that the block we are asking to Split is always the leftmost block. But is it the case?
+//Yes it is the casee
 char *BuddyAllocator::split(char *blockAddress) {
+	cout << "\nWe are splitting block " << (BlockHeader*)blockAddress << "\n";
 	// splits the given block by putting a new header halfway through the block
 	// also, the original header needs to be corrected
 
@@ -172,25 +175,30 @@ char *BuddyAllocator::split(char *blockAddress) {
 	int halfSize = bigBlockSize/2;
 	char * rightBlockAddr = blockAddress + halfSize;
 
-	cout << "Still no getNextBlock()?\n";
-
 	//Can I look up the right FreeList in constant time?
 	//I have halfSize, which is the size of the FreeList we will insert into
 	//Look into that after I make this work...
 
 	for (int i = 0; i < allFreeLists.size(); i++) {
 		//Delete big block
+		cout << "Cyckle through the allFreeList blocks, now at allFreeLists["<<i<<"] with blockSize "<<allFreeLists[i].getBlockSize()<<"\n";
 		if (allFreeLists[i].getBlockSize() == bigBlockSize) {
-			cout << "\nCalling remove of block " << allFreeLists[i].getHead() << "\n";
+			cout << "HalfSize nowdays is "<<halfSize<<"\n";
+			//When we Split, we want to remove the block we are splitting, and replace it with two smaller blocks in its memory
+			cout << "Calling remove of block " << (BlockHeader*)blockAddress << "\n";
 			allFreeLists[i].remove((BlockHeader*)blockAddress);
-			cout << "After first remove!\n";
 			//Insert new blocks
+			cout << "Something is wrong with the (BlockHeader*)rightBlockAddr, it's now "<<(BlockHeader*)rightBlockAddr<<"\n";
+			cout << "allFreeLists[i+1].getBlockSize() "<<allFreeLists[i+1].getBlockSize()<<"\n";
 			allFreeLists[i+1].insert(bigBlock); //Insert the left block (It's no longer acutally big, size is set in the insert function)
 			allFreeLists[i+1].insert((BlockHeader*)rightBlockAddr); //Insert the right block
+			//DID NOT GENERATE ENOUGH FREELISTS FFS
+			cout << "The two new inserted blocks have the addresses "<< bigBlock << " and " << (BlockHeader*)rightBlockAddr << " with sizes " << bigBlock->getBlocksize() << " and "<<((BlockHeader*)rightBlockAddr)->getBlocksize() << "\n";
 			return rightBlockAddr; //Return pointer to new header (the block to the right)
 		}
 	}
 	//If error
+	cout << "ERROR IN SPLIT!";
 	return nullptr;
 }
 

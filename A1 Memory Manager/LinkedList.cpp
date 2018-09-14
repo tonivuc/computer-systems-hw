@@ -23,7 +23,7 @@ void LinkedList::insert(BlockHeader *b) {
 	//Change the nextHeader variable
 	//BlockHeader* b = (BlockHeader*) memoryStart;
 
-	std::cout << "using insert function in LinekedList\n";
+	std::cout << "Inserting block with address "<<b<<"\n";
 
 	b->setNextBlock(firstHeader); //Set this block to point to the previous first block in the list
 	//The order in the list isn't the order in the physical memory.
@@ -32,7 +32,7 @@ void LinkedList::insert(BlockHeader *b) {
 }
 
 void LinkedList::remove(BlockHeader *b) {
-	std::cout << "before calling getNextBlock()\n";
+	std::cout << "Removing block"<< b<<"\n";
 	//std::cout << "for b: " << b << " we have that b->getNextBlock() " << b->getNextBlock() <<"\n";
 	//BlockHeader* header = firstHeader->getNextBlock();
 
@@ -43,7 +43,7 @@ void LinkedList::remove(BlockHeader *b) {
 	//Overwrites this block, and nobody points to the next block any more.
 	//In stead this block now points to the old next block's next block and the list is intact.
 	//Moving the data from the next node into this node
-	std::cout << "Hva er b->getNextBlock()?  det er: " << b->getNextBlock() << "\n";
+	//std::cout << "Hva er b->getNextBlock()?  det er: " << b->getNextBlock() << "\n";
 	if (b->getNextBlock() != NULL) { //If it's not the last block in the LinkedList
 		std::cout << "address: " << b << " has next block " << b->getNextBlock() << "\n";
 		BlockHeader * temp = b->getNextBlock();
@@ -57,10 +57,11 @@ void LinkedList::remove(BlockHeader *b) {
 
 		BlockHeader* header = firstHeader;
 		if (header == b) {
-			std::cout << "We have reached the only block in the list. Remove it!\n";
+			std::cout << "We have reached the only block in the list. That's " << header << "Remove it!\n";
 			firstHeader = NULL;
 		}
 		else {
+			std::cout << "We have reached the last block in the LinkedList, but not the only one. The block is "<<header<<"\n";
 			int k = 0;
 			while(header->getNextBlock() != b) {
 				std::cout << "going through LinkedList, at index " << k << "\n";
@@ -70,9 +71,11 @@ void LinkedList::remove(BlockHeader *b) {
 					std::cout << "We might have entered an infinite loop in the removal function folks \n";
 				}
 			}
+			std::cout << "We found that that the first block in the LinkedList, " <<header << " points to the block we want to remove.\n";
+			std::cout << "Removing "<<header->getNextBlock()<<"\n";
 			//Turns out the next block was the block we wanted to remove.
 			header->setNextBlock(NULL);
-			std::cout << "Removed block";
+			std::cout << "Removed block ";
 		}
 	}
 }
