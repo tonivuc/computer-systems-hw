@@ -14,10 +14,11 @@ int main(int argc, char ** argv) {
 	char* block2 = allocator->alloc(90);
 
 	cout << "block1 data is stored at "<<(void*)block1<<" and block2 data is stored at "<<(void*)block2<<"\n";
+
+
 	allocator->free(block1);
 	cout << "Done with block1\n";
 	allocator->free(block2);
-
 
     // test memory manager
     //Ackerman* am = new Ackerman ();

@@ -21,7 +21,9 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	}
 
 	totalMemory = _total_memory_length;
-	_basic_block_size = returnClosestPowerOf2(_basic_block_size+sizeof(BlockHeader));
+	this->_basic_block_size = returnClosestPowerOf2(_basic_block_size);
+
+	cout << "_basic_block_size inside the constructor "<<_basic_block_size<<"\n";
 	allFreeLists = initializeFreeLists(_basic_block_size, _total_memory_length);
 
 	cout << "Size to be allocated: " << _total_memory_length<< "\n";
@@ -32,7 +34,7 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	BlockHeader* initialBlock = (BlockHeader*) memoryStart; //No point calling constructor before we have the right memory location
 	allFreeLists[0].insert(initialBlock);
 	cout << allFreeLists.size() << "\n";
-	cout << " blocksiz " <<allFreeLists[0].getFirstHeader()->getBlocksize() << "\n";
+	cout << " blocksize " <<allFreeLists[0].getFirstHeader()->getBlocksize() << "\n";
 	//cout << " avSiz " <<allFreeLists[0].getFirstHeader()->getAvailableSize() << "\n";
 }
 
@@ -42,10 +44,11 @@ BuddyAllocator::~BuddyAllocator (){
 }
 
 vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block_size, unsigned int _total_memory_length) {
+	cout << "BBS"<<_basic_block_size<<"\n";
 	vector<LinkedList> allFreeLists;
-	int blockLength = _total_memory_length;
+	unsigned int blockLength = _total_memory_length;
 
-	for (int i = 1; blockLength >= _basic_block_size; i = i*2) {
+	for (unsigned int i = 1; blockLength > _basic_block_size; i = i*2) {
 		//cout << "EEEy lmao in the function w. i= " << i << "\n";
 		blockLength = _total_memory_length/i;
 		//cout << "Blocklength= " << blockLength << "\n";
@@ -55,7 +58,14 @@ vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block
 }
 
 char* BuddyAllocator::alloc(uint _length) {
+	cout << "_length is "<<_length<<" and _basic_block_sie is "<<_basic_block_size<<"\n";
 	_length = returnClosestPowerOf2(_length+sizeof(BlockHeader));
+	if (_length < _basic_block_size) {
+		cout << "Went in the if loop yep.\n";
+		_length = _basic_block_size;
+	}
+
+	cout << "_length is "<<_length<<"\n";
 
 	if (_length > totalMemory- sizeof(BlockHeader)) {
 		cout << "Tried to allocate more memory than total available memory!";

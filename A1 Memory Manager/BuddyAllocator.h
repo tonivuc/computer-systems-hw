@@ -28,6 +28,7 @@ private:
 	vector<LinkedList> allFreeLists;
 	char* memoryStart;
 	unsigned int totalMemory;
+	unsigned int _basic_block_size;
 
 private:
 	/* private function you are required to implement
