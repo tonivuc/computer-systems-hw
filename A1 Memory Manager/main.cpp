@@ -1,25 +1,11 @@
 #include "test/Ackerman.h"
-#include "BuddyAllocator.h"
 
 int main(int argc, char ** argv) {
 
-    int basic_block_size = 128, memory_length = 128000000; //currently 128MB, before: 512 * 1024
+    int basic_block_size = 128, memory_length = 512 * 1024; //currently 128MB, before: 512 * 1024
 
     // create memory manager
     BuddyAllocator * allocator = new BuddyAllocator(basic_block_size, memory_length);
-
-	/*
-	char* block1 = allocator->alloc(10);
-	cout << "OKAY NEXT ALLOC COMING UP!!!!\n\n\n\n";
-
-	char* block2 = allocator->alloc(22609);
-
-	cout << "block1 data is stored at "<<(void*)block1<<" and block2 data is stored at "<<(void*)block2<<"\n";
-
-	//allocator->free(block1);
-	cout << "Done with block1\n";
-	allocator->free(block2);
-	*/
 
     // test memory manager
     Ackerman* am = new Ackerman ();
@@ -27,4 +13,14 @@ int main(int argc, char ** argv) {
 
     // destroy memory manager
     delete allocator;
+
+
+	/* Some testing code
+	char* block1 = allocator->alloc(10);
+	char* block2 = allocator->alloc(22609);
+	cout << "block1 data is stored at "<<(void*)block1<<" and block2 data is stored at "<<(void*)block2<<"\n";
+	//allocator->free(block1);
+	cout << "Done with block1\n";
+	allocator->free(block2);
+	*/
 }

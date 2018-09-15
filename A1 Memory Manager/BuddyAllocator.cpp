@@ -196,17 +196,15 @@ bool BuddyAllocator::isvalid(char *addr) {
 }
 
 bool BuddyAllocator::arebuddies(char *block1, char *block2) {
+	if (getbuddy(block1) == block2) {
+		return true;
+	}
 	return false;
 }
 
 char *BuddyAllocator::merge(char *block1, char *block2) {
 	//Assume that it has already been checked if they are buddies, as the only function that calls merge is free()
-	//Not quite right! Ackerman also calls merge!
-	//Double check which is free and which is not
 
-	//No need to check if the blocks should be merged. Ackerman can't call merge() directly.
-
-	//If you get two blocks, merge them no matter what!
 	BlockHeader* block1H = (BlockHeader*)block1;
 	BlockHeader* block2H = (BlockHeader*)block2;
 
@@ -246,8 +244,6 @@ char *BuddyAllocator::merge(char *block1, char *block2) {
 	}
 }
 
-//Split sort of assumes that the block we are asking to Split is always the leftmost block. But is it the case?
-//Yes it is the casee
 char *BuddyAllocator::split(char *blockAddress) {
 	cout << "\nWe are splitting block " << (BlockHeader*)blockAddress << "which has the size "<<((BlockHeader*)blockAddress)->getBlocksize()<< "\n";
 	// splits the given block by putting a new header halfway through the block

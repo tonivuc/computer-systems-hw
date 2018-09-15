@@ -67,7 +67,7 @@ void LinkedList::remove(BlockHeader *b) {
 					//std::cout << "going through LinkedList, at index " << k << "\n";
 					firstRealBlock = firstRealBlock->getNextBlock();
 					k++;
-					if (k == 100) {
+					if (k == 1000) {
 						std::cout << "Block "<<b<<" was not found and could therefore not be removed."<<" \n";
 						return;
 					}
