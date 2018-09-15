@@ -38,7 +38,6 @@ void LinkedList::remove(BlockHeader *b) {
 	//Overwrites this block, and nobody points to the next block any more.
 	//In stead this block now points to the old next block's next block and the list is intact.
 	//Moving the data from the next node into this node
-	//std::cout << "Hva er b->getNextBlock()?  det er: " << b->getNextBlock() << "\n";
 	if (b->getNextBlock() != NULL) { //If it's not the last block in the LinkedList
 		std::cout << "address: " << b << " has next block " << b->getNextBlock() << "\n";
 		BlockHeader * temp = b->getNextBlock();
@@ -56,20 +55,27 @@ void LinkedList::remove(BlockHeader *b) {
 			firstHeader = NULL; //The list no longer points to any blocks
 		}
 		else {
-			std::cout << "We have reached the last block in the LinkedList, but not the only one. The block is "<<firstRealBlock<<"\n";
-			int k = 0;
-			while(firstRealBlock->getNextBlock() != b) {
-				std::cout << "going through LinkedList, at index " << k << "\n";
-				firstRealBlock = firstRealBlock->getNextBlock();
-				k++;
-				if (k == 10000) {
-					std::cout << "We might have entered an infinite loop in the removal function folks \n";
-				}
+			bool stop_here = false;
+			if (firstRealBlock == NULL) {
+				std::cout << "The header of the LinkedList is pointing nowhere...";
+				stop_here = true;
 			}
-			std::cout << "We found that that the first block in the LinkedList, " <<firstRealBlock << " points to the block we want to remove.\n";
-			std::cout << "Removing "<<firstRealBlock->getNextBlock()<<"\n";
-			//Turns out the next block was the block we wanted to remove.
-			firstRealBlock->setNextBlock(NULL);
+			if (stop_here == false) {
+				std::cout << "We have reached the last block in the LinkedList, but not the only one. The block is "<<firstRealBlock<<"\n";
+				int k = 0;
+				while(firstRealBlock->getNextBlock() != b) {
+					std::cout << "going through LinkedList, at index " << k << "\n";
+					firstRealBlock = firstRealBlock->getNextBlock();
+					k++;
+					if (k == 10000) {
+						std::cout << "We might have entered an infinite loop in the removal function folks \n";
+					}
+				}
+				std::cout << "We found that that the first block in the LinkedList, " <<firstRealBlock << " points to the block we want to remove.\n";
+				std::cout << "Removing "<<firstRealBlock->getNextBlock()<<"\n";
+				//Turns out the next block was the block we wanted to remove.
+				firstRealBlock->setNextBlock(NULL);
+			}
 		}
 	}
 }
