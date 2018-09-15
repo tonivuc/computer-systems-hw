@@ -57,18 +57,19 @@ void LinkedList::remove(BlockHeader *b) {
 		else {
 			bool stop_here = false;
 			if (firstRealBlock == NULL) {
-				std::cout << "The header of the LinkedList is pointing nowhere...";
+				std::cout << "The header of the LinkedList is pointing nowhere... This block is as good as removed already.";
 				stop_here = true;
 			}
 			if (stop_here == false) {
 				std::cout << "We have reached the last block in the LinkedList, but not the only one. The block is "<<firstRealBlock<<"\n";
 				int k = 0;
-				while(firstRealBlock->getNextBlock() != b) {
-					std::cout << "going through LinkedList, at index " << k << "\n";
+				while((firstRealBlock->getNextBlock() != b)) {
+					//std::cout << "going through LinkedList, at index " << k << "\n";
 					firstRealBlock = firstRealBlock->getNextBlock();
 					k++;
-					if (k == 10000) {
-						std::cout << "We might have entered an infinite loop in the removal function folks \n";
+					if (k == 100) {
+						std::cout << "Block "<<b<<" was not found and could therefore not be removed."<<" \n";
+						return;
 					}
 				}
 				std::cout << "We found that that the first block in the LinkedList, " <<firstRealBlock << " points to the block we want to remove.\n";

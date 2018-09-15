@@ -15,9 +15,9 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
     memory made available to the allocator. If an error occurred,
      it returns 0.
     */
-
 	if (_basic_block_size >= _total_memory_length) {
 		cout << "The basic block size must be smaller than the total memory length!\n";
+		return;
 	}
 
 	totalMemory = _total_memory_length;
@@ -36,6 +36,7 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 	cout << allFreeLists.size() << "\n";
 	cout << " blocksize " <<allFreeLists[0].getFirstHeader()->getBlocksize() << "\n";
 	//cout << " avSiz " <<allFreeLists[0].getFirstHeader()->getAvailableSize() << "\n";
+
 }
 
 BuddyAllocator::~BuddyAllocator (){
@@ -44,7 +45,6 @@ BuddyAllocator::~BuddyAllocator (){
 }
 
 vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block_size, unsigned int _total_memory_length) {
-	cout << "BBS"<<_basic_block_size<<"\n";
 	vector<LinkedList> allFreeLists;
 	unsigned int blockLength = _total_memory_length;
 
@@ -58,14 +58,11 @@ vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block
 }
 
 char* BuddyAllocator::alloc(uint _length) {
-	cout << "_length is "<<_length<<" and _basic_block_sie is "<<_basic_block_size<<"\n";
+	//cout << "_length is "<<_length<<" and _basic_block_sie is "<<_basic_block_size<<"\n";
 	_length = returnClosestPowerOf2(_length+sizeof(BlockHeader));
 	if (_length < _basic_block_size) {
-		cout << "Went in the if loop yep.\n";
 		_length = _basic_block_size;
 	}
-
-	cout << "_length is "<<_length<<"\n";
 
 	if (_length > totalMemory- sizeof(BlockHeader)) {
 		cout << "Tried to allocate more memory than total available memory!";
@@ -80,7 +77,7 @@ char* BuddyAllocator::alloc(uint _length) {
 	for (int i = allFreeLists.size()-1; i > -1; i--) {
 		cout << "available sizes are: "<<allFreeLists[i].getBlockSize()<< "\n";
 		if ((allFreeLists[i].getBlockSize() >= _length) && (allFreeLists[i].getFirstHeader() != NULL)) {
-			cout << "\n allFreeLists[i].getBlockSize(): at i =  "<< i<< " s " << allFreeLists[i].getBlockSize() <<"\n";
+			cout << "\n allFreeLists[i].getBlockSize(): at i =  "<< i<< " size " << allFreeLists[i].getBlockSize() <<"\n";
 			cout << "We found a block that's big enough for " << _length << " !\n";
 			timesToSplit = findNumSplits(allFreeLists[i].getBlockSize(), _length, 0);
 			//timesToSplit = timesToSplit-1; //Might need to remove this
@@ -114,7 +111,7 @@ char* BuddyAllocator::alloc(uint _length) {
 		}
 	}
 	//Didn't find a block
-	cout << "No available blocks that are big enough for the request memory chunk!\n";
+	cout << "No available blocks that are big enough for the requested memory chunk!\n";
 	return nullptr;
 }
 
@@ -268,7 +265,7 @@ char *BuddyAllocator::split(char *blockAddress) {
 	//Look into that after I make this work...
 
 	for (int i = 0; i < allFreeLists.size(); i++) {
-		cout << "allFreeLists[<<"<<i<<"].getBlockSize()"<<allFreeLists[i].getBlockSize()<<"\n";
+		cout << "allFreeLists["<<i<<"].getBlockSize()"<<allFreeLists[i].getBlockSize()<<"\n";
 		//Delete big block
 		if (allFreeLists[i].getBlockSize() == bigBlockSize) {
 			//cout << "HalfSize nowdays is "<<halfSize<<"\n";
