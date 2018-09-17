@@ -46,7 +46,7 @@ void LinkedList::remove(BlockHeader *b) {
 	}
 		//Next block is NULL.
 	else {
-		//Hva skal skje hvis det er siste blokk i listen?
+		//What if it is the last block in the LinkedList?
 		//Current block must be removed, by finding the element prior in the LinkedList and removing it
 
 		BlockHeader* firstRealBlock = firstHeader;

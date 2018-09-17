@@ -41,7 +41,7 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 
 BuddyAllocator::~BuddyAllocator (){
 	//Destructor
-	delete [] memoryStart;
+	delete memoryStart;
 }
 
 vector<LinkedList> BuddyAllocator::initializeFreeLists(unsigned int _basic_block_size, unsigned int _total_memory_length) {
@@ -107,7 +107,7 @@ char* BuddyAllocator::alloc(uint _length) {
 				//retrnAddr = allFreeLists[i].getFirstHeader();
 			}
 			cout << "Size of block to be returned: " << retrnAddr->getBlocksize()<<"\n";
-			return (char*)((int)retrnAddr+sizeof(BlockHeader)); //REMEMBER TO OFFSET
+			return (char*)((int)retrnAddr+sizeof(BlockHeader));
 		}
 	}
 	//Didn't find a block
