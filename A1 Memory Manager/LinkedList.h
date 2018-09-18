@@ -22,11 +22,7 @@ public:
 
     void remove (BlockHeader* b); // removes a block from the list
 
-	BlockHeader *getHead() const;
-
-	void setHead(BlockHeader *head);
-
-	BlockHeader *getFirstHeader() const;
+	BlockHeader* getFirstHeader();
 
 	void setFirstHeader(BlockHeader *firstHeader);
 

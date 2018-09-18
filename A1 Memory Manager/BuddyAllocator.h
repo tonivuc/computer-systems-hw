@@ -98,7 +98,7 @@ public:
 
 	int findNumSplits(uint currBlockSize, uint dataLength, int splitsSoFar);
 
-	const vector<LinkedList> &getAllFreeLists() const;
+	vector<LinkedList> &getAllFreeLists();
 
 	void setAllFreeLists(const vector<LinkedList> &allFreeLists);
 };

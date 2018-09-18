@@ -11,14 +11,6 @@ LinkedList::LinkedList(unsigned int blockSize) {
 	this->blockSize = blockSize;
 }
 
-BlockHeader *LinkedList::getHead() const {
-	return firstHeader;
-}
-
-void LinkedList::setHead(BlockHeader *head) {
-	LinkedList::firstHeader = head;
-}
-
 void LinkedList::insert(BlockHeader *b) {
 	//Change the nextHeader variable
 	//BlockHeader* b = (BlockHeader*) memoryStart;
@@ -29,6 +21,7 @@ void LinkedList::insert(BlockHeader *b) {
 	//The order in the list isn't the order in the physical memory.
 	b->setBlocksize(blockSize), b->setFree(true);
 	firstHeader = b; //finally set firstHeader to point to the new header block
+	std::cout << "firstHeader set to "<<b<<" in linkedlist.insert()\n";
 }
 
 void LinkedList::remove(BlockHeader *b) {
@@ -43,6 +36,8 @@ void LinkedList::remove(BlockHeader *b) {
 		BlockHeader * temp = b->getNextBlock();
 		b->setBlocksize(b->getNextBlock()->getBlocksize());
 		b->setNextBlock(temp->getNextBlock());
+		std::cout << "The block that was just changed has the size "<<b->getBlocksize()<<"\n";
+		//The head still points to the old block
 	}
 		//Next block is NULL.
 	else {
@@ -52,6 +47,11 @@ void LinkedList::remove(BlockHeader *b) {
 		BlockHeader* firstRealBlock = firstHeader;
 		if (firstRealBlock == b) {
 			std::cout << "We have reached the only block in the list. That's " << firstRealBlock << "Remove it!\n";
+			//I don't really have to do this, but it helps with debugging.
+			firstRealBlock->setNextBlock(NULL);
+			firstRealBlock->setFree(false);
+			b->setFree(false);
+			b->setNextBlock(NULL);
 			firstHeader = NULL; //The list no longer points to any blocks
 		}
 		else {
@@ -81,7 +81,7 @@ void LinkedList::remove(BlockHeader *b) {
 	}
 }
 
-BlockHeader *LinkedList::getFirstHeader() const {
+BlockHeader* LinkedList::getFirstHeader() {
 	return firstHeader;
 }
 
