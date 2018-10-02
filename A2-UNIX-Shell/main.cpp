@@ -7,31 +7,6 @@
 
 using namespace std;
 
-int main() {
-    string input;
-    int status;
-    bool cont = true;
-
-    cout << "Enter command: ";
-    while ( getline( cin, input )) {
-
-        cout << input;
-
-
-
-
-        int pid = fork();
-        if (pid == 0) {  // child
-            //exec(cmd);
-        }
-        else {  // parent
-            wait(&status); //Stores childs return value
-            //Alternative: waitpid(pid, NULL, 0)
-        }
-        cont = false;
-    }
-}
-
 /***************************************************************************************
 *    Title: String tokenizer in C++ w. delimiter characters
 *    Author: linello (Stackoverflow username)
@@ -58,3 +33,36 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     }
     return tokens;
 }
+
+int main() {
+    string input;
+    const string delim = " ";
+    vector<string> tokens;
+    int status;
+    bool cont = true;
+
+    cout << "Enter command: ";
+    while ( getline( cin, input )) {
+
+        tokens = tokenizeString(input,delim);
+        //cout << input;
+
+        for(string i : tokens) {
+            // process i
+            cout << i << " "; // this will print all the contents of *features*
+        }
+
+        int pid = fork();
+        if (pid == 0) {  // child
+            //exec(cmd);
+        }
+        else {  // parent
+            wait(&status); //Stores childs return value
+            //Alternative: waitpid(pid, NULL, 0)
+        }
+        cont = false;
+    }
+}
+
+
+
