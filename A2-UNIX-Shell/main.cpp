@@ -4,12 +4,14 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <vector>
+#include <cstring>
+#include <algorithm>
 
 using namespace std;
 
 /***************************************************************************************
 *    Title: String tokenizer in C++ w. delimiter characters
-*    Author: linello (Stackoverflow username)
+*    Author: linello (Stack Overflow username)
 *    Date: 10.02.2018
 *    Code version: 02.02.2014 14:27
 *    Availability: https://stackoverflow.com/questions/9823263/string-tokenization-in-c-including-delimiter-characters
@@ -34,10 +36,42 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     return tokens;
 }
 
-int executeCommand() {
-    cout << "Inside the executeCommand!\n";
-    int status;
 
+/***************************************************************************************
+*    Title: std::vector<std::string> to char* array
+*    Author: Nawaz (Stack Overflow username)
+*    Date: 10.02.2018
+*    Code version: 08.13.2011 07:36
+*    Availability: https://stackoverflow.com/questions/7048888/stdvectorstdstring-to-char-arrays
+*
+***************************************************************************************/
+char *convert(const std::string & s)
+{
+    char *pc = new char[s.size()+1];
+    strcpy(pc, s.c_str());
+    return pc;
+}
+
+int executeCommand(string command, vector<string> arguments) {
+
+
+    char* arglist[arguments.size()];
+    vector<char*> charVector;
+
+    //Convert vector<string> to vector<char*>
+    transform(arguments.begin(), arguments.end(), std::back_inserter(charVector), convert);
+
+    //Convert vector<char*> to char*[]
+    for (int i = 0; i < arguments.size(); i++) {
+        arglist[i] = charVector[i];
+    }
+
+    for(char* i : arglist) {
+        // process i
+        cout << i << "\n"; // this will print all the contents of *features*
+    }
+
+    int status;
     int pid = fork();
     if (pid < 0) {
         perror("fork() error");
@@ -59,8 +93,11 @@ int executeCommand() {
     return -1;
 }
 
+
+
 int main() {
     string input;
+    std::vector<char*>  charArray;
     const string delim = " ";
     vector<string> tokens;
     int status;;
@@ -76,7 +113,9 @@ int main() {
             cout << i << " "; // this will print all the contents of *features*
         }
 
-        executeCommand();
+
+
+        executeCommand("ls",tokens);
 
     }
 }
