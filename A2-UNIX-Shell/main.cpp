@@ -34,12 +34,36 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     return tokens;
 }
 
+int executeCommand() {
+    cout << "Inside the executeCommand!\n";
+    int status;
+
+    int pid = fork();
+    if (pid < 0) {
+        perror("fork() error");
+        exit(-1);
+    }
+    else if (pid != 0) {  // parent
+        cout << "Inside the parent!\n";
+        wait(&status); //Stores childs return value
+        cout << "Child returned!\n";
+        return status;
+    }
+    else {  // child
+        //exec(cmd);
+        cout << "Inside the child!\n";
+        execvp("ls",nullptr);
+        //execl("ls","ls","-l",NULL);
+        //Alternative: waitpid(pid, NULL, 0)
+    }
+    return -1;
+}
+
 int main() {
     string input;
     const string delim = " ";
     vector<string> tokens;
-    int status;
-    bool cont = true;
+    int status;;
 
     cout << "Enter command: ";
     while ( getline( cin, input )) {
@@ -52,15 +76,8 @@ int main() {
             cout << i << " "; // this will print all the contents of *features*
         }
 
-        int pid = fork();
-        if (pid == 0) {  // child
-            //exec(cmd);
-        }
-        else {  // parent
-            wait(&status); //Stores childs return value
-            //Alternative: waitpid(pid, NULL, 0)
-        }
-        cont = false;
+        executeCommand();
+
     }
 }
 
