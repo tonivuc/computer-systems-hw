@@ -147,12 +147,24 @@ int executeCommand(vector<string> arguments) {
     return -1;
 }
 
+vector<string> testFunction(vector<string> arguments, const string& specials) {
+
+    vector<string> betterArgs;
+
+    betterArgs = splitBySpecials(arguments,specials);
+
+    for (string s : betterArgs) {
+        cout << s << "\n";
+    }
+
+}
 
 
 int main() {
     string input;
     std::vector<char*>  charArray;
     const string delim = " ,";
+    const string specials = "|<>";
     vector<string> tokens;
     int status;;
 
@@ -161,10 +173,13 @@ int main() {
 
         tokens = tokenizeString(input,delim);
 
-        executeCommand(tokens);
+        //executeCommand(tokens);
+        testFunction(tokens,specials);
 
     }
 }
+
+
 
 
 
