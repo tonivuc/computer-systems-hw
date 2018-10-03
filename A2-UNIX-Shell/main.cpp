@@ -36,6 +36,45 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     return tokens;
 }
 
+//Function returns string vector with all special characters and words seperated in seperate strings
+//NOTE: Function is not perfect. Only works on simple strings like command|command or command>command, but not abc/c(command|command)
+vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
+    vector<string> betterTokens;
+    size_t specialCharIndex;
+    size_t prevSpesCharIndex = 0;
+
+
+    for (unsigned int i = 0; i < tokens.size(); i++) {
+
+        bool haveSplit = false;
+
+        //While we haven't searched the entire string
+        specialCharIndex = tokens[i].find_first_of(specials); //returns string::npos if can't find any
+        while  (specialCharIndex != string::npos) {
+
+            if (haveSplit) {
+                betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-1)); //The text between previous and next special char
+            }
+            else {
+                betterTokens.push_back(tokens[i].substr(0,specialCharIndex-1)); //normal text, from the start
+            }
+            betterTokens.push_back(tokens[i].substr(specialCharIndex,1)); //The actual token
+            haveSplit = true;
+            //While there are still special elements
+
+
+            prevSpesCharIndex = specialCharIndex;
+
+            specialCharIndex = tokens[i].find_first_of(specials, specialCharIndex+1); //Look for additional special chars
+        };
+
+        if (haveSplit == false) {
+            betterTokens.push_back(tokens.at(i));
+        }
+
+    }
+}
+
 
 /***************************************************************************************
 *    Title: std::vector<std::string> to char* array
@@ -50,6 +89,11 @@ char *convert(const std::string & s)
     char *pc = new char[s.size()+1];
     strcpy(pc, s.c_str());
     return pc;
+}
+
+void analyzeToken(vector<string> arguments) {
+
+
 }
 
 int executeCommand(vector<string> arguments) {
@@ -108,7 +152,7 @@ int executeCommand(vector<string> arguments) {
 int main() {
     string input;
     std::vector<char*>  charArray;
-    const string delim = " ";
+    const string delim = " ,";
     vector<string> tokens;
     int status;;
 
