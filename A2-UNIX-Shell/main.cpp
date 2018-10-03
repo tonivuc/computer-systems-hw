@@ -43,19 +43,27 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
     size_t specialCharIndex;
     size_t prevSpesCharIndex = 0;
 
-
+    cout << "We in the game fam\n";
     for (unsigned int i = 0; i < tokens.size(); i++) {
+        cout << "in that loop\n";
 
         bool haveSplit = false;
 
         //While we haven't searched the entire string
         specialCharIndex = tokens[i].find_first_of(specials); //returns string::npos if can't find any
-        while  (specialCharIndex != string::npos) {
+        cout << string::npos << " is string npos\n";
+        cout << "dat specialcharIndex is " << specialCharIndex << "\n";
+
+        const size_t numNotFound = string::npos;
+        cout << "got over dat hump \n";
+        while  (specialCharIndex != numNotFound) {
+            cout << "in dat while loop\n";
 
             if (haveSplit) {
                 betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-1)); //The text between previous and next special char
             }
             else {
+                cout << "pushBack that token!\n";
                 betterTokens.push_back(tokens[i].substr(0,specialCharIndex-1)); //normal text, from the start
             }
             betterTokens.push_back(tokens[i].substr(specialCharIndex,1)); //The actual token
@@ -73,6 +81,8 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
         }
 
     }
+    cout << "Returning from splitBySpecials!";
+    return betterTokens;
 }
 
 
@@ -153,10 +163,12 @@ vector<string> testFunction(vector<string> arguments, const string& specials) {
 
     betterArgs = splitBySpecials(arguments,specials);
 
+    /*
     for (string s : betterArgs) {
         cout << s << "\n";
     }
 
+    */
 }
 
 
