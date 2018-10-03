@@ -65,12 +65,18 @@ int executeCommand(vector<string> arguments) {
     for (int i = 0; i < arguments.size(); i++) {
         arglist[i] = charVector[i];
     }
+
+    /* REALLY FUNKY STUFF HAPPENS IF I UNCOMMENT THIS
+     * Somehow the cout line produces a memory leak
     cout << "Printing arglist: \n";
     for(char* i : arglist) {
         // process i
-        cout << i << "\n"; // this will print all the contents of *features*
+        cout << "before\n";
+        //cout << i << "\n";
+        cout << "hello\n";
     }
     cout << "Done printing arglist: \n";
+    */
 
     int status;
     int pid = fork();
@@ -81,6 +87,7 @@ int executeCommand(vector<string> arguments) {
     else if (pid != 0) {  // parent
         cout << "Inside the parent!\n";
         int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+        //Alternative: waitpid(pid, NULL, 0)
         cout << "Child returned!\n";
         return result;
     }
@@ -88,14 +95,10 @@ int executeCommand(vector<string> arguments) {
         //exec(cmd);
         cout << "Inside the child!\n";
         cout << "the command: "<<arglist[0]<<"\n";
-        //execvp("ls", );
-        char *argz[] = {"ls", "-l",nullptr};
+        //char *argz[] = {"ls", "-l",nullptr};
         execvp(arglist[0],arglist);
-        //execvp(okayy.c_str(),argz);
-  //      execvp("echo",arglist);
-        //execlp("ls",'\0');
         //execl("ls","ls","-l",NULL);
-        //Alternative: waitpid(pid, NULL, 0)
+
     }
     return -1;
 }
