@@ -52,10 +52,10 @@ char *convert(const std::string & s)
     return pc;
 }
 
-int executeCommand(string command, vector<string> arguments) {
+int executeCommand(vector<string> arguments) {
 
-
-    char* arglist[arguments.size()];
+    char* arglist[arguments.size()+1];
+    arglist[arguments.size()] = nullptr;
     vector<char*> charVector;
 
     //Convert vector<string> to vector<char*>
@@ -65,11 +65,12 @@ int executeCommand(string command, vector<string> arguments) {
     for (int i = 0; i < arguments.size(); i++) {
         arglist[i] = charVector[i];
     }
-
+    cout << "Printing arglist: \n";
     for(char* i : arglist) {
         // process i
         cout << i << "\n"; // this will print all the contents of *features*
     }
+    cout << "Done printing arglist: \n";
 
     int status;
     int pid = fork();
@@ -79,14 +80,20 @@ int executeCommand(string command, vector<string> arguments) {
     }
     else if (pid != 0) {  // parent
         cout << "Inside the parent!\n";
-        wait(&status); //Stores childs return value
+        int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
         cout << "Child returned!\n";
-        return status;
+        return result;
     }
     else {  // child
         //exec(cmd);
         cout << "Inside the child!\n";
-        execvp("ls",nullptr);
+        cout << "the command: "<<arglist[0]<<"\n";
+        //execvp("ls", );
+        char *argz[] = {"ls", "-l",nullptr};
+        execvp(arglist[0],arglist);
+        //execvp(okayy.c_str(),argz);
+  //      execvp("echo",arglist);
+        //execlp("ls",'\0');
         //execl("ls","ls","-l",NULL);
         //Alternative: waitpid(pid, NULL, 0)
     }
@@ -106,16 +113,8 @@ int main() {
     while ( getline( cin, input )) {
 
         tokens = tokenizeString(input,delim);
-        //cout << input;
 
-        for(string i : tokens) {
-            // process i
-            cout << i << " "; // this will print all the contents of *features*
-        }
-
-
-
-        executeCommand("ls",tokens);
+        executeCommand(tokens);
 
     }
 }
