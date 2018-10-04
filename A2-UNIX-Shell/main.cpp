@@ -178,6 +178,7 @@ int evaluateCommand(vector<string> arguments) {
     }
 
     vector<string> argsBefore;
+    bool pipeStart = true;
 
     int fd[2]; //Just in case of piping
     //fd[0] --Read-end
@@ -192,8 +193,6 @@ int evaluateCommand(vector<string> arguments) {
 
     for (int i = 0; i < arguments.size(); i++) {
         if (arguments.at(i) == "|") {
-
-
 
             //Pipe logic
             //Put all arguments before pipe symbol in separate vector
@@ -219,11 +218,29 @@ int evaluateCommand(vector<string> arguments) {
             else {  // child
                 cout << "Inside the child!\n";
                 //close(fd[0]); //Read-end
-                //if ()
-                dup2(fd[1], STDOUT_FILENO); //make stdout fd[1]
+                if (pipeStart) {
+                    dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
+                    //Don't do anything to the input, keep it standard.
+                } else {
+                    //set process to use pipe read as its input
+                    dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end)
+
+                    //Look ahead for any more pipes
+                    bool morePipes = false;
+                    for (int y = i; y < arguments.size(); y++) {
+                        if (arguments.at(y) == "|") {
+                            morePipes = true;
+                            break;
+                        }
+                    }
+                    if (morePipes) {
+                        dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
+                    }
+                }
                 //close(fd[1]);
                 execvp(charArrayBfr[0],charArrayBfr);
             }
+            pipeStart = false;
 
 
         }
