@@ -148,12 +148,10 @@ bool hasSpecialCommand(vector<string> arguments) {
     }
 }
 
+//Function edits the charStringArray[] that is passed in to the function
+void stringVectorToArray(vector<string> arguments, char* charStringArray[]) {
 
-
-int evaluateCommand(vector<string> arguments) {
-
-    char* arglist[arguments.size()+1];
-    arglist[arguments.size()] = nullptr;
+    charStringArray[arguments.size()] = nullptr;
     vector<char*> charVector;
 
     //Convert vector<string> to vector<char*>
@@ -161,8 +159,15 @@ int evaluateCommand(vector<string> arguments) {
 
     //Convert vector<char*> to char*[]
     for (int i = 0; i < arguments.size(); i++) {
-        arglist[i] = charVector[i];
+        charStringArray[i] = charVector[i];
     }
+}
+
+int evaluateCommand(vector<string> arguments) {
+
+    char* arglist[arguments.size()+1];
+
+    stringVectorToArray(arguments,arglist); //No return value, but populates arglist
 
     //Check if 'cd' or 'exit'
     if (arguments.at(0) == "cd") {
@@ -174,8 +179,21 @@ int evaluateCommand(vector<string> arguments) {
 
     vector<string> argsBefore;
 
+    int fd[2]; //Just in case of piping
+    //fd[0] --Read-end
+    //fd[1] --Write-end
+    /*
+     * "0", with a unistd.h symbolic constant of STDIN_FILENO
+     * "1", with a unistd.h symbolic constant of STDOUT_FILENO
+     * "2", with a unistd.h symbolic constant of STDERR_FILENO
+     */
+
+    pipe(fd);
+
     for (int i = 0; i < arguments.size(); i++) {
         if (arguments.at(i) == "|") {
+
+
 
             //Pipe logic
             //Put all arguments before pipe symbol in separate vector
@@ -183,10 +201,35 @@ int evaluateCommand(vector<string> arguments) {
                 argsBefore.push_back(arguments.at(i));
             }
 
+            char* charArrayBfr[argsBefore.size()+1];
+            stringVectorToArray(argsBefore,charArrayBfr); //making it ready for execvp
+
+            int pid = fork();
+            if (pid < 0) {
+                perror("fork() error");
+                exit(-1);
+            }
+            else if (pid != 0) {  // parent
+                cout << "Inside the parent!\n";
+                //Wait until child has finished with the pipe
+                int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                cout << "Child returned!\n";
+                return result;
+            }
+            else {  // child
+                cout << "Inside the child!\n";
+                //close(fd[0]); //Read-end
+                //if ()
+                dup2(fd[1], STDOUT_FILENO); //make stdout fd[1]
+                //close(fd[1]);
+                execvp(charArrayBfr[0],charArrayBfr);
+            }
+
 
         }
         //Redirect logic will be here
     }
+
     normalExecvp(arglist);
     return -1;
 }
