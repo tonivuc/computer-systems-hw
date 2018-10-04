@@ -36,6 +36,13 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     return tokens;
 }
 
+bool isFound(size_t input) {
+    if (input > 10000) {
+        return false;
+    }
+    return true;
+}
+
 //Function returns string vector with all special characters and words seperated in seperate strings
 //NOTE: Function is not perfect. Only works on simple strings like command|command or command>command, but not abc/c(command|command)
 vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
@@ -49,14 +56,13 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
 
         bool haveSplit = false;
 
-        //While we haven't searched the entire string
-        specialCharIndex = tokens[i].find_first_of(specials); //returns string::npos if can't find any
-        cout << string::npos << " is string npos\n";
-        cout << "dat specialcharIndex is " << specialCharIndex << "\n";
+        //Check if any special characters are in this token/string
+        bool found = isFound(tokens[i].find_first_of(specials)); //returns string::npos if can't find any
+        cout << "found: "<< found << "\n";
 
         const size_t numNotFound = string::npos;
         cout << "got over dat hump \n";
-        while  (specialCharIndex != numNotFound) {
+        while (found) {
             cout << "in dat while loop\n";
 
             if (haveSplit) {
@@ -74,6 +80,7 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
             prevSpesCharIndex = specialCharIndex;
 
             specialCharIndex = tokens[i].find_first_of(specials, specialCharIndex+1); //Look for additional special chars
+            found = isFound(specialCharIndex);
         };
 
         if (haveSplit == false) {
@@ -81,8 +88,15 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
         }
 
     }
-    cout << "Returning from splitBySpecials!";
-    return betterTokens;
+    cout << "Returning from splitBySpecials!\n";
+    cout << "betterTokens.size()" <<betterTokens.size();
+    if (betterTokens.size() > tokens.size()) {
+        return betterTokens;
+    }
+    else {
+        return tokens;
+    }
+
 }
 
 
