@@ -141,21 +141,8 @@ int evaluateCommand(vector<string> arguments) {
         arglist[i] = charVector[i];
     }
 
-    /* REALLY FUNKY STUFF HAPPENS IF I UNCOMMENT THIS
-     * Somehow the cout line produces a memory leak
-    cout << "Printing arglist: \n";
-    for(char* i : arglist) {
-        // process i
-        cout << "before\n";
-        //cout << i << "\n";
-        cout << "hello\n";
-    }
-    cout << "Done printing arglist: \n";
-    */
 
-    //Regarding pipes, the entire process is copied. And child and parent share the
 
-    int status;
     normalExecvp(arglist);
     return -1;
 }
