@@ -9,9 +9,6 @@
 
 using namespace std;
 
-//Global variables:
-const string specialCommands[] = {"cd", ""};
-
 /***************************************************************************************
 *    Title: String tokenizer in C++ w. delimiter characters
 *    Author: linello (Stack Overflow username)
@@ -48,8 +45,6 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
     size_t specialCharIndex;
     size_t prevSpesCharIndex = 0;
 
-    //tokens.push_back("eeey");
-
     if(debug) cout << "We in the game fam\n";
     for (unsigned int i = 0; i < tokens.size(); i++) {
         if(debug) cout << "In for loop at index "<<i<<" looking at token "<<tokens.at(i)<<"\n";
@@ -65,12 +60,7 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
         while  (specialCharIndex != string::npos) {
             if(debug)cout << "in dat while loop\n";
 
-
-
-                if (tokens[i].size() <= 1) {
-                    //do nothing
-                }
-                else {
+                if (tokens[i].size() >= 1) {
                     //add the text before the token
                     if(debug)cout << "pushBack the text before the token: "<<tokens[i].substr(0,specialCharIndex)<<"\n";
                     betterTokens.push_back(tokens[i].substr(0,specialCharIndex)); //normal text, from the start
@@ -86,17 +76,17 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
             specialCharIndex = tokens[i].find_first_of(specials, specialCharIndex+1); //Look for additional special chars
 
             //Add what is after the token
-
+            //If there is still another special character
             if (specialCharIndex < string::npos) {
                 if(debug)cout << "Added everything after the token up to the next token "<<tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-prevSpesCharIndex)<<"\n";
                 betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-prevSpesCharIndex)); //The text between previous and next special char
             }
             else {
+                //Don't add empty stirngs
                 if (tokens[i].substr(prevSpesCharIndex+1,string::npos).size() >= 1) {
                     if(debug)cout << "Added everything in the string after the token: " << tokens[i].substr(prevSpesCharIndex+1,string::npos)<<"\n";
                     betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,string::npos));
                 }
-
             }
 
         };
@@ -174,6 +164,29 @@ int evaluateCommand(vector<string> arguments) {
         arglist[i] = charVector[i];
     }
 
+    //Check if 'cd' or 'exit'
+    if (arguments.at(0) == "cd") {
+        //Do cd logic
+    }
+    else if (arguments.at(0) == "exit" || arguments.at(0) == "EXIT") {
+        //do exit logic
+    }
+
+    vector<string> argsBefore;
+
+    for (int i = 0; i < arguments.size(); i++) {
+        if (arguments.at(i) == "|") {
+
+            //Pipe logic
+            //Put all arguments before pipe symbol in separate vector
+            for (int j = 0; j < i; j++) {
+                argsBefore.push_back(arguments.at(i));
+            }
+
+
+        }
+        //Redirect logic will be here
+    }
     normalExecvp(arglist);
     return -1;
 }
@@ -212,9 +225,10 @@ int main() {
     while ( getline( cin, input )) {
 
         tokens = tokenizeString(input,delim);
+        tokens = splitBySpecials(tokens,specials);
 
-        //evaluateCommand(tokens);
-        testFunction(tokens,specials);
+        evaluateCommand(tokens);
+        //testFunction(tokens,specials);
         cout << "> ";
     }
 }
