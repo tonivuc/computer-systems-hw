@@ -59,13 +59,12 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
         cout << "initial specialCharIndex: "<<specialCharIndex<<"\n";
 
         cout << "Before while loop \n";
+        //Adds what is before the token, and the token
         while  (specialCharIndex != string::npos) {
             cout << "in dat while loop\n";
 
-            if (haveSplit) {
-                betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-1)); //The text between previous and next special char
-            }
-            else {
+
+
                 if (tokens[i].size() <= 1) {
                     //do nothing
                 }
@@ -74,7 +73,7 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
                     cout << "pushBack the text before the token: "<<tokens[i].substr(0,specialCharIndex)<<"\n";
                     betterTokens.push_back(tokens[i].substr(0,specialCharIndex)); //normal text, from the start
                 }
-            }
+
             cout << "pushBack the token: "<<tokens[i].substr(specialCharIndex,1)<<"\n";
             betterTokens.push_back(tokens[i].substr(specialCharIndex,1)); //The actual token
             haveSplit = true;
@@ -83,7 +82,18 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
 
             prevSpesCharIndex = specialCharIndex;
 
+            //The code below doesn't really make sense with the grammar we have
             specialCharIndex = tokens[i].find_first_of(specials, specialCharIndex+1); //Look for additional special chars
+
+            //Add what is after the token
+
+            if (specialCharIndex < string::npos) {
+                betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-prevSpesCharIndex)); //The text between previous and next special char
+            }
+            else {
+                betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,string::npos));
+            }
+
         };
         cout << "While loop done\n";
 
