@@ -66,8 +66,14 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
                 betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-1)); //The text between previous and next special char
             }
             else {
-                cout << "pushBack the text before the token: "<<tokens[i].substr(0,specialCharIndex-1)<<"\n";
-                betterTokens.push_back(tokens[i].substr(0,specialCharIndex-1)); //normal text, from the start
+                if (tokens[i].size() <= 1) {
+                    //do nothing
+                }
+                else {
+                    //add the text before the token
+                    cout << "pushBack the text before the token: "<<tokens[i].substr(0,specialCharIndex)<<"\n";
+                    betterTokens.push_back(tokens[i].substr(0,specialCharIndex)); //normal text, from the start
+                }
             }
             cout << "pushBack the token: "<<tokens[i].substr(specialCharIndex,1)<<"\n";
             betterTokens.push_back(tokens[i].substr(specialCharIndex,1)); //The actual token
