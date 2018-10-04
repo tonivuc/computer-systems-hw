@@ -9,6 +9,9 @@
 
 using namespace std;
 
+//Global variables:
+const string specialCommands[] = {"cd", ""};
+
 /***************************************************************************************
 *    Title: String tokenizer in C++ w. delimiter characters
 *    Author: linello (Stack Overflow username)
@@ -43,19 +46,19 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
     size_t specialCharIndex;
     size_t prevSpesCharIndex = 0;
 
+    //tokens.push_back("eeey");
+
     cout << "We in the game fam\n";
     for (unsigned int i = 0; i < tokens.size(); i++) {
-        cout << "in that loop\n";
+        cout << "In for loop at index "<<i<<" looking at token "<<tokens.at(i)<<"\n";
 
         bool haveSplit = false;
 
         //While we haven't searched the entire string
         specialCharIndex = tokens[i].find_first_of(specials); //returns string::npos if can't find any
-        cout << string::npos << " is string npos\n";
-        cout << "dat specialcharIndex is " << specialCharIndex << "\n";
+        cout << "initial specialCharIndex: "<<specialCharIndex<<"\n";
 
-        const size_t numNotFound = string::npos;
-        cout << "got over dat hump hm \n";
+        cout << "Before while loop \n";
         while  (specialCharIndex != string::npos) {
             cout << "in dat while loop\n";
 
@@ -63,9 +66,10 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
                 betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-1)); //The text between previous and next special char
             }
             else {
-                cout << "pushBack that token!\n";
+                cout << "pushBack the text before the token: "<<tokens[i].substr(0,specialCharIndex-1)<<"\n";
                 betterTokens.push_back(tokens[i].substr(0,specialCharIndex-1)); //normal text, from the start
             }
+            cout << "pushBack the token: "<<tokens[i].substr(specialCharIndex,1)<<"\n";
             betterTokens.push_back(tokens[i].substr(specialCharIndex,1)); //The actual token
             haveSplit = true;
             //While there are still special elements
@@ -75,8 +79,10 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
 
             specialCharIndex = tokens[i].find_first_of(specials, specialCharIndex+1); //Look for additional special chars
         };
+        cout << "While loop done\n";
 
         if (haveSplit == false) {
+            cout << "havesplit == false, added "<<tokens.at(i)<<" to betterTokens\n";
             betterTokens.push_back(tokens.at(i));
         }
 
@@ -125,6 +131,12 @@ int normalExecvp(char* arglist[]) {
     }
 }
 
+bool hasSpecialCommand(vector<string> arguments) {
+    for (string s : arguments) {
+
+    }
+}
+
 
 
 int evaluateCommand(vector<string> arguments) {
@@ -141,22 +153,29 @@ int evaluateCommand(vector<string> arguments) {
         arglist[i] = charVector[i];
     }
 
-
-
     normalExecvp(arglist);
     return -1;
 }
 
 vector<string> testFunction(vector<string> arguments, const string& specials) {
 
+    cout << "Printing original tokenized arguments:\n";
+    for (string s : arguments) {
+        cout << s << "\n";
+    }
+
     vector<string> betterArgs;
 
     betterArgs = splitBySpecials(arguments,specials);
-    /*
+
+    cout << "Printing betterTokens\n";
+
     for (string s : betterArgs) {
         cout << s << "\n";
     }
-    */
+
+    return betterArgs;
+
 }
 
 
@@ -173,8 +192,8 @@ int main() {
 
         tokens = tokenizeString(input,delim);
 
-        evaluateCommand(tokens);
-        //testFunction(tokens,specials);
+        //evaluateCommand(tokens);
+        testFunction(tokens,specials);
         cout << "> ";
     }
 }
