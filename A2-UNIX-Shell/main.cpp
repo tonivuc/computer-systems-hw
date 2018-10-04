@@ -36,13 +36,6 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     return tokens;
 }
 
-bool isFound(size_t input) {
-    if (input > 10000) {
-        return false;
-    }
-    return true;
-}
-
 //Function returns string vector with all special characters and words seperated in seperate strings
 //NOTE: Function is not perfect. Only works on simple strings like command|command or command>command, but not abc/c(command|command)
 vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
@@ -56,13 +49,14 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
 
         bool haveSplit = false;
 
-        //Check if any special characters are in this token/string
-        bool found = isFound(tokens[i].find_first_of(specials)); //returns string::npos if can't find any
-        cout << "found: "<< found << "\n";
+        //While we haven't searched the entire string
+        specialCharIndex = tokens[i].find_first_of(specials); //returns string::npos if can't find any
+        cout << string::npos << " is string npos\n";
+        cout << "dat specialcharIndex is " << specialCharIndex << "\n";
 
         const size_t numNotFound = string::npos;
-        cout << "got over dat hump \n";
-        while (found) {
+        cout << "got over dat hump hm \n";
+        while  (specialCharIndex != string::npos) {
             cout << "in dat while loop\n";
 
             if (haveSplit) {
@@ -80,7 +74,6 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
             prevSpesCharIndex = specialCharIndex;
 
             specialCharIndex = tokens[i].find_first_of(specials, specialCharIndex+1); //Look for additional special chars
-            found = isFound(specialCharIndex);
         };
 
         if (haveSplit == false) {
@@ -88,15 +81,8 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
         }
 
     }
-    cout << "Returning from splitBySpecials!\n";
-    cout << "betterTokens.size()" <<betterTokens.size();
-    if (betterTokens.size() > tokens.size()) {
-        return betterTokens;
-    }
-    else {
-        return tokens;
-    }
-
+    cout << "Returning from splitBySpecials!";
+    return betterTokens;
 }
 
 
@@ -115,12 +101,33 @@ char *convert(const std::string & s)
     return pc;
 }
 
-void analyzeToken(vector<string> arguments) {
-
-
+int normalExecvp(char* arglist[]) {
+    int pid = fork();
+    if (pid < 0) {
+        perror("fork() error");
+        exit(-1);
+    }
+    else if (pid != 0) {  // parent
+        cout << "Inside the parent!\n";
+        int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+        //TODO: This dude does a do-while-loop. Why? https://brennan.io/2015/01/16/write-a-shell-in-c/
+        //Alternative: waitpid(pid, NULL, 0)
+        cout << "Child returned!\n";
+        return result;
+    }
+    else {  // child
+        //exec(cmd);
+        cout << "Inside the child!\n";
+        cout << "the command: "<<arglist[0]<<"\n";
+        //char *argz[] = {"ls", "-l",nullptr};
+        execvp(arglist[0],arglist);
+        //execl("ls","ls","-l",NULL);
+    }
 }
 
-int executeCommand(vector<string> arguments) {
+
+
+int evaluateCommand(vector<string> arguments) {
 
     char* arglist[arguments.size()+1];
     arglist[arguments.size()] = nullptr;
@@ -146,28 +153,10 @@ int executeCommand(vector<string> arguments) {
     cout << "Done printing arglist: \n";
     */
 
-    int status;
-    int pid = fork();
-    if (pid < 0) {
-        perror("fork() error");
-        exit(-1);
-    }
-    else if (pid != 0) {  // parent
-        cout << "Inside the parent!\n";
-        int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
-        //Alternative: waitpid(pid, NULL, 0)
-        cout << "Child returned!\n";
-        return result;
-    }
-    else {  // child
-        //exec(cmd);
-        cout << "Inside the child!\n";
-        cout << "the command: "<<arglist[0]<<"\n";
-        //char *argz[] = {"ls", "-l",nullptr};
-        execvp(arglist[0],arglist);
-        //execl("ls","ls","-l",NULL);
+    //Regarding pipes, the entire process is copied. And child and parent share the
 
-    }
+    int status;
+    normalExecvp(arglist);
     return -1;
 }
 
@@ -176,12 +165,10 @@ vector<string> testFunction(vector<string> arguments, const string& specials) {
     vector<string> betterArgs;
 
     betterArgs = splitBySpecials(arguments,specials);
-
     /*
     for (string s : betterArgs) {
         cout << s << "\n";
     }
-
     */
 }
 
@@ -199,9 +186,9 @@ int main() {
 
         tokens = tokenizeString(input,delim);
 
-        //executeCommand(tokens);
-        testFunction(tokens,specials);
-
+        evaluateCommand(tokens);
+        //testFunction(tokens,specials);
+        cout << "> ";
     }
 }
 
