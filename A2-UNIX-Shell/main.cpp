@@ -40,28 +40,30 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
 }
 
 //Function returns string vector with all special characters and words seperated in seperate strings
-//NOTE: Function is not perfect. Only works on simple strings like command|command or command>command, but not abc/c(command|command)
+//Works on: "abc|cdf xxx|yyy" but not "abc|dfe|xxx"
 vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
+
+    bool debug = false;
     vector<string> betterTokens;
     size_t specialCharIndex;
     size_t prevSpesCharIndex = 0;
 
     //tokens.push_back("eeey");
 
-    cout << "We in the game fam\n";
+    if(debug) cout << "We in the game fam\n";
     for (unsigned int i = 0; i < tokens.size(); i++) {
-        cout << "In for loop at index "<<i<<" looking at token "<<tokens.at(i)<<"\n";
+        if(debug) cout << "In for loop at index "<<i<<" looking at token "<<tokens.at(i)<<"\n";
 
         bool haveSplit = false;
 
         //While we haven't searched the entire string
         specialCharIndex = tokens[i].find_first_of(specials); //returns string::npos if can't find any
-        cout << "initial specialCharIndex: "<<specialCharIndex<<"\n";
+        if(debug) cout << "initial specialCharIndex: "<<specialCharIndex<<"\n";
 
-        cout << "Before while loop \n";
+        if(debug) cout << "Before while loop \n";
         //Adds what is before the token, and the token
         while  (specialCharIndex != string::npos) {
-            cout << "in dat while loop\n";
+            if(debug)cout << "in dat while loop\n";
 
 
 
@@ -70,15 +72,13 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
                 }
                 else {
                     //add the text before the token
-                    cout << "pushBack the text before the token: "<<tokens[i].substr(0,specialCharIndex)<<"\n";
+                    if(debug)cout << "pushBack the text before the token: "<<tokens[i].substr(0,specialCharIndex)<<"\n";
                     betterTokens.push_back(tokens[i].substr(0,specialCharIndex)); //normal text, from the start
                 }
 
-            cout << "pushBack the token: "<<tokens[i].substr(specialCharIndex,1)<<"\n";
+            if(debug)cout << "pushBack the token: "<<tokens[i].substr(specialCharIndex,1)<<"\n";
             betterTokens.push_back(tokens[i].substr(specialCharIndex,1)); //The actual token
             haveSplit = true;
-            //While there are still special elements
-
 
             prevSpesCharIndex = specialCharIndex;
 
@@ -88,27 +88,27 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
             //Add what is after the token
 
             if (specialCharIndex < string::npos) {
-                cout << "Added everything after the token up to the next token "<<tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-prevSpesCharIndex)<<"\n";
+                if(debug)cout << "Added everything after the token up to the next token "<<tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-prevSpesCharIndex)<<"\n";
                 betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-prevSpesCharIndex)); //The text between previous and next special char
             }
             else {
                 if (tokens[i].substr(prevSpesCharIndex+1,string::npos).size() >= 1) {
-                    cout << "Added everything in the string after the token: " << tokens[i].substr(prevSpesCharIndex+1,string::npos)<<"\n";
+                    if(debug)cout << "Added everything in the string after the token: " << tokens[i].substr(prevSpesCharIndex+1,string::npos)<<"\n";
                     betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,string::npos));
                 }
 
             }
 
         };
-        cout << "While loop done\n";
+        if(debug)cout << "While loop done\n";
 
         if (haveSplit == false) {
-            cout << "havesplit == false, added "<<tokens.at(i)<<" to betterTokens\n";
+            if(debug)cout << "havesplit == false, added "<<tokens.at(i)<<" to betterTokens\n";
             betterTokens.push_back(tokens.at(i));
         }
 
     }
-    cout << "Returning from splitBySpecials!";
+    if(debug)cout << "Returning from splitBySpecials!";
     return betterTokens;
 }
 
