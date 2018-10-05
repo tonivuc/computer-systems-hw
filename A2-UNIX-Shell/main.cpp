@@ -164,6 +164,19 @@ void stringVectorToArray(vector<string> arguments, char* charStringArray[]) {
     }
 }
 
+//This function checks if the process should write to standard out or not
+//The alternative would be that the process writes to the pipe
+bool writeToPipe(vector<string> arguments, int searchStartIndex) {
+    bool morePipes = false;
+    for (int y = searchStartIndex; y < arguments.size(); y++) {
+        if (arguments.at(y) == "|") {
+            morePipes = true;
+            break;
+        }
+    }
+    return morePipes;
+}
+
 int evaluateCommand(vector<string> arguments) {
 
     char* arglist[arguments.size()+1];
@@ -178,10 +191,6 @@ int evaluateCommand(vector<string> arguments) {
         //do exit logic
     }
 
-
-    bool pipeStart = true;
-    bool runLastChild= false;
-
     int fd[2]; //Just in case of piping
     //fd[0] --Read-end
     //fd[1] --Write-end
@@ -192,7 +201,6 @@ int evaluateCommand(vector<string> arguments) {
      */
     //Make a pipe to be used from now on
     pipe(fd);
-    bool rightOfPipe = false;
 
     for (int i = 0; i < arguments.size(); i++) {
         cout << "running loop for the "<<i<<"th time, when arguments.size() == "<<arguments.size()<<"\n";
@@ -203,10 +211,9 @@ int evaluateCommand(vector<string> arguments) {
 
             //Pipe logic
             //Put all arguments before pipe symbol in separate vector
-            cout << "Printing out arguments added to argsBefore\n";
+            //Make array argsBefore
             for (int j = 0; j < i; j++) {
                 argsBefore.push_back(arguments.at(j));
-                cout << arguments.at(j)<<"\n";
             }
 
             char* charArrayBfr[argsBefore.size()+1];
@@ -226,56 +233,77 @@ int evaluateCommand(vector<string> arguments) {
                 cout << "Inside the parent!\n";
                 //Wait until child has finished with the pipe
                 int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
-
-                //Look ahead for any more pipes
-                bool morePipes = false;
-                for (int y = i+1; y < arguments.size(); y++) {
-                    if (arguments.at(y) == "|") {
-                        morePipes = true;
-                        cout << "morepipes is true??\n";
-                        break;
-                    }
-                }
-                runLastChild = !morePipes;
                 cout << "Child returned!\n";
-                //return result;
             }
             else {  // child
                 cout << "Inside the child!\n";
                 //close(fd[0]); //Read-end
-                if (pipeStart) {
-                    dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
-                    //Don't do anything to the input, keep it standard.
-                } else {
-                    //set process to use pipe read as its input
-                    dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end)
 
-                    //Look ahead for any more pipes
-                    bool morePipes = false;
-                    for (int y = i; y < arguments.size(); y++) {
-                        if (arguments.at(y) == "|") {
-                            morePipes = true;
-                            break;
-                        }
-                    }
-                    if (morePipes) {
-                        dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
-                    }
-                    else {
-                        dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
-                    }
-                }
+                //Output to pipe write-end
+                dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
                 //close(fd[1]);
                 execvp(charArrayBfr[0],charArrayBfr);
             }
-            pipeStart = false;
-
-
         }
 
         //If the previous token was a pipe
         //Run the code, but set the input to be the read end of the pipe
         //And if there are no more pipes, set output to standard out
+        if ((i > 0) && arguments.at(i-1) == "|") {
+            vector<string> argsAfter;
+
+            //Pipe logic
+            //Put all arguments before pipe symbol in separate vector
+            cout << "Printing out arguments added to argsAfter\n";
+            for (int j = i; j < arguments.size(); j++) {
+                if (arguments.at(i) != "|") {
+                    argsAfter.push_back(arguments.at(j));
+                    cout << arguments.at(j)<<"\n";
+                }
+                else {
+                    cout << "Hit another pipe, stop adding to argsAfter.\n";
+                    break;
+                }
+            }
+
+            char* charArrayAfter[argsAfter.size()+1];
+            stringVectorToArray(argsAfter,charArrayAfter); //making it ready for execvp
+
+            cout << "Args in that new char array:\n";
+            for (int l = 0; l < argsAfter.size(); l++) {
+                cout << charArrayAfter[l]<<"\n";
+            }
+
+            int pid = fork();
+            if (pid < 0) {
+                perror("fork() error");
+                exit(-1);
+            }
+            else if (pid != 0) {  // parent
+                cout << "Inside the parent nr. 2!\n";
+                //Wait until child has finished with the pipe
+                int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                cout << "Child nr. 2 returned!\n";
+            }
+            else {  // child
+                cout << "Inside the child nr. 2!\n";
+                //close(fd[0]); //Read-end
+                //Read input from pipe read end
+                dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end)
+
+                //If the next argument is a pipe
+                if ( writeToPipe(arguments,i) ) {
+                    dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
+                }
+                //If no more pipes
+                else {
+                    dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
+                }
+
+                //close(fd[1]);
+                execvp(charArrayAfter[0],charArrayAfter);
+            }
+        }
 
 
         //Redirect logic will be here
