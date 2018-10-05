@@ -193,6 +193,7 @@ int evaluateCommand(vector<string> arguments) {
     pipe(fd);
 
     for (int i = 0; i < arguments.size(); i++) {
+        cout << "running loop for the "<<i<<"th time, when arguments.size() == "<<arguments.size()<<"\n";
         if (arguments.at(i) == "|") {
 
             //Pipe logic
@@ -206,6 +207,11 @@ int evaluateCommand(vector<string> arguments) {
             char* charArrayBfr[argsBefore.size()+1];
             stringVectorToArray(argsBefore,charArrayBfr); //making it ready for execvp
 
+            cout << "Args in that new char array:\n";
+            for (int l = 0; l < argsBefore.size(); l++) {
+                cout << charArrayBfr[l]<<"\n";
+            }
+
             int pid = fork();
             if (pid < 0) {
                 perror("fork() error");
@@ -216,7 +222,7 @@ int evaluateCommand(vector<string> arguments) {
                 //Wait until child has finished with the pipe
                 int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
                 cout << "Child returned!\n";
-                return result;
+                //return result;
             }
             else {  // child
                 cout << "Inside the child!\n";
@@ -250,7 +256,7 @@ int evaluateCommand(vector<string> arguments) {
         //Redirect logic will be here
     }
 
-    normalExecvp(arglist);
+    //normalExecvp(arglist);
     return -1;
 }
 
@@ -288,7 +294,7 @@ int main() {
     while ( getline( cin, input )) {
 
         tokens = tokenizeString(input,delim);
-        //tokens = splitBySpecials(tokens,specials);
+        tokens = splitBySpecials(tokens,specials);
 
         evaluateCommand(tokens);
         //testFunction(tokens,specials);
