@@ -60,9 +60,10 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
         while  (specialCharIndex != string::npos) {
             if(debug)cout << "in dat while loop\n";
 
-                if (tokens[i].size() >= 1) {
+                if(debug)cout << "tokens[i].size() "<<tokens[i].size()<<" and tokens[i] == "<<tokens[i]<<"\n";
+                if (specialCharIndex > 0) {
                     //add the text before the token
-                    if(debug)cout << "pushBack the text before the token: "<<tokens[i].substr(0,specialCharIndex)<<"\n";
+                    if(debug)cout << "pushBack the text before the token:"<<tokens[i].substr(0,specialCharIndex)<<"endhere\n";
                     betterTokens.push_back(tokens[i].substr(0,specialCharIndex)); //normal text, from the start
                 }
 
@@ -196,8 +197,10 @@ int evaluateCommand(vector<string> arguments) {
 
             //Pipe logic
             //Put all arguments before pipe symbol in separate vector
+            cout << "Printing out arguments added to argsBefore\n";
             for (int j = 0; j < i; j++) {
-                argsBefore.push_back(arguments.at(i));
+                argsBefore.push_back(arguments.at(j));
+                cout << arguments.at(j)<<"\n";
             }
 
             char* charArrayBfr[argsBefore.size()+1];
@@ -285,7 +288,7 @@ int main() {
     while ( getline( cin, input )) {
 
         tokens = tokenizeString(input,delim);
-        tokens = splitBySpecials(tokens,specials);
+        //tokens = splitBySpecials(tokens,specials);
 
         evaluateCommand(tokens);
         //testFunction(tokens,specials);
