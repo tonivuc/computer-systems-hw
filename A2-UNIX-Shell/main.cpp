@@ -178,8 +178,9 @@ int evaluateCommand(vector<string> arguments) {
         //do exit logic
     }
 
-    vector<string> argsBefore;
+
     bool pipeStart = true;
+    bool runLastChild= false;
 
     int fd[2]; //Just in case of piping
     //fd[0] --Read-end
@@ -189,12 +190,16 @@ int evaluateCommand(vector<string> arguments) {
      * "1", with a unistd.h symbolic constant of STDOUT_FILENO
      * "2", with a unistd.h symbolic constant of STDERR_FILENO
      */
-
+    //Make a pipe to be used from now on
     pipe(fd);
+    bool rightOfPipe = false;
 
     for (int i = 0; i < arguments.size(); i++) {
         cout << "running loop for the "<<i<<"th time, when arguments.size() == "<<arguments.size()<<"\n";
+
+        //All unprocessed tokens are run, and their output set to pipe read
         if (arguments.at(i) == "|") {
+            vector<string> argsBefore;
 
             //Pipe logic
             //Put all arguments before pipe symbol in separate vector
@@ -221,6 +226,17 @@ int evaluateCommand(vector<string> arguments) {
                 cout << "Inside the parent!\n";
                 //Wait until child has finished with the pipe
                 int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+
+                //Look ahead for any more pipes
+                bool morePipes = false;
+                for (int y = i+1; y < arguments.size(); y++) {
+                    if (arguments.at(y) == "|") {
+                        morePipes = true;
+                        cout << "morepipes is true??\n";
+                        break;
+                    }
+                }
+                runLastChild = !morePipes;
                 cout << "Child returned!\n";
                 //return result;
             }
@@ -245,6 +261,9 @@ int evaluateCommand(vector<string> arguments) {
                     if (morePipes) {
                         dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
                     }
+                    else {
+                        dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
+                    }
                 }
                 //close(fd[1]);
                 execvp(charArrayBfr[0],charArrayBfr);
@@ -253,6 +272,12 @@ int evaluateCommand(vector<string> arguments) {
 
 
         }
+
+        //If the previous token was a pipe
+        //Run the code, but set the input to be the read end of the pipe
+        //And if there are no more pipes, set output to standard out
+
+
         //Redirect logic will be here
     }
 
