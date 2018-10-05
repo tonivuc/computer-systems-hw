@@ -44,14 +44,37 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
     vector<string> betterTokens;
     size_t specialCharIndex;
     size_t prevSpesCharIndex = 0;
+    string quotes = "\"\'";
 
     if(debug) cout << "We in the game fam\n";
     for (unsigned int i = 0; i < tokens.size(); i++) {
         if(debug) cout << "In for loop at index "<<i<<" looking at token "<<tokens.at(i)<<"\n";
 
+        //Function to make the token splitter ignore everything after a quote
+        bool finished = false;
+        if (tokens[i].find_first_of(quotes) != string::npos && !finished) { //Does the current token have a "?
+            //Add it to betterTokens
+            betterTokens.push_back(tokens[i]);
+            for (i = i+1 ; i < tokens.size() && !finished; i++) {
+                if (tokens[i].find_first_of(quotes) != string::npos) { //If this token has a "
+                    betterTokens.push_back(tokens[i]);
+                    finished = true;
+                }
+                else {
+                    betterTokens.push_back(tokens[i]);
+                }
+            }
+        }
+        if (finished) {
+            continue;
+        }
+
+
+
         bool haveSplit = false;
 
         //While we haven't searched the entire string
+
         specialCharIndex = tokens[i].find_first_of(specials); //returns string::npos if can't find any
         if(debug) cout << "initial specialCharIndex: "<<specialCharIndex<<"\n";
 
@@ -143,11 +166,6 @@ int normalExecvp(char* arglist[]) {
     }
 }
 
-bool hasSpecialCommand(vector<string> arguments) {
-    for (string s : arguments) {
-
-    }
-}
 
 //Function edits the charStringArray[] that is passed in to the function
 void stringVectorToArray(vector<string> arguments, char* charStringArray[]) {
@@ -177,7 +195,38 @@ bool writeToPipe(vector<string> arguments, int searchStartIndex) {
     return morePipes;
 }
 
-int evaluateCommand(vector<string> arguments) {
+bool hasSpecials(vector<string> arguments, string specials, int startIndex) {
+
+    /*
+    cout << "Printing original tokenized arguments:\n";
+    for (string s : arguments) {
+        cout << s << "\n";
+    }
+     */
+
+    string quotes = "\"\'";
+    bool ignore = false;
+
+    for (int t = startIndex; t<arguments.size();t++) {
+        cout << "token: "<<arguments[t]<<"\n";
+        if (arguments[t].find_first_of(quotes) != string::npos ) {
+            cout << "Found quotes!\n";
+            if (ignore == false) {
+                ignore = true;
+            }
+            else {
+                ignore = false;
+            }
+        }
+        if ((arguments[t].find_first_of(specials) != string::npos) && (ignore == false)) {
+            cout << "found special! "<< arguments[t].find_first_of(specials)<<"\n";
+            return true;
+        }
+    }
+    return false;
+}
+
+int evaluateCommand(vector<string> arguments, string specials) {
 
     char* arglist[arguments.size()+1];
 
@@ -202,13 +251,20 @@ int evaluateCommand(vector<string> arguments) {
     //Make a pipe to be used from now on
     pipe(fd);
 
+    //If there is nothing special going on, just run the execvp
+    if ( ! hasSpecials(arguments,specials,0) ) { //if there are pipes or redirects
+        return normalExecvp(arglist);
+    }
+
     for (int i = 0; i < arguments.size(); i++) {
+
         cout << "running loop for the "<<i<<"th time, when arguments.size() == "<<arguments.size()<<"\n";
 
-        //So basically run code that checks for more pipes
+        //Make sure commands that have been executed are not executed again.
+        //By moving i to aftet the commands
 
-        //All unprocessed tokens are run, and their output set to pipe read
-
+        //Execute normally. Otherwise, if there are more pipes.
+        //continue execution:
         if (arguments.at(i) == "|") {
             vector<string> argsBefore;
 
@@ -265,6 +321,7 @@ int evaluateCommand(vector<string> arguments) {
                 }
                 else {
                     cout << "Hit another pipe, stop adding to argsAfter.\n";
+                    i = i+1; //This line of code is here to make sure we don't run the code again.
                     break;
                 }
             }
@@ -341,7 +398,7 @@ vector<string> testFunction(vector<string> arguments, const string& specials) {
 int main() {
     string input;
     std::vector<char*>  charArray;
-    const string delim = " ,";
+    const string delim = " ";
     const string specials = "|<>";
     vector<string> tokens;
     int status;;
@@ -350,10 +407,10 @@ int main() {
     while ( getline( cin, input )) {
 
         tokens = tokenizeString(input,delim);
-        tokens = splitBySpecials(tokens,specials);
+        //tokens = splitBySpecials(tokens,specials);
 
-        evaluateCommand(tokens);
-        //testFunction(tokens,specials);
+        //evaluateCommand(tokens,specials);
+        testFunction(tokens,specials);
         cout << "> ";
     }
 }
