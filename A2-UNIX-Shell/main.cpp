@@ -197,13 +197,6 @@ bool writeToPipe(vector<string> arguments, int searchStartIndex) {
 
 bool hasSpecials(vector<string> arguments, string specials, int startIndex) {
 
-    /*
-    cout << "Printing original tokenized arguments:\n";
-    for (string s : arguments) {
-        cout << s << "\n";
-    }
-     */
-
     string quotes = "\"\'";
     bool ignore = false;
 
@@ -218,7 +211,7 @@ bool hasSpecials(vector<string> arguments, string specials, int startIndex) {
                 ignore = false;
             }
         }
-        if ((arguments[t].find_first_of(specials) != string::npos) && (ignore == false)) {
+        if ((arguments[t].find_first_of(specials) != string::npos) && (ignore == false) && arguments[t].find_first_of(quotes) == string::npos) {
             cout << "found special! "<< arguments[t].find_first_of(specials)<<"\n";
             return true;
         }
@@ -407,10 +400,10 @@ int main() {
     while ( getline( cin, input )) {
 
         tokens = tokenizeString(input,delim);
-        //tokens = splitBySpecials(tokens,specials);
+        tokens = splitBySpecials(tokens,specials);
 
-        //evaluateCommand(tokens,specials);
-        testFunction(tokens,specials);
+        evaluateCommand(tokens,specials);
+        //testFunction(tokens,specials);
         cout << "> ";
     }
 }
