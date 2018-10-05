@@ -205,7 +205,10 @@ int evaluateCommand(vector<string> arguments) {
     for (int i = 0; i < arguments.size(); i++) {
         cout << "running loop for the "<<i<<"th time, when arguments.size() == "<<arguments.size()<<"\n";
 
+        //So basically run code that checks for more pipes
+
         //All unprocessed tokens are run, and their output set to pipe read
+
         if (arguments.at(i) == "|") {
             vector<string> argsBefore;
 
