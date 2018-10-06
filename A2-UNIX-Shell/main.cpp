@@ -54,6 +54,15 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     return tokens;
 }
 
+vector<string> removeOccurancesOf(vector<string> arguments, char toRemove) {
+    for (int i = 0; i < arguments.size();i++) {
+        cout << "before: "<<arguments[i]<<"\n";
+        arguments[i].erase(std::remove(arguments[i].begin(), arguments[i].end(), toRemove), arguments[i].end());
+        cout << "arugments[" << i << "] = " << arguments[i] << "\n";
+    }
+    return arguments;
+}
+
 //Function returns string vector with all special characters and words seperated in seperate strings
 //Works on: "abc|cdf xxx|yyy" but not "abc|dfe|xxx"
 vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
@@ -204,8 +213,18 @@ void stringVectorToArray(vector<string> arguments, char* charStringArray[]) {
     transform(arguments.begin(), arguments.end(), std::back_inserter(charVector), convert);
 
     //Convert vector<char*> to char*[]
-    for (int i = 0; i < arguments.size(); i++) {
+    int i = 0;
+    for ( ; i < arguments.size(); i++) {
+        cout << "i: "<<i<<"\n";
         charStringArray[i] = charVector[i];
+        cout << "added this to char array:"<<charStringArray[i]<<"checking for whitespace\n";
+    }
+    cout << "i: "<<i<<"\n";
+    if (charStringArray[i] == nullptr) {
+        cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHHHH\n";
+    }
+    else {
+        cout << ":(\n";
     }
 }
 
@@ -258,6 +277,7 @@ int findNextPipeIndex(vector<string> arguments, int startIndex) {
 }
 
 int evaluateCommand(vector<string> arguments, string specials) {
+    cout << "in evaluatecommands\n";
 
     char* arglist[arguments.size()+1];
     int alreadyExecutedIndex = 0;
@@ -365,8 +385,8 @@ int evaluateCommand(vector<string> arguments, string specials) {
             char* charArrayAfter[argsAfter.size()+1];
             stringVectorToArray(argsAfter,charArrayAfter); //making it ready for execvp
 
-            cout << "Args in that new char array after:\n";
-            for (int l = 0; l < argsAfter.size(); l++) {
+            cout << "Args in that new char array after (not including nullptr):\n";
+            for (int l = 0; l < argsAfter.size(); l++) { //My
                 cout << charArrayAfter[l]<<"\n";
             }
 
@@ -459,6 +479,13 @@ int main() {
           */
         tokens = tokenizeString(input,delim);
         tokens = splitBySpecials(tokens,specials);
+        tokens = removeOccurancesOf(tokens,'\'');
+
+        cout << "in main still\n";
+
+        for (string s : tokens) {
+            cout << s;
+        }
 
         evaluateCommand(tokens,specials);
         //testFunction(tokens,specials);
