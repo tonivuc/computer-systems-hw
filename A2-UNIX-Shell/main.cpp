@@ -21,6 +21,7 @@ string quotes = "\"\'";
 ***************************************************************************************/
 vector<string> tokenizeString(const string& str, const string& delimiters)
 {
+    bool debug = false;
     vector<string> tokens;
     bool firstRun = true;
 
@@ -33,25 +34,25 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     do {
         if (!firstRun) {
             tokens.push_back(str.substr(lastPos, pos - lastPos));
-            cout << "pushed back: "<<str.substr(lastPos, pos - lastPos)<<"\n";
+            if(debug)cout << "pushed back: "<<str.substr(lastPos, pos - lastPos)<<"\n";
         }
         else { firstRun = false; }
 
         lastPos = str.find_first_not_of(delimiters, pos); //Find next non-delimiter character
-        cout << "strglength "<<str.length()<<"\n";
+        if(debug)cout << "strglength "<<str.length()<<"\n";
         if (string::npos == pos && string::npos == lastPos || pos > str.length()-1) break; //Stop execution if end of string is reached
 
-        cout << "lastPos "<<lastPos<<"\n";
-        cout << "pos "<<pos<<"\n";
+        if(debug)cout << "lastPos "<<lastPos<<"\n";
+        if(debug)cout << "pos "<<pos<<"\n";
 
         if (str.substr(lastPos,1) == "\"" || str.substr(lastPos,1) == "\'") {
             pos = str.find_first_of(quotes, lastPos+1)+1;
-            cout << "quote-pos set to "<<pos<<"\n";
+            if(debug)cout << "quote-pos set to "<<pos<<"\n";
         }
         else {
             // Find next "non-delimiter"
             pos = str.find_first_of(delimiters, lastPos);
-            cout <<"pos "<<pos<<"\n";
+            if(debug)cout <<"pos "<<pos<<"\n";
         }
     } while (string::npos != pos || string::npos != lastPos);
 
@@ -101,8 +102,6 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
             continue;
         }
          */
-
-
 
         bool haveSplit = false;
 
@@ -251,6 +250,18 @@ bool hasSpecials(vector<string> arguments, string specials, int startIndex) {
     return false;
 }
 
+int findNextPipeIndex(vector<string> arguments, int startIndex) {
+    cout << "in findNextPipeIndex\n";
+    for (int i = startIndex; i < arguments.size();i++) {
+        cout << "checking arguments["<<i<<"] to see if "<<arguments[i]<<" is equal to |\n";
+        if (arguments[i].find_first_of("|") != string::npos) {
+            cout << "Found pipe index and returning "<<i<<"\n";
+            return i;
+        }
+    }
+    return arguments.size();
+}
+
 int evaluateCommand(vector<string> arguments, string specials) {
 
     char* arglist[arguments.size()+1];
@@ -293,9 +304,12 @@ int evaluateCommand(vector<string> arguments, string specials) {
         if (arguments.at(i) == "|") {
             vector<string> argsBefore;
 
+            int stopHere = findNextPipeIndex(arguments,i+1);
+
             //Pipe logic
             //Put all arguments before pipe symbol in separate vector
             //Make array argsBefore
+            //PROBLEM: Once we get to the 2nd pipe, we don't want to sample from 0. We need to keep track of where the last pipe was.
             for (int j = 0; j < i; j++) {
                 argsBefore.push_back(arguments.at(j));
             }
@@ -303,7 +317,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
             char* charArrayBfr[argsBefore.size()+1];
             stringVectorToArray(argsBefore,charArrayBfr); //making it ready for execvp
 
-            cout << "Args in that new char array:\n";
+            cout << "Args in that new bfr char array:\n";
             for (int l = 0; l < argsBefore.size(); l++) {
                 cout << charArrayBfr[l]<<"\n";
             }
@@ -340,7 +354,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
             //Put all arguments before pipe symbol in separate vector
             cout << "Printing out arguments added to argsAfter\n";
             for (int j = i; j < arguments.size(); j++) {
-                if (arguments.at(i) != "|") {
+                if (arguments.at(j) != "|") {
                     argsAfter.push_back(arguments.at(j));
                     cout << arguments.at(j)<<"\n";
                 }
@@ -354,7 +368,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
             char* charArrayAfter[argsAfter.size()+1];
             stringVectorToArray(argsAfter,charArrayAfter); //making it ready for execvp
 
-            cout << "Args in that new char array:\n";
+            cout << "Args in that new char array after:\n";
             for (int l = 0; l < argsAfter.size(); l++) {
                 cout << charArrayAfter[l]<<"\n";
             }
@@ -378,13 +392,15 @@ int evaluateCommand(vector<string> arguments, string specials) {
 
                 //If the next argument is a pipe
                 if ( writeToPipe(arguments,i) ) {
+                    cout << "set stdOut to be write-end of pipe\n";
                     dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
                 }
                 //If no more pipes
                 else {
-                    dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
-                }
 
+                    dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
+                    cout << "made write-end of pipe point to stdout\n";
+                }
                 //close(fd[1]);
                 execvp(charArrayAfter[0],charArrayAfter);
             }
@@ -394,7 +410,6 @@ int evaluateCommand(vector<string> arguments, string specials) {
         //Redirect logic will be here
     }
 
-    //normalExecvp(arglist);
     return -1;
 }
 
@@ -433,10 +448,10 @@ int main() {
     while ( getline( cin, input )) {
 
         tokens = tokenizeString(input,delim);
-        //tokens = splitBySpecials(tokens,specials);
+        tokens = splitBySpecials(tokens,specials);
 
-        //evaluateCommand(tokens,specials);
-        testFunction(tokens,specials);
+        evaluateCommand(tokens,specials);
+        //testFunction(tokens,specials);
         cout << "> ";
     }
 }
