@@ -399,6 +399,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
                     cout << "made write-end of pipe point to stdout\n";
                 }
                 //close(fd[1]);
+
                 execvp(charArrayAfter[0],charArrayAfter);
             }
         }
@@ -444,11 +445,24 @@ int main() {
     cout << "Enter command: ";
     while ( getline( cin, input )) {
 
+        //char const *strs[2] = {"awk", "'/pts\/[0-9]/{print $1}'"};
+
+
+        //ps | awk '/pts\/[0-9]/{print $1}''
+        //awk "/pts\/[0-9]/{print $1}"
+/*
+        char* testArr[2];
+        testArr[0] = "ps";
+        testArr[1] = "'/pts\/[0-9]/{print $1}'";
+
+        execvp(testArr[0],testArr);
+          */
         tokens = tokenizeString(input,delim);
         tokens = splitBySpecials(tokens,specials);
 
         evaluateCommand(tokens,specials);
         //testFunction(tokens,specials);
+
         cout << "> ";
     }
 }
