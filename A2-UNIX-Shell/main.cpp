@@ -26,6 +26,7 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     string::size_type quoteEnd = 0;
     bool firstQuote = false;
     bool foundEnd = false;
+    bool foundStart = false;
 
     // Skip delimiters at beginning.
     string::size_type lastPos = str.find_first_not_of(delimiters, 0); //Jump over spaces at the beginning
@@ -43,6 +44,7 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
                 quoteStart = str.find_first_of(quotes, lastPos); //Look from lastPos, and see if there are any quotes. Save quote location as split start
                 cout << "quoteStart " << quoteStart<<"\n";
                 firstQuote = true;
+                foundStart = true;
             } else {
                 firstQuote = false;
                 foundEnd = true;
@@ -50,25 +52,50 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
                 cout << "quoteEnd "<<quoteEnd<<"\n";
             }
         }
+        if (foundStart && !)
         if (foundEnd) {
             foundEnd = false;
+            cout << "in foundEnd, pushing back token "<<str.substr(quoteStart, quoteEnd+1 - quoteStart)<<"\n";
             tokens.push_back(str.substr(quoteStart, quoteEnd+1 - quoteStart));
             cout << "lastPos was set in foundEnd\n";
             lastPos = quoteEnd + 1;
             pos = str.find_first_of(delimiters, lastPos);
+            foundStart = false; //Not currently between two ""
         }
         else {
+            if (foundStart && !foundEnd) {
+                //Wait
+            }
+            lastPos = str.find_first_not_of(delimiters, 0);
+            pos = str.find_first_of(delimiters, lastPos);
+
+            tokens.push_back(str.substr(lastPos, pos - lastPos)
+
+            /*
+            cout << "setting lastPos to "<<str.find_first_not_of(delimiters, pos)<<" in foundEnd's else\n";
+            pos = str.find_first_of(delimiters, lastPos);
+            lastPos = str.find_first_not_of(delimiters, pos);
+            cout << "pos is here: "<<pos<<"\n";
+
+
             if (str.substr(lastPos, pos - lastPos).size() > 0) {
+                cout << "in ELSE, pushing back token "<<str.substr(lastPos, pos - lastPos)<<"\n";
                 tokens.push_back(str.substr(lastPos, pos - lastPos));
             }
             // Skip delimiters.  Note the "not_of"
-            lastPos = str.find_first_not_of(delimiters, pos);
-            // Find next "non-delimiter"
+
             pos = str.find_first_of(delimiters, lastPos);
+            cout << "at this point pos should be infinite\n";
+            lastPos = str.find_first_not_of(delimiters, pos);
+
+            // Find next "non-delimiter"
+             */
+
         }
         cout << "before ending while loop:\n";
         cout << "lastPos: "<<lastPos<<"\n";
         cout << "pos: "<<pos<<"\n";
+        cout << "While loop iteration ended\n";
     }
     cout << "size of tokens: "<<tokens.size()<<"\n";
     return tokens;
@@ -78,7 +105,7 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
 //Works on: "abc|cdf xxx|yyy" but not "abc|dfe|xxx"
 vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
 
-    bool debug = true;
+    bool debug = false;
     vector<string> betterTokens;
     size_t specialCharIndex;
     size_t prevSpesCharIndex = 0;
@@ -87,7 +114,16 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
     for (unsigned int i = 0; i < tokens.size(); i++) {
         if(debug) cout << "In for loop at index "<<i<<" looking at token "<<tokens.at(i)<<"\n";
 
+
+        //New function to do this?
+        //Have to ignore tokens which include "
+        if (tokens[i].find_first_of(quotes) != string::npos) {
+            betterTokens.push_back(tokens[i]);
+            continue;
+        }
+
         //Function to make the token splitter ignore everything after a quote
+        /*
         bool finished = false;
         if (tokens[i].find_first_of(quotes) != string::npos && !finished) { //Does the current token have a "?
             cout << "passed if loop in splitBySpecials\n";
@@ -95,6 +131,7 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
             betterTokens.push_back(tokens[i]);
             for (i = i+1 ; i < tokens.size() && !finished; i++) {
                 if (tokens[i].find_first_of(quotes) != string::npos) { //If this token has a "
+                    cout << "found end token"<<"\n";
                     betterTokens.push_back(tokens[i]);
                     finished = true;
                 }
@@ -106,6 +143,7 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
         if (finished) {
             continue;
         }
+         */
 
 
 
