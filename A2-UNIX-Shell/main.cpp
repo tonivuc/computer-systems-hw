@@ -25,27 +25,33 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     bool firstRun = true;
 
     // Skip delimiters at beginning.
-    string::size_type lastPos;
+    string::size_type lastPos = 0;
     // Find first "non-delimiter".
-    string::size_type pos;
+    string::size_type pos = 0;
 
 
     do {
         if (!firstRun) {
             tokens.push_back(str.substr(lastPos, pos - lastPos));
+            cout << "pushed back: "<<str.substr(lastPos, pos - lastPos)<<"\n";
         }
-        else {
-            firstRun = false;
-        }
-        // Skip delimiters.  Note the "not_of"
-        lastPos = str.find_first_not_of(delimiters, pos);
+        else { firstRun = false; }
+
+        lastPos = str.find_first_not_of(delimiters, pos); //Find next non-delimiter character
+        cout << "strglength "<<str.length()<<"\n";
+        if (string::npos == pos && string::npos == lastPos || pos > str.length()-1) break; //Stop execution if end of string is reached
+
+        cout << "lastPos "<<lastPos<<"\n";
+        cout << "pos "<<pos<<"\n";
 
         if (str.substr(lastPos,1) == "\"" || str.substr(lastPos,1) == "\'") {
-            pos = str.find_first_of(quotes, lastPos)+1;
+            pos = str.find_first_of(quotes, lastPos+1)+1;
+            cout << "quote-pos set to "<<pos<<"\n";
         }
         else {
             // Find next "non-delimiter"
             pos = str.find_first_of(delimiters, lastPos);
+            cout <<"pos "<<pos<<"\n";
         }
     } while (string::npos != pos || string::npos != lastPos);
 
