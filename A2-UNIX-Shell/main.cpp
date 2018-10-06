@@ -481,12 +481,6 @@ int main() {
         tokens = splitBySpecials(tokens,specials);
         tokens = removeOccurancesOf(tokens,'\'');
 
-        cout << "in main still\n";
-
-        for (string s : tokens) {
-            cout << s;
-        }
-
         evaluateCommand(tokens,specials);
         //testFunction(tokens,specials);
 
