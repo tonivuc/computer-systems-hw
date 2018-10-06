@@ -22,55 +22,19 @@ string quotes = "\"\'";
 vector<string> tokenizeString(const string& str, const string& delimiters)
 {
     vector<string> tokens;
-    string::size_type quoteStart = 0;
-    string::size_type quoteEnd = 0;
-    bool firstQuote = false;
-    bool foundEnd = false;
-
     // Skip delimiters at beginning.
-    string::size_type lastPos = str.find_first_not_of(delimiters, 0); //Jump over spaces at the beginning
-    cout << "lastPos "<<lastPos<<"\n";
+    string::size_type lastPos = str.find_first_not_of(delimiters, 0);
     // Find first "non-delimiter".
-    string::size_type pos = str.find_first_of(delimiters, lastPos); //Find first space
-    cout << "pos "<<pos<<"\n";
-
+    string::size_type pos = str.find_first_of(delimiters, lastPos);
 
     while (string::npos != pos || string::npos != lastPos)
     {  // Found a token, add it to the vector.
-        //When encountering first ", don't do this
-        if (str.find_first_of(quotes, quoteStart) != string::npos) {
-            if (firstQuote == false) {
-                quoteStart = str.find_first_of(quotes, lastPos); //Look from lastPos, and see if there are any quotes. Save quote location as split start
-                cout << "quoteStart " << quoteStart<<"\n";
-                firstQuote = true;
-            } else {
-                firstQuote = false;
-                foundEnd = true;
-                quoteEnd = str.find_first_of(quotes, lastPos+1);
-                cout << "quoteEnd "<<quoteEnd<<"\n";
-            }
-        }
-        if (foundEnd) {
-            foundEnd = false;
-            tokens.push_back(str.substr(quoteStart, quoteEnd+1 - quoteStart));
-            cout << "lastPos was set in foundEnd\n";
-            lastPos = quoteEnd + 1;
-            pos = str.find_first_of(delimiters, lastPos);
-        }
-        else {
-            if (str.substr(lastPos, pos - lastPos).size() > 0) {
-                tokens.push_back(str.substr(lastPos, pos - lastPos));
-            }
-            // Skip delimiters.  Note the "not_of"
-            lastPos = str.find_first_not_of(delimiters, pos);
-            // Find next "non-delimiter"
-            pos = str.find_first_of(delimiters, lastPos);
-        }
-        cout << "before ending while loop:\n";
-        cout << "lastPos: "<<lastPos<<"\n";
-        cout << "pos: "<<pos<<"\n";
+        tokens.push_back(str.substr(lastPos, pos - lastPos));
+        // Skip delimiters.  Note the "not_of"
+        lastPos = str.find_first_not_of(delimiters, pos);
+        // Find next "non-delimiter"
+        pos = str.find_first_of(delimiters, lastPos);
     }
-    cout << "size of tokens: "<<tokens.size()<<"\n";
     return tokens;
 }
 
