@@ -11,14 +11,9 @@ using namespace std;
 
 string quotes = "\"\'";
 
-/***************************************************************************************
-*    Title: String tokenizer in C++ w. delimiter characters
-*    Author: linello (Stack Overflow username)
-*    Date: 10.02.2018
-*    Code version: 02.02.2014 14:27
-*    Availability: https://stackoverflow.com/questions/9823263/string-tokenization-in-c-including-delimiter-characters
-*
-***************************************************************************************/
+
+//Splits by space, but keeps stuff in quotes together.
+//Known bug: A quote starting with " can be closed by '. This can be solved with stack based approach.
 vector<string> tokenizeString(const string& str, const string& delimiters)
 {
     bool debug = false;
@@ -265,6 +260,7 @@ int findNextPipeIndex(vector<string> arguments, int startIndex) {
 int evaluateCommand(vector<string> arguments, string specials) {
 
     char* arglist[arguments.size()+1];
+    int alreadyExecutedIndex = 0;
 
     stringVectorToArray(arguments,arglist); //No return value, but populates arglist
 
@@ -301,16 +297,14 @@ int evaluateCommand(vector<string> arguments, string specials) {
 
         //Execute normally. Otherwise, if there are more pipes.
         //continue execution:
-        if (arguments.at(i) == "|") {
+        if (arguments.at(i) == "|" && alreadyExecutedIndex < i) {
+            cout << "arguments["<<i<<"] is "<<arguments.at(i)<<"\n";
             vector<string> argsBefore;
 
-            int stopHere = findNextPipeIndex(arguments,i+1);
 
-            //Pipe logic
-            //Put all arguments before pipe symbol in separate vector
-            //Make array argsBefore
-            //PROBLEM: Once we get to the 2nd pipe, we don't want to sample from 0. We need to keep track of where the last pipe was.
-            for (int j = 0; j < i; j++) {
+            //FUNNY. Bug saved me.
+            //We don't want to run the commands we already ran, again.
+            for (int j = alreadyExecutedIndex; j < i; j++) {
                 argsBefore.push_back(arguments.at(j));
             }
 
@@ -331,6 +325,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
                 cout << "Inside the parent!\n";
                 //Wait until child has finished with the pipe
                 int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                alreadyExecutedIndex = i;
                 cout << "Child returned!\n";
             }
             else {  // child
@@ -360,7 +355,9 @@ int evaluateCommand(vector<string> arguments, string specials) {
                 }
                 else {
                     cout << "Hit another pipe, stop adding to argsAfter.\n";
-                    i = i+1; //This line of code is here to make sure we don't run the code again.
+                    cout << "alreadyExecutedIndex = "<<j<<"\n";
+                    alreadyExecutedIndex = j;
+                    //i = i+1; //This line of code is here to make sure we don't run the code again.
                     break;
                 }
             }
