@@ -23,7 +23,7 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     // Skip delimiters at beginning.
     string::size_type lastPos = str.find_first_not_of(delimiters, 0);
     // Find first "non-delimiter".
-    string::size_type pos = str.find_first_of(delimiters, lastPos);
+    string::size_type pos = str.find_first_of(delimiters, lastPos); //I think lastPos means the position used last?
 
     while (string::npos != pos || string::npos != lastPos)
     {  // Found a token, add it to the vector.
