@@ -327,7 +327,15 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD) {
 
         if (redirType == '>') {
             cout << "redirtype is >\n";
-            dup2(fileFD, STDOUT_FILENO); //make stdout point to the new file
+
+            if (fd[0] < 0) { //If we don't read from the pipe
+                dup2(fileFD, STDOUT_FILENO); //make stdout point to the new file
+            }
+            else { //Read from the read-end of pipe
+                dup2(fd[0], STDIN_FILENO); //make stdin point to pipe read-end
+                dup2(fileFD, STDOUT_FILENO); //make stdout point to the new file
+            }
+
         }
         else if (redirType == '<') {
             //do something else
@@ -366,6 +374,8 @@ int evaluateCommand(vector<string> arguments, string specials) {
 
     char* arglist[arguments.size()+1];
     int alreadyExecutedIndex = 0;
+    bool fileOpen = false;
+    int fileFD = -1;
 
     stringVectorToArray(arguments,arglist); //No return value, but populates arglist
 
@@ -400,6 +410,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
         char redirType = findRedirectType(arguments);
         cout << "redirType: "<<redirType<<"\n";
         if (redirType != 0 && findFirstArgWith(arguments,"|",0) == -1) {
+            cout << "We are in the redirect logic block outside the for loop\n";
             int redirIndex = findFirstArgWith(arguments,"<>",0);
             cout << "redirIndex "<<redirIndex<<"\n";
             char* charArrayRedir[redirIndex+1];
@@ -407,7 +418,8 @@ int evaluateCommand(vector<string> arguments, string specials) {
 
             cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
             int fileFD = open(arguments[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
-            int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD);
+            int noPipe[2] = {-1,-1};
+            int retVal = executeRedirect(charArrayRedir, redirType, noPipe, fileFD);
             close(fileFD);
             return retVal;
         }
@@ -445,20 +457,21 @@ int evaluateCommand(vector<string> arguments, string specials) {
 
             //Redirect code goes here
             //If it is run, only need to set the dup2 and not run any more forks here
-            /*
-             * REDIR and piping currently on hold until normal redir works.
             char redirType = findRedirectType(argsBefore);
-            if (redirType != 0) {
-
+            cout << "redirType: "<<redirType<<"\n";
+            if (redirType != 0 && findFirstArgWith(argsBefore,"|",0) == -1) {
                 int redirIndex = findFirstArgWith(argsBefore,"<>",0);
+                cout << "redirIndex "<<redirIndex<<"\n";
                 char* charArrayRedir[redirIndex+1];
-                stringVectorToArray(argsBefore,charArrayRedir,redirIndex);
+                stringVectorToArray(argsBefore,charArrayRedir,redirIndex-1);
 
-                //executeRedirect(charArrayBfr, redirType, fd);
-                //alreadyExecutedIndex = ; //Possible return value
-                continue; //Skip rest of code, there is nothing left to execute before the piping
+                cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
+                fileFD = open(argsBefore[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
+                int noPipe[2] = {-1,-1};
+                int retVal = executeRedirect(charArrayRedir, redirType, noPipe, fileFD); //Assume standard input
+                fileOpen = true;
+                return retVal;
             }
-            */
 
             int pid = fork();
             if (pid < 0) {
@@ -509,9 +522,31 @@ int evaluateCommand(vector<string> arguments, string specials) {
             char* charArrayAfter[argsAfter.size()+1];
             stringVectorToArray(argsAfter,charArrayAfter); //making it ready for execvp
 
+            //Just debug printing
             cout << "Args in that new char array after (not including nullptr):\n";
             for (int l = 0; l < argsAfter.size(); l++) { //My
                 cout << charArrayAfter[l]<<"\n";
+            }
+
+            //Check for redirects in case of no pipes
+            if (findFirstArgWith(argsAfter,"\"\'",0) == string::npos) {
+                cout << "A bit of a hack, don't check for redirect if string includes quotes.\n";
+                cout << "In the logic block after the pipe\n";
+
+                char redirType = findRedirectType(argsAfter);
+                cout << "redirType: "<<redirType<<"\n";
+                if (redirType != 0 && findFirstArgWith(argsAfter,"|",0) == -1) {
+                    int redirIndex = findFirstArgWith(argsAfter,"<>",0);
+                    cout << "redirIndex "<<redirIndex<<"\n";
+                    char* charArrayRedir[redirIndex+1];
+                    stringVectorToArray(argsAfter,charArrayRedir,redirIndex-1);
+
+                    cout << "isn't this a file name? "<<argsAfter[redirIndex+1]<<"\n";
+                    fileFD = open(argsAfter[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
+                    int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD);
+                    close(fileFD);
+                    return retVal;
+                }
             }
 
             int pid = fork();
@@ -523,6 +558,11 @@ int evaluateCommand(vector<string> arguments, string specials) {
                 cout << "Inside the parent nr. 2!\n";
                 //Wait until child has finished with the pipe
                 int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                if (fileOpen) {
+                    cout << "closed file with fileFD "<<fileFD<<"\n";
+                    close(fileFD);
+                    fileOpen = false;
+                }
                 cout << "Child nr. 2 returned!\n";
             }
             else {  // child
@@ -532,6 +572,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
                 dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end)
 
                 //If the next argument is a pipe
+                //TODO: Investigate if this shoudl say "arguments"
                 if ( writeToPipe(arguments,i) ) {
                     cout << "set stdOut to be write-end of pipe\n";
                     dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
