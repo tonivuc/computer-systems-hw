@@ -15,7 +15,7 @@ using namespace std;
 string quotes = "\"\'";
 
 
-//Splits by space, but keeps stuff in quotes together.
+//Splits by space, but keeps stuff in quotes together. hm
 //Known bug: A quote starting with " can be closed by '. This can be solved with stack based approach.
 vector<string> tokenizeString(const string& str, const string& delimiters)
 {
@@ -200,6 +200,7 @@ int normalExecvp(char* arglist[]) {
         cout << "Inside the child!\n";
         cout << "the command: "<<arglist[0]<<"\n";
         //char *argz[] = {"ls", "-l",nullptr};
+
         execvp(arglist[0],arglist);
         //execl("ls","ls","-l",NULL);
     }
