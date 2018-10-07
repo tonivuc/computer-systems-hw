@@ -6,6 +6,9 @@
 #include <vector>
 #include <cstring>
 #include <algorithm>
+#include <cassert>
+#include <fstream>
+#include <fcntl.h>
 
 using namespace std;
 
@@ -215,10 +218,11 @@ void stringVectorToArray(vector<string> arguments, char* charStringArray[]) {
     //Convert vector<char*> to char*[]
     int i = 0;
     for ( ; i < arguments.size(); i++) {
-        cout << "i: "<<i<<"\n";
+        //cout << "i: "<<i<<"\n";
         charStringArray[i] = charVector[i];
-        cout << "added this to char array:"<<charStringArray[i]<<"checking for whitespace\n";
+        //cout << "added this to char array:"<<charStringArray[i]<<"checking for whitespace\n";
     }
+    /*
     cout << "i: "<<i<<"\n";
     if (charStringArray[i] == nullptr) {
         cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHHHH\n";
@@ -226,6 +230,7 @@ void stringVectorToArray(vector<string> arguments, char* charStringArray[]) {
     else {
         cout << ":(\n";
     }
+     */
 }
 
 //This function checks if the process should write to standard out or not
@@ -276,6 +281,53 @@ int findNextPipeIndex(vector<string> arguments, int startIndex) {
     return arguments.size();
 }
 
+//Return -1 on failure, 0 otherwise
+int executeRedirect(char** charArrayBfr, char redirType, int fd[]) {
+
+
+    int fileFD = open("foo.txt", O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
+
+
+    int pid = fork();
+    if (pid < 0) {
+        perror("fork() error");
+        exit(-1);
+    }
+    else if (pid != 0) {  // parent
+        cout << "Inside the redirect parent!\n";
+        int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+        cout << "Redirect child returned!\n";
+        return result;
+    }
+    else {  // child
+        cout << "Inside the child!\n";
+        //close(fd[0]); //Read-end
+
+        if (redirType == '>') {
+            dup2(fileFD, STDOUT_FILENO); //make stdout the new file
+        }
+        else if (redirType == '<') {
+            //do something else
+        }
+        //close(fd[1]);
+        execvp(charArrayBfr[0],charArrayBfr);
+    }
+    return -1;
+}
+
+char findRedirectType(vector<string> arguments) {
+    string symbols = "<>";
+
+    for (int i = 0; i < arguments.size();i++) {
+        if (arguments[i].find_first_of(symbols) != string::npos) {
+            assert(arguments[i].size() == 1);
+            char character = arguments[i][0];
+            return character;
+        }
+    }
+    return 0;
+}
+
 int evaluateCommand(vector<string> arguments, string specials) {
     cout << "in evaluatecommands\n";
 
@@ -304,7 +356,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
     pipe(fd);
 
     //If there is nothing special going on, just run the execvp
-    if ( ! hasSpecials(arguments,specials,0) ) { //if there are pipes or redirects
+    if ( ! hasSpecials(arguments,specials,0) ) { //if there are pipes or redirects?
         return normalExecvp(arglist);
     }
 
@@ -323,7 +375,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
 
 
             //FUNNY. Bug saved me.
-            //We don't want to run the commands we already ran, again.
+            //We don't want to run the commands we already ran, again. This is now in the if-condition.
             for (int j = alreadyExecutedIndex; j < i; j++) {
                 argsBefore.push_back(arguments.at(j));
             }
@@ -334,6 +386,15 @@ int evaluateCommand(vector<string> arguments, string specials) {
             cout << "Args in that new bfr char array:\n";
             for (int l = 0; l < argsBefore.size(); l++) {
                 cout << charArrayBfr[l]<<"\n";
+            }
+
+            //Redirect code goes here
+            //If it is run, only need to set the dup2 and not run any more forks here
+            char redirType = findRedirectType(arguments);
+            if (redirType != 0) {
+                executeRedirect(charArrayBfr, redirType, fd);
+                //alreadyExecutedIndex = ; //Possible return value
+                continue; //Skip rest of code, there is nothing left to execute before the piping
             }
 
             int pid = fork();
