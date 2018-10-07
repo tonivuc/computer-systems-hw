@@ -394,19 +394,25 @@ int evaluateCommand(vector<string> arguments, string specials) {
     }
 
     //Check for redirects in case of no pipes
-    char redirType = findRedirectType(arguments);
-    cout << "redirType: "<<redirType<<"\n";
-    if (redirType != 0 && findFirstArgWith(arguments,"|",0) == -1) {
-        int redirIndex = findFirstArgWith(arguments,"<>",0);
-        cout << "redirIndex "<<redirIndex<<"\n";
-        char* charArrayRedir[redirIndex+1];
-        stringVectorToArray(arguments,charArrayRedir,redirIndex-1);
+    if (findFirstArgWith(arguments,"\"\'",0) == string::npos) {
+        cout << "A bit of a hack, don't check for redirect if string includes quotes.\n";
 
-        int fileFD = open("foo.txt", O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
-        int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD);
-        close(fileFD);
-        return retVal;
+        char redirType = findRedirectType(arguments);
+        cout << "redirType: "<<redirType<<"\n";
+        if (redirType != 0 && findFirstArgWith(arguments,"|",0) == -1) {
+            int redirIndex = findFirstArgWith(arguments,"<>",0);
+            cout << "redirIndex "<<redirIndex<<"\n";
+            char* charArrayRedir[redirIndex+1];
+            stringVectorToArray(arguments,charArrayRedir,redirIndex-1);
+
+            cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
+            int fileFD = open(arguments[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
+            int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD);
+            close(fileFD);
+            return retVal;
+        }
     }
+
 
 
     for (int i = 0; i < arguments.size(); i++) {
