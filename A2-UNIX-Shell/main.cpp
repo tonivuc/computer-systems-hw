@@ -233,6 +233,32 @@ void stringVectorToArray(vector<string> arguments, char* charStringArray[]) {
      */
 }
 
+void stringVectorToArray(vector<string> arguments, char* charStringArray[], int lastIndexToCopy) {
+
+    charStringArray[lastIndexToCopy+1] = nullptr;
+    cout << "lastIndex"<<lastIndexToCopy<<" and nullptr is stored at "<<lastIndexToCopy+1<<"\n";
+    vector<char*> charVector;
+
+    //Convert vector<string> to vector<char*>
+    transform(arguments.begin(), arguments.end(), std::back_inserter(charVector), convert);
+
+    //Convert vector<char*> to char*[]
+    int i = 0;
+    for ( ; i <= lastIndexToCopy; i++) {
+        cout << "i: "<<i<<"\n";
+        charStringArray[i] = charVector[i];
+        cout << "added this to char array:"<<charStringArray[i]<<"checking for whitespace\n";
+    }
+
+    cout << "outside for i: "<<i<<"\n";
+    if (charStringArray[i] == nullptr) {
+        cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHHHH\n";
+    }
+    else {
+        cout << ":(\n";
+    }
+}
+
 //This function checks if the process should write to standard out or not
 //The alternative would be that the process writes to the pipe
 bool writeToPipe(vector<string> arguments, int searchStartIndex) {
@@ -269,24 +295,20 @@ bool hasSpecials(vector<string> arguments, string specials, int startIndex) {
     return false;
 }
 
-int findNextPipeIndex(vector<string> arguments, int startIndex) {
-    cout << "in findNextPipeIndex\n";
-    for (int i = startIndex; i < arguments.size();i++) {
-        cout << "checking arguments["<<i<<"] to see if "<<arguments[i]<<" is equal to |\n";
-        if (arguments[i].find_first_of("|") != string::npos) {
-            cout << "Found pipe index and returning "<<i<<"\n";
-            return i;
+void splitBasedOnRedir(vector<string> argsIn, char** argsOut) {
+    int i = 0;
+    for ( ; i < argsIn.size(); i++) {
+        if (argsIn[i][0] == '>' || argsIn[i][0] == '<') {
+            break;
         }
     }
-    return arguments.size();
+
+    stringVectorToArray(argsIn, argsOut, i);
 }
 
 //Return -1 on failure, 0 otherwise
-int executeRedirect(char** charArrayBfr, char redirType, int fd[]) {
-
-
-    int fileFD = open("foo.txt", O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
-
+//1st input only contains the arguments to be executed
+int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD) {
 
     int pid = fork();
     if (pid < 0) {
@@ -304,7 +326,8 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[]) {
         //close(fd[0]); //Read-end
 
         if (redirType == '>') {
-            dup2(fileFD, STDOUT_FILENO); //make stdout the new file
+            cout << "redirtype is >\n";
+            dup2(fileFD, STDOUT_FILENO); //make stdout point to the new file
         }
         else if (redirType == '<') {
             //do something else
@@ -319,6 +342,7 @@ char findRedirectType(vector<string> arguments) {
     string symbols = "<>";
 
     for (int i = 0; i < arguments.size();i++) {
+
         if (arguments[i].find_first_of(symbols) != string::npos) {
             assert(arguments[i].size() == 1);
             char character = arguments[i][0];
@@ -326,6 +350,15 @@ char findRedirectType(vector<string> arguments) {
         }
     }
     return 0;
+}
+
+int findFirstArgWith(vector<string> args, string searchChars, int startIndex) {
+    for (int i = startIndex; i < args.size();i++) {
+        if (args[i].find_first_of(searchChars) != string::npos) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 int evaluateCommand(vector<string> arguments, string specials) {
@@ -360,6 +393,22 @@ int evaluateCommand(vector<string> arguments, string specials) {
         return normalExecvp(arglist);
     }
 
+    //Check for redirects in case of no pipes
+    char redirType = findRedirectType(arguments);
+    cout << "redirType: "<<redirType<<"\n";
+    if (redirType != 0 && findFirstArgWith(arguments,"|",0) == -1) {
+        int redirIndex = findFirstArgWith(arguments,"<>",0);
+        cout << "redirIndex "<<redirIndex<<"\n";
+        char* charArrayRedir[redirIndex+1];
+        stringVectorToArray(arguments,charArrayRedir,redirIndex-1);
+
+        int fileFD = open("foo.txt", O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
+        int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD);
+        close(fileFD);
+        return retVal;
+    }
+
+
     for (int i = 0; i < arguments.size(); i++) {
 
         cout << "running loop for the "<<i<<"th time, when arguments.size() == "<<arguments.size()<<"\n";
@@ -390,12 +439,20 @@ int evaluateCommand(vector<string> arguments, string specials) {
 
             //Redirect code goes here
             //If it is run, only need to set the dup2 and not run any more forks here
-            char redirType = findRedirectType(arguments);
+            /*
+             * REDIR and piping currently on hold until normal redir works.
+            char redirType = findRedirectType(argsBefore);
             if (redirType != 0) {
-                executeRedirect(charArrayBfr, redirType, fd);
+
+                int redirIndex = findFirstArgWith(argsBefore,"<>",0);
+                char* charArrayRedir[redirIndex+1];
+                stringVectorToArray(argsBefore,charArrayRedir,redirIndex);
+
+                //executeRedirect(charArrayBfr, redirType, fd);
                 //alreadyExecutedIndex = ; //Possible return value
                 continue; //Skip rest of code, there is nothing left to execute before the piping
             }
+            */
 
             int pid = fork();
             if (pid < 0) {
