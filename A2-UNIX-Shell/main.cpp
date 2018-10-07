@@ -572,7 +572,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
                 dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end)
 
                 //If the next argument is a pipe
-                //TODO: Investigate if this shoudl say "arguments"
+                //TODO: Investigate if this shoudl say "arguments" yup
                 if ( writeToPipe(arguments,i) ) {
                     cout << "set stdOut to be write-end of pipe\n";
                     dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
