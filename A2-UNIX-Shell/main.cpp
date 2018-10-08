@@ -444,10 +444,6 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
             char* charArrayBfr[argsBefore.size()+1];
             stringVectorToArray(argsBefore,charArrayBfr); //making it ready for execvp
 
-            for (int l = 0; l < argsBefore.size(); l++) {
-                cout << charArrayBfr[l]<<"\n";
-            }
-
             //Redirect code goes here
             //If it is run, only need to set the dup2 and not run any more forks here
             char redirType = findRedirectType(argsBefore);
@@ -496,7 +492,6 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
             for (int j = i; j < arguments.size(); j++) {
                 if (arguments.at(j) != "|") {
                     argsAfter.push_back(arguments.at(j));
-                    cout << arguments.at(j)<<"\n";
                 }
                 else {
                     alreadyExecutedIndex = j;
@@ -507,10 +502,6 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
 
             char* charArrayAfter[argsAfter.size()+1];
             stringVectorToArray(argsAfter,charArrayAfter); //making it ready for execvp
-
-            for (int l = 0; l < argsAfter.size(); l++) { //My
-                cout << charArrayAfter[l]<<"\n";
-            }
 
             //Takes the arguments after the pipe, and makes sure they are ran!
             if (findFirstArgWith(argsAfter,"\"\'",0) == string::npos) {
