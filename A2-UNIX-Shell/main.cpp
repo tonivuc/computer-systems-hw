@@ -384,16 +384,20 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
 
     //Check if 'cd' or 'exit'
     if (arguments.at(0) == "cd") {
+        int retVal;
         if (arguments.at(1).c_str() == nullptr) {
             fprintf(stderr, "expected argument: \"cd\"\n");
             return -1;
         } else {
             if (arguments.at(1) == "-") {
-                return chdir("..");
+                retVal = chdir("..");
             } else {
-                return chdir(arguments.at(1).c_str());
+                retVal = chdir(arguments.at(1).c_str());
             }
-
+            if (retVal<0) {
+                cout << "Something is wrong with that path. Maybe it doesn't exist?\n";
+            }
+            return retVal;
         }
     }
     else if (arguments.at(0) == "exit" || arguments.at(0) == "EXIT") {
