@@ -331,7 +331,7 @@ void killZombies() {
 
 //Return -1 on failure, 0 otherwise
 //1st input only contains the arguments to be executed
-int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, bool isBGProcess, bool readFromPipe, bool writeToPipe) {
+int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, bool isBGProcess) {
 
     int pid = fork();
     if (pid < 0) {
@@ -360,26 +360,9 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, b
             if (fd[0] < 0) { //If we don't read from the pipe
                 dup2(fileFD, STDOUT_FILENO); //make stdout point to the new file
             }
-            else {
-                if (readFromPipe) {
-                    //Read to file (not directly, through STD_IN) from the read-end of pipe
-                    dup2(fd[0], STDIN_FILENO); //make stdin point to pipe read-end
-                }
-                else { //Read to file from standard in
-                    //Stanard in should point to the new file hmm...
-                    dup2(fileFD, STDIN_FILENO); //make stdin point to pipe read-end
-                }
-                //Standard out points to pipe
-                if (writeToPipe) {
-                    dup2(fd[1], STDOUT_FILENO); //make stdout point to the new file
-                }
-                //Write to standard out
-                else {
-                    dup2(fileFD, STDOUT_FILENO); //make stdout point to the new file
-                }
-
-
-
+            else { //Read from the read-end of pipe
+                dup2(fd[0], STDIN_FILENO); //make stdin point to pipe read-end
+                dup2(fileFD, STDOUT_FILENO); //make stdout point to the new file
             }
 
         }
@@ -392,7 +375,7 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, b
     return -1;
 }
 
-int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int &fileFD, bool noPipe, bool readFromPipe) {
+int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int &fileFD, bool beforePipe) {
 
     char redirType = findRedirectType(arguments);
     cout << "redirType: "<<redirType<<"\n";
@@ -406,12 +389,12 @@ int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int 
         cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
         if (redirType == '>') {
             fileFD = open(arguments[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, write only, permission flags at end
-            if (noPipe) {
+            if (beforePipe) {
                 int noPipe[2] = {-1,-1};
                 pipeFD = noPipe;
             }
 
-            int retVal = executeRedirect(charArrayRedir, redirType, pipeFD, fileFD, isBackgroundProcess(arguments), readFromPipe);
+            int retVal = executeRedirect(charArrayRedir, redirType, pipeFD, fileFD, isBackgroundProcess(arguments));
 
             if (closeFileAfter) close(fileFD);
             return retVal;
@@ -424,25 +407,23 @@ int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int 
 
 /*
 int test(vector<string> argsAfter, int &fileFD) {
-    //This is the code that runs before the pipe
-    char redirType = findRedirectType(argsBefore);
+    //This is the code that runs after the pipe
+    char redirType = findRedirectType(argsAfter);
     cout << "redirType: "<<redirType<<"\n";
-    if (redirType != 0 && findFirstArgWith(argsBefore,"|",0) == -1) {
-        int redirIndex = findFirstArgWith(argsBefore,"<>",0);
+    if (redirType != 0 && findFirstArgWith(argsAfter,"|",0) == -1) {
+        int redirIndex = findFirstArgWith(argsAfter,"<>",0);
         cout << "redirIndex "<<redirIndex<<"\n";
         char* charArrayRedir[redirIndex+1];
-        stringVectorToArray(argsBefore,charArrayRedir,redirIndex-1);
+        stringVectorToArray(argsAfter,charArrayRedir,redirIndex-1);
 
-        cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
-        fileFD = open(argsBefore[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, write only, permission flags at end
-        int noPipe[2] = {-1,-1};
-        int retVal = executeRedirect(charArrayRedir, redirType, noPipe, fileFD, isBackgroundProcess(arguments)); //Assume standard input
-        fileOpen = true;
+        cout << "isn't this a file name? "<<argsAfter[redirIndex+1]<<"\n";
+        fileFD = open(argsAfter[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, write only, permission flags at end
+        int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD, isBackgroundProcess(arguments));
+        close(fileFD);
         return retVal;
     }
 }
-*/
-
+ */
 
 
 
@@ -547,8 +528,8 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
 
                 cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
                 fileFD = open(argsBefore[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, write only, permission flags at end
-                cout << "THIS CODE SHOULD BE RAN OKAY!?\n";
-                int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD, isBackgroundProcess(arguments)); //Assume standard input
+                int noPipe[2] = {-1,-1};
+                int retVal = executeRedirect(charArrayRedir, redirType, noPipe, fileFD, isBackgroundProcess(arguments)); //Assume standard input
                 fileOpen = true;
                 return retVal;
             }
