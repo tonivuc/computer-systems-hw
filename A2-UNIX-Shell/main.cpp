@@ -355,7 +355,7 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, b
         //close(fd[0]); //Read-end
 
         if (redirType == '>') {
-            cout << "redirtype is >\n";
+            //cout << "redirtype is >\n";
 
             if (fd[0] < 0) { //If we don't read from the pipe
                 dup2(fileFD, STDOUT_FILENO); //make stdout point to the new file
@@ -378,7 +378,7 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, b
 int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int &fileFD, bool beforePipe, bool &keepFileOpen) {
 
     char redirType = findRedirectType(arguments);
-    cout << "redirType: "<<redirType<<"\n";
+    //cout << "redirType: "<<redirType<<"\n";
     if (redirType != 0 && findFirstArgWith(arguments,"|",0) == -1) {
         cout << "We are in the redirect logic function\n";
         int redirIndex = findFirstArgWith(arguments,"<>",0);
@@ -507,7 +507,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
             //Redirect code goes here
             //If it is run, only need to set the dup2 and not run any more forks here
             char redirType = findRedirectType(argsBefore);
-            cout << "redirType: "<<redirType<<"\n";
+            //cout << "redirType: "<<redirType<<"\n";
 
             if ( doRedirect(argsBefore, false, fd,fileFD, true, fileOpen) > -1 ) {
                 close(fileFD);
@@ -629,7 +629,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 }
                 //If no more pipes
                 else {
-
+                    //close(fd[1]);
                     dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
                     cout << "made write-end of pipe point to stdout\n";
                 }
@@ -677,7 +677,7 @@ int main() {
     vector<string> tokens;
     int status;;
 
-    cout << "Enter command: ";
+    cout << "Enter command please: ";
     while ( getline( cin, input )) {
 
         killZombies();
