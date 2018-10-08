@@ -94,40 +94,13 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
     for (unsigned int i = 0; i < tokens.size(); i++) {
         if(debug) cout << "In for loop at index "<<i<<" looking at token "<<tokens.at(i)<<"\n";
 
-
-        //New function to do this?
-        //Have to ignore tokens which include "
+        //Have to ignore tokens which include " or '
         if (tokens[i].find_first_of(quotes) != string::npos) {
             betterTokens.push_back(tokens[i]);
             continue;
         }
 
-        //Function to make the token splitter ignore everything after a quote
-        /*
-        bool finished = false;
-        if (tokens[i].find_first_of(quotes) != string::npos && !finished) { //Does the current token have a "?
-            cout << "passed if loop in splitBySpecials\n";
-            //Add it to betterTokens
-            betterTokens.push_back(tokens[i]);
-            for (i = i+1 ; i < tokens.size() && !finished; i++) {
-                if (tokens[i].find_first_of(quotes) != string::npos) { //If this token has a "
-                    cout << "found end token"<<"\n";
-                    betterTokens.push_back(tokens[i]);
-                    finished = true;
-                }
-                else {
-                    betterTokens.push_back(tokens[i]);
-                }
-            }
-        }
-        if (finished) {
-            continue;
-        }
-         */
-
         bool haveSplit = false;
-
-        //While we haven't searched the entire string
 
         specialCharIndex = tokens[i].find_first_of(specials); //returns string::npos if can't find any
         if(debug) cout << "initial specialCharIndex: "<<specialCharIndex<<"\n";
@@ -213,22 +186,16 @@ int normalExecvp(char* arglist[], bool isBGProcess) {
             bgProcessIDs.push_back(pid);
             cout << "pushing process ID "<<pid<<" to process ID vector\n";
         }
-        //Alternative: waitpid(pid, NULL, 0)
         return result;
     }
     else {  // child
-        //exec(cmd);
-        //cout << "Inside the child!\n";
-        //cout << "the command: "<<arglist[0]<<"\n";
-        //char *argz[] = {"ls", "-l",nullptr};
-
         execvp(arglist[0],arglist);
         //execl("ls","ls","-l",NULL);
     }
 }
 
 
-//Function edits the charStringArray[] that is passed in to the function
+//Function converts an array of strings to an array of char pointers with char strings
 void stringVectorToArray(vector<string> arguments, char* charStringArray[]) {
 
     charStringArray[arguments.size()] = nullptr;
@@ -244,17 +211,9 @@ void stringVectorToArray(vector<string> arguments, char* charStringArray[]) {
         charStringArray[i] = charVector[i];
         //cout << "added this to char array:"<<charStringArray[i]<<"checking for whitespace\n";
     }
-    /*
-    cout << "i: "<<i<<"\n";
-    if (charStringArray[i] == nullptr) {
-        cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHHHH\n";
-    }
-    else {
-        cout << ":(\n";
-    }
-     */
 }
 
+//Function converts an array of strings to an array of char pointers with char strings
 void stringVectorToArray(vector<string> arguments, char* charStringArray[], int lastIndexToCopy) {
 
     charStringArray[lastIndexToCopy+1] = nullptr;
@@ -294,6 +253,7 @@ bool writeToPipe(vector<string> arguments, int searchStartIndex) {
     return morePipes;
 }
 
+//Used to search the vector of strings for special characters, ignoring those within quotes
 bool hasSpecials(vector<string> arguments, string specials, int startIndex) {
 
     bool ignore = false;
@@ -316,6 +276,7 @@ bool hasSpecials(vector<string> arguments, string specials, int startIndex) {
     }
     return false;
 }
+
 
 void splitBasedOnRedir(vector<string> argsIn, char** argsOut) {
     int i = 0;
@@ -413,7 +374,7 @@ void killZombies() {
 }
 
 
-int evaluateCommand(vector<string> arguments, string specials) {
+int evaluateCommand(vector<string> arguments, string specials, int *fd) {
 
     if (isBackgroundProcessOldFunc(arguments)) {
         arguments.pop_back();
@@ -447,7 +408,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
         exit(0);
     }
 
-    int fd[2]; //Just in case of piping
+    //Just in case of piping
     //fd[0] --Read-end
     //fd[1] --Write-end
     /*
@@ -724,10 +685,17 @@ int main() {
         tokens = splitBySpecials(tokens,specials);
         tokens = removeOccurancesOf(tokens,'\'');
 
-        evaluateCommand(tokens,specials);
+        int fd[2];
+
+        evaluateCommand(tokens,specials,fd);
         backgroundProcces = false; //Reset this
         //testFunction(tokens,specials);
         killZombies();
+        for (int i = 0; i < 2;i++) {
+            if (close(fd[i])!=0) {
+                cout << "error closing fd["<<i<<"]\n";
+            }
+        }
         cout << "\nBack in main: Write next command below \n> ";
     }
 }
