@@ -444,6 +444,12 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
     else if (arguments.at(0) == "exit" || arguments.at(0) == "EXIT") {
         exit(0);
     }
+    else if (arguments.at(0) == "jobs") {
+        cout << "Current background processes: \n";
+        for (int i : bgProcessIDs) {
+            cout << i <<"\n";
+        }
+    }
 
     //Just in case of piping
     //fd[0] --Read-end
