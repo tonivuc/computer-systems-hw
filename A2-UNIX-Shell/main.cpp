@@ -15,6 +15,7 @@ using namespace std;
 string quotes = "\"\'";
 
 vector<int> bgProcessIDs;
+bool backgroundProcces = false;
 
 
 //Splits by space, but keeps stuff in quotes together. hm
@@ -68,12 +69,16 @@ vector<string> removeOccurancesOf(vector<string> arguments, char toRemove) {
     return arguments;
 }
 
-bool isBackgroundProcess(vector<string> arguments) {
+bool isBackgroundProcessOldFunc(vector<string> arguments) {
     if (arguments[arguments.size()-1] == "&") {
         return true;
     } else {
         return false;
     }
+}
+
+bool isBackgroundProcess(vector<string> args) {
+    return backgroundProcces;
 }
 
 //Function returns string vector with all special characters and words seperated in seperate strings
@@ -202,19 +207,19 @@ int normalExecvp(char* arglist[], bool isBGProcess) {
         int result = 0;
         if (!isBGProcess) {
             result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+            cout << "Child returned!\n";
         }
         else {
             bgProcessIDs.push_back(pid);
+            cout << "pushing process ID "<<pid<<" to process ID vector\n";
         }
-
         //Alternative: waitpid(pid, NULL, 0)
-        cout << "Child returned!\n";
         return result;
     }
     else {  // child
         //exec(cmd);
-        cout << "Inside the child!\n";
-        cout << "the command: "<<arglist[0]<<"\n";
+        //cout << "Inside the child!\n";
+        //cout << "the command: "<<arglist[0]<<"\n";
         //char *argz[] = {"ls", "-l",nullptr};
 
         execvp(arglist[0],arglist);
@@ -392,8 +397,29 @@ int findFirstArgWith(vector<string> args, string searchChars, int startIndex) {
     return -1;
 }
 
+void killZombies() {
+    int status;
+    int finishedChild;
+    for (int i = 0; i < bgProcessIDs.size(); i++) {
+        cout << "currently looking at BGprocess with ID "<<bgProcessIDs.at(i)<<"\n";
+        //finishedChild = wait(nullptr);
+        finishedChild = waitpid(bgProcessIDs[i],&status,WNOHANG);
+        //kill(bgProcessIDs[i], SIGKILL);
+        if (finishedChild > 0) {
+            bgProcessIDs.erase(bgProcessIDs.begin()+i);
+            cout << "process "<<finishedChild<<" should now be removed from the process table\n";
+        }
+    }
+}
+
 
 int evaluateCommand(vector<string> arguments, string specials) {
+
+    if (isBackgroundProcessOldFunc(arguments)) {
+        arguments.pop_back();
+        backgroundProcces = true;
+    }
+
     cout << "in evaluatecommands\n";
 
     char* arglist[arguments.size()+1];
@@ -680,6 +706,8 @@ int main() {
     cout << "Enter command: ";
     while ( getline( cin, input )) {
 
+        killZombies();
+
         //char const *strs[2] = {"awk", "'/pts\/[0-9]/{print $1}'"};
 
 
@@ -697,9 +725,10 @@ int main() {
         tokens = removeOccurancesOf(tokens,'\'');
 
         evaluateCommand(tokens,specials);
+        backgroundProcces = false; //Reset this
         //testFunction(tokens,specials);
-
-        cout << "> ";
+        killZombies();
+        cout << "\nBack in main: Write next command below \n> ";
     }
 }
 
