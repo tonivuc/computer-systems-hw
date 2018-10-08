@@ -17,6 +17,8 @@ string quotes = "\"\'";
 
 vector<int> bgProcessIDs;
 bool backgroundProcces = false;
+int saved_STD_IN;
+int saved_STD_OUT;
 
 
 //Splits by space, but keeps stuff in quotes together. hm
@@ -554,7 +556,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
             else {  // child
                 cout << "Inside the child!\n";
                 //close(fd[0]); //Read-end
-
+                cout << "set STDOUT to point to file write end\n";;
                 //Output to pipe write-end
                 dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
                 //close(fd[1]);
@@ -646,7 +648,8 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 }
                 //If no more pipes
                 else {
-
+                    //int dup2(int oldfd, int newfd); dup2() makes newfd be the copy of oldfd
+                    dup2(saved_STD_OUT,STDOUT_FILENO); //Set standard out to work as originally
                     dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
                     cout << "made write-end of pipe point to stdout\n";
                 }
@@ -716,6 +719,8 @@ int main() {
         tokens = removeOccurancesOf(tokens,'\'');
 
         int fd[2];
+        saved_STD_IN = dup(STDIN_FILENO);
+        saved_STD_OUT = dup(STDOUT_FILENO);
 
         evaluateCommand(tokens,specials,fd);
         backgroundProcces = false; //Reset this
@@ -728,6 +733,8 @@ int main() {
                 cout << "error closing fd["<<i<<"]\n";
             }
         }
+        close(saved_STD_OUT);
+        close(saved_STD_IN);
         cout << "\nBack in main: Write next command below \n> ";
     }
 }
