@@ -375,7 +375,7 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, b
     return -1;
 }
 
-int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int &fileFD, bool beforePipe) {
+int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int &fileFD, bool beforePipe, bool &keepFileOpen) {
 
     char redirType = findRedirectType(arguments);
     cout << "redirType: "<<redirType<<"\n";
@@ -396,7 +396,12 @@ int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int 
 
             int retVal = executeRedirect(charArrayRedir, redirType, pipeFD, fileFD, isBackgroundProcess(arguments));
 
-            if (closeFileAfter) close(fileFD);
+            if (closeFileAfter) {
+                close(fileFD);
+            }
+            else {
+                keepFileOpen = true;
+            }
             return retVal;
         }
     }
@@ -404,29 +409,6 @@ int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int 
         return -1;
     }
 }
-
-/*
-int test(vector<string> argsAfter, int &fileFD) {
-    //This is the code that runs after the pipe
-    char redirType = findRedirectType(argsAfter);
-    cout << "redirType: "<<redirType<<"\n";
-    if (redirType != 0 && findFirstArgWith(argsAfter,"|",0) == -1) {
-        int redirIndex = findFirstArgWith(argsAfter,"<>",0);
-        cout << "redirIndex "<<redirIndex<<"\n";
-        char* charArrayRedir[redirIndex+1];
-        stringVectorToArray(argsAfter,charArrayRedir,redirIndex-1);
-
-        cout << "isn't this a file name? "<<argsAfter[redirIndex+1]<<"\n";
-        fileFD = open(argsAfter[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, write only, permission flags at end
-        int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD, isBackgroundProcess(arguments));
-        close(fileFD);
-        return retVal;
-    }
-}
- */
-
-
-
 
 
 int evaluateCommand(vector<string> arguments, string specials, int *fd) {
@@ -483,7 +465,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
     if (findFirstArgWith(arguments,"\"\'",0) == string::npos) {
         cout << "A bit of a hack, don't check for redirect if string includes quotes.\n";
         cout << "fd[0] "<<fd[0]<<"\n";
-        doRedirect(arguments,true,fd,fileFD,true);
+        doRedirect(arguments,true,fd,fileFD,true,fileOpen);
         cout << "fd[0] "<<fd[0]<<"\n";
     }
 
@@ -520,18 +502,11 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
             //If it is run, only need to set the dup2 and not run any more forks here
             char redirType = findRedirectType(argsBefore);
             cout << "redirType: "<<redirType<<"\n";
-            if (redirType != 0 && findFirstArgWith(argsBefore,"|",0) == -1) {
-                int redirIndex = findFirstArgWith(argsBefore,"<>",0);
-                cout << "redirIndex "<<redirIndex<<"\n";
-                char* charArrayRedir[redirIndex+1];
-                stringVectorToArray(argsBefore,charArrayRedir,redirIndex-1);
 
-                cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
-                fileFD = open(argsBefore[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, write only, permission flags at end
-                int noPipe[2] = {-1,-1};
-                int retVal = executeRedirect(charArrayRedir, redirType, noPipe, fileFD, isBackgroundProcess(arguments)); //Assume standard input
-                fileOpen = true;
-                return retVal;
+            if ( doRedirect(argsBefore, false, fd,fileFD, true, fileOpen) > -1 ) {
+                close(fileFD);
+                cout << "Redir was executed, but no way to take it's output onwards. Abort!\n";
+                return -1; //ABORT because this type of redirect isn't supported.
             }
 
             int pid = fork();
@@ -601,8 +576,11 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 cout << "A bit of a hack, don't check for redirect if string includes quotes.\n";
                 cout << "In the logic block after the pipe\n";
 
-                int retVal = doRedirect(argsAfter,true,fd,fileFD,false);
-                return retVal;
+                int retVal = doRedirect(argsAfter,true,fd,fileFD,false,fileOpen);
+                if (retVal > -1) {
+                    return retVal;
+                }
+
             }
 
             int pid = fork();
