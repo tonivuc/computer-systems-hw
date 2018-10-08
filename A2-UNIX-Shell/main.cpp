@@ -610,7 +610,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
 
             int pid = fork();
             if (pid < 0) {
-                perror("fork() error");
+                perror("fork() error");dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end) (read next command from pipe read)
                 exit(-1);
             }
             else if (pid != 0) {  // parent
@@ -619,6 +619,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
 
                 int result = 0;
                 if (!isBackgroundProcess(arguments)) {
+                    cout << "Waiting for child\n";
                     result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
                 }
                 else {
@@ -638,19 +639,22 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 cout << "Inside the child nr. 2!\n";
                 //close(fd[0]); //Read-end
                 //Read input from pipe read end
-                dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end)
+
 
                 //If the next argument is a pipe
                 //TODO: Investigate if this shoudl say "arguments" yup
                 if ( writeToPipe(arguments,i) ) {
                     cout << "set stdOut to be write-end of pipe\n";
+                    dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end) (read next command from pipe read)
                     dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
                 }
                 //If no more pipes
                 else {
+                    //close(fd[1]);
                     //int dup2(int oldfd, int newfd); dup2() makes newfd be the copy of oldfd
+                    dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end) (read next command from pipe read)
                     dup2(saved_STD_OUT,STDOUT_FILENO); //Set standard out to work as originally
-                    dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
+                    //dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
                     cout << "made write-end of pipe point to stdout\n";
                 }
                 //close(fd[1]);
