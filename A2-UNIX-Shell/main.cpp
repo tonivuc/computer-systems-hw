@@ -511,6 +511,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 }
                 alreadyExecutedIndex = i;
                 cout << "Child returned!\n";
+                //TODO: Possibly add a continue; here?
             }
             else {  // child
                 cout << "Inside the child!\n";
@@ -691,6 +692,8 @@ int main() {
         backgroundProcces = false; //Reset this
         //testFunction(tokens,specials);
         killZombies();
+
+        //Close the pipe that gets opened every time we run a command.
         for (int i = 0; i < 2;i++) {
             if (close(fd[i])!=0) {
                 cout << "error closing fd["<<i<<"]\n";
