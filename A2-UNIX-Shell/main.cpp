@@ -479,7 +479,6 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
      * "2", with a unistd.h symbolic constant of STDERR_FILENO
      */
     //Make a pipe to be used from now on
-    pipe(fd);
 
     //If there is nothing special going on, just run the execvp
     if ( ! hasSpecials(arguments,specials,0) ) { //if there are pipes or redirects?
@@ -544,7 +543,8 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 //Wait until child has finished with the pipe
                 int result = 0;
                 if (!isBackgroundProcess(arguments)) {
-                    result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                    result = wait(nullptr); //Returns child process ID, or -1 if the child had an errorclose(fd[1]);
+                    close(fd[1]);
                 }
                 else {
                     bgProcessIDs.push_back(pid);
@@ -558,7 +558,9 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 //close(fd[0]); //Read-end
 
                 //Output to pipe write-end
+
                 dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
+
                 //close(fd[1]);
                 execvp(charArrayBfr[0],charArrayBfr);
             }
@@ -732,11 +734,13 @@ int main() {
         killZombies();
 
         //Close the pipe that gets opened every time we run a command.
+        /*
         for (int i = 0; i < 2;i++) {
             if (close(fd[i])!=0) {
                 cout << "error closing fd["<<i<<"]\n";
             }
         }
+         */
         close(saved_STD_OUT);
         close(saved_STD_IN);
         cout << "\nBack in main: Write next command below \n> ";
