@@ -9,6 +9,7 @@
 #include <cassert>
 #include <fstream>
 #include <fcntl.h>
+#include <zconf.h>
 
 using namespace std;
 
@@ -383,7 +384,9 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
     pipe(fd);
 
     //Check if 'cd' or 'exit'
+    //Took some code from here for this one: https://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
     if (arguments.at(0) == "cd") {
+        char cwd[PATH_MAX];
         int retVal;
         if (arguments.at(1).c_str() == nullptr) {
             fprintf(stderr, "expected argument: \"cd\"\n");
@@ -396,6 +399,14 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
             }
             if (retVal<0) {
                 cout << "Something is wrong with that path. Maybe it doesn't exist?\n";
+            }
+            else {
+                if (getcwd(cwd, sizeof(cwd)) != NULL) {
+                    cout <<cwd<< " ";
+                } else {
+                    perror("getcwd() error");
+                    return -1;
+                }
             }
             return retVal;
         }
