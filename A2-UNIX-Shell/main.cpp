@@ -22,7 +22,7 @@ bool backgroundProcces = false;
 //Known bug: A quote starting with " can be closed by '. This can be solved with stack based approach.
 vector<string> tokenizeString(const string& str, const string& delimiters)
 {
-    bool debug = false;
+
     vector<string> tokens;
     bool firstRun = true;
 
@@ -35,25 +35,20 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
     do {
         if (!firstRun) {
             tokens.push_back(str.substr(lastPos, pos - lastPos));
-            if(debug)cout << "pushed back: "<<str.substr(lastPos, pos - lastPos)<<"\n";
         }
         else { firstRun = false; }
 
         lastPos = str.find_first_not_of(delimiters, pos); //Find next non-delimiter character
-        if(debug)cout << "strglength "<<str.length()<<"\n";
-        if (string::npos == pos && string::npos == lastPos || pos > str.length()-1) break; //Stop execution if end of string is reached
 
-        if(debug)cout << "lastPos "<<lastPos<<"\n";
-        if(debug)cout << "pos "<<pos<<"\n";
+        if (string::npos == pos && string::npos == lastPos || pos > str.length()-1) break; //Stop execution if end of string is reached
 
         if (str.substr(lastPos,1) == "\"" || str.substr(lastPos,1) == "\'") {
             pos = str.find_first_of(quotes, lastPos+1)+1;
-            if(debug)cout << "quote-pos set to "<<pos<<"\n";
+
         }
         else {
             // Find next "non-delimiter"
             pos = str.find_first_of(delimiters, lastPos);
-            if(debug)cout <<"pos "<<pos<<"\n";
         }
     } while (string::npos != pos || string::npos != lastPos);
 
@@ -62,9 +57,9 @@ vector<string> tokenizeString(const string& str, const string& delimiters)
 
 vector<string> removeOccurancesOf(vector<string> arguments, char toRemove) {
     for (int i = 0; i < arguments.size();i++) {
-        cout << "before: "<<arguments[i]<<"\n";
+
         arguments[i].erase(std::remove(arguments[i].begin(), arguments[i].end(), toRemove), arguments[i].end());
-        cout << "arugments[" << i << "] = " << arguments[i] << "\n";
+
     }
     return arguments;
 }
@@ -90,9 +85,7 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
     size_t specialCharIndex;
     size_t prevSpesCharIndex = 0;
 
-    if(debug) cout << "We in the game fam\n";
     for (unsigned int i = 0; i < tokens.size(); i++) {
-        if(debug) cout << "In for loop at index "<<i<<" looking at token "<<tokens.at(i)<<"\n";
 
         //Have to ignore tokens which include " or '
         if (tokens[i].find_first_of(quotes) != string::npos) {
@@ -103,21 +96,15 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
         bool haveSplit = false;
 
         specialCharIndex = tokens[i].find_first_of(specials); //returns string::npos if can't find any
-        if(debug) cout << "initial specialCharIndex: "<<specialCharIndex<<"\n";
 
-        if(debug) cout << "Before while loop \n";
         //Adds what is before the token, and the token
         while  (specialCharIndex != string::npos) {
-            if(debug)cout << "in dat while loop\n";
 
-                if(debug)cout << "tokens[i].size() "<<tokens[i].size()<<" and tokens[i] == "<<tokens[i]<<"\n";
                 if (specialCharIndex > 0) {
-                    //add the text before the token
-                    if(debug)cout << "pushBack the text before the token:"<<tokens[i].substr(0,specialCharIndex)<<"endhere\n";
+                    //add the text before the token";
                     betterTokens.push_back(tokens[i].substr(0,specialCharIndex)); //normal text, from the start
                 }
 
-            if(debug)cout << "pushBack the token: "<<tokens[i].substr(specialCharIndex,1)<<"\n";
             betterTokens.push_back(tokens[i].substr(specialCharIndex,1)); //The actual token
             haveSplit = true;
 
@@ -129,27 +116,21 @@ vector<string> splitBySpecials(vector<string> tokens, const string& specials) {
             //Add what is after the token
             //If there is still another special character
             if (specialCharIndex < string::npos) {
-                if(debug)cout << "Added everything after the token up to the next token "<<tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-prevSpesCharIndex)<<"\n";
                 betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,specialCharIndex-prevSpesCharIndex)); //The text between previous and next special char
             }
             else {
                 //Don't add empty stirngs
                 if (tokens[i].substr(prevSpesCharIndex+1,string::npos).size() >= 1) {
-                    if(debug)cout << "Added everything in the string after the token: " << tokens[i].substr(prevSpesCharIndex+1,string::npos)<<"\n";
                     betterTokens.push_back(tokens[i].substr(prevSpesCharIndex+1,string::npos));
                 }
             }
 
         };
-        if(debug)cout << "While loop done\n";
 
         if (haveSplit == false) {
-            if(debug)cout << "havesplit == false, added "<<tokens.at(i)<<" to betterTokens\n";
             betterTokens.push_back(tokens.at(i));
         }
-
     }
-    if(debug)cout << "Returning from splitBySpecials!";
     return betterTokens;
 }
 
@@ -176,11 +157,9 @@ int normalExecvp(char* arglist[], bool isBGProcess) {
         exit(-1);
     }
     else if (pid != 0) {  // parent
-        cout << "Inside the parent!\n";
         int result = 0;
         if (!isBGProcess) {
             result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
-            cout << "Child returned!\n";
         }
         else {
             bgProcessIDs.push_back(pid);
@@ -217,7 +196,6 @@ void stringVectorToArray(vector<string> arguments, char* charStringArray[]) {
 void stringVectorToArray(vector<string> arguments, char* charStringArray[], int lastIndexToCopy) {
 
     charStringArray[lastIndexToCopy+1] = nullptr;
-    cout << "lastIndex"<<lastIndexToCopy<<" and nullptr is stored at "<<lastIndexToCopy+1<<"\n";
     vector<char*> charVector;
 
     //Convert vector<string> to vector<char*>
@@ -226,18 +204,9 @@ void stringVectorToArray(vector<string> arguments, char* charStringArray[], int 
     //Convert vector<char*> to char*[]
     int i = 0;
     for ( ; i <= lastIndexToCopy; i++) {
-        cout << "i: "<<i<<"\n";
         charStringArray[i] = charVector[i];
-        cout << "added this to char array:"<<charStringArray[i]<<"checking for whitespace\n";
     }
 
-    cout << "outside for i: "<<i<<"\n";
-    if (charStringArray[i] == nullptr) {
-        cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHHHH\n";
-    }
-    else {
-        cout << ":(\n";
-    }
 }
 
 //This function checks if the process should write to standard out or not
@@ -258,10 +227,8 @@ bool hasSpecials(vector<string> arguments, string specials, int startIndex) {
 
     bool ignore = false;
 
-    for (int t = startIndex; t<arguments.size();t++) {
-        cout << "token: "<<arguments[t]<<"\n";
+    for (int t = startIndex; t<arguments.size();t++) { ;
         if (arguments[t].find_first_of(quotes) != string::npos ) {
-            cout << "Found quotes!\n";
             if (ignore == false) {
                 ignore = true;
             }
@@ -269,8 +236,7 @@ bool hasSpecials(vector<string> arguments, string specials, int startIndex) {
                 ignore = false;
             }
         }
-        if ((arguments[t].find_first_of(specials) != string::npos) && (ignore == false) && arguments[t].find_first_of(quotes) == string::npos) {
-            cout << "found special! "<< arguments[t].find_first_of(specials)<<"\n";
+        if ((arguments[t].find_first_of(specials) != string::npos) && (ignore == false) && arguments[t].find_first_of(quotes) == string::npos) { ;
             return true;
         }
     }
@@ -318,13 +284,11 @@ void killZombies() {
     int status;
     int finishedChild;
     for (int i = 0; i < bgProcessIDs.size(); i++) {
-        cout << "currently looking at BGprocess with ID "<<bgProcessIDs.at(i)<<"\n";
         //finishedChild = wait(nullptr);
         finishedChild = waitpid(bgProcessIDs[i],&status,WNOHANG);
         //kill(bgProcessIDs[i], SIGKILL);
         if (finishedChild > 0) {
             bgProcessIDs.erase(bgProcessIDs.begin()+i);
-            cout << "process "<<finishedChild<<" should now be removed from the process table\n";
         }
     }
 }
@@ -339,24 +303,19 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, b
         exit(-1);
     }
     else if (pid != 0) {  // parent
-        cout << "Inside the redirect parent!\n";
         int result = 0;
         if (!isBGProcess) {
             result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
         }
         else {
             bgProcessIDs.push_back(pid);
-        }
-        cout << "Redirect child returned!\n";
+        };
         return result;
     }
     else {  // child
-        cout << "Inside the child!\n";
         //close(fd[0]); //Read-end
 
         if (redirType == '>') {
-            cout << "redirtype is >\n";
-
             if (fd[0] < 0) { //If we don't read from the pipe
                 dup2(fileFD, STDOUT_FILENO); //make stdout point to the new file
             }
@@ -364,7 +323,6 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, b
                 dup2(fd[0], STDIN_FILENO); //make stdin point to pipe read-end
                 dup2(fileFD, STDOUT_FILENO); //make stdout point to the new file
             }
-
         }
         else if (redirType == '<') {
             //do something else
@@ -378,15 +336,11 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, b
 int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int &fileFD, bool beforePipe, bool &keepFileOpen) {
 
     char redirType = findRedirectType(arguments);
-    cout << "redirType: "<<redirType<<"\n";
     if (redirType != 0 && findFirstArgWith(arguments,"|",0) == -1) {
-        cout << "We are in the redirect logic function\n";
         int redirIndex = findFirstArgWith(arguments,"<>",0);
-        cout << "redirIndex "<<redirIndex<<"\n";
         char* charArrayRedir[redirIndex+1];
         stringVectorToArray(arguments,charArrayRedir,redirIndex-1);
 
-        cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
         if (redirType == '>') {
             fileFD = open(arguments[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, write only, permission flags at end
             if (beforePipe) {
@@ -417,8 +371,6 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
         arguments.pop_back();
         backgroundProcces = true;
     }
-
-    cout << "in evaluatecommands\n";
 
     char* arglist[arguments.size()+1];
     int alreadyExecutedIndex = 0;
@@ -469,16 +421,11 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
 
     //Check for redirects in case of no pipes
     if (findFirstArgWith(arguments,"\"\'",0) == string::npos) {
-        cout << "A bit of a hack, don't check for redirect if string includes quotes.\n";
-        cout << "fd[0] "<<fd[0]<<"\n";
         doRedirect(arguments,true,fd,fileFD,true,fileOpen);
-        cout << "fd[0] "<<fd[0]<<"\n";
     }
 
 
     for (int i = 0; i < arguments.size(); i++) {
-
-        cout << "running loop for the "<<i<<"th time, when arguments.size() == "<<arguments.size()<<"\n";
 
         //Make sure commands that have been executed are not executed again.
         //By moving i to aftet the commands
@@ -486,9 +433,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
         //Execute normally. Otherwise, if there are more pipes.
         //continue execution:
         if (arguments.at(i) == "|" && alreadyExecutedIndex < i) {
-            cout << "arguments["<<i<<"] is "<<arguments.at(i)<<"\n";
             vector<string> argsBefore;
-
 
             //FUNNY. Bug saved me.
             //We don't want to run the commands we already ran, again. This is now in the if-condition.
@@ -499,7 +444,6 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
             char* charArrayBfr[argsBefore.size()+1];
             stringVectorToArray(argsBefore,charArrayBfr); //making it ready for execvp
 
-            cout << "Args in that new bfr char array:\n";
             for (int l = 0; l < argsBefore.size(); l++) {
                 cout << charArrayBfr[l]<<"\n";
             }
@@ -507,11 +451,9 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
             //Redirect code goes here
             //If it is run, only need to set the dup2 and not run any more forks here
             char redirType = findRedirectType(argsBefore);
-            cout << "redirType: "<<redirType<<"\n";
 
             if ( doRedirect(argsBefore, false, fd,fileFD, true, fileOpen) > -1 ) {
                 close(fileFD);
-                cout << "Redir was executed, but no way to take it's output onwards. Abort!\n";
                 return -1; //ABORT because this type of redirect isn't supported.
             }
 
@@ -521,7 +463,6 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 exit(-1);
             }
             else if (pid != 0) {  // parent
-                cout << "Inside the parent!\n";
                 //Wait until child has finished with the pipe
                 int result = 0;
                 if (!isBackgroundProcess(arguments)) {
@@ -531,11 +472,9 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                     bgProcessIDs.push_back(pid);
                 }
                 alreadyExecutedIndex = i;
-                cout << "Child returned!\n";
                 //TODO: Possibly add a continue; here?
             }
             else {  // child
-                cout << "Inside the child!\n";
                 //close(fd[0]); //Read-end
 
                 //Output to pipe write-end
@@ -553,15 +492,13 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
 
             //Pipe logic
             //Put all arguments before pipe symbol in separate vector
-            cout << "Printing out arguments added to argsAfter\n";
+
             for (int j = i; j < arguments.size(); j++) {
                 if (arguments.at(j) != "|") {
                     argsAfter.push_back(arguments.at(j));
                     cout << arguments.at(j)<<"\n";
                 }
                 else {
-                    cout << "Hit another pipe, stop adding to argsAfter.\n";
-                    cout << "alreadyExecutedIndex = "<<j<<"\n";
                     alreadyExecutedIndex = j;
                     //i = i+1; //This line of code is here to make sure we don't run the code again.
                     break;
@@ -571,16 +508,12 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
             char* charArrayAfter[argsAfter.size()+1];
             stringVectorToArray(argsAfter,charArrayAfter); //making it ready for execvp
 
-            //Just debug printing
-            cout << "Args in that new char array after (not including nullptr):\n";
             for (int l = 0; l < argsAfter.size(); l++) { //My
                 cout << charArrayAfter[l]<<"\n";
             }
 
             //Takes the arguments after the pipe, and makes sure they are ran!
             if (findFirstArgWith(argsAfter,"\"\'",0) == string::npos) {
-                cout << "A bit of a hack, don't check for redirect if string includes quotes.\n";
-                cout << "In the logic block after the pipe\n";
 
                 int retVal = doRedirect(argsAfter,true,fd,fileFD,false,fileOpen);
                 if (retVal > -1) {
@@ -595,7 +528,6 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 exit(-1);
             }
             else if (pid != 0) {  // parent
-                cout << "Inside the parent nr. 2!\n";
                 //Wait until child has finished with the pipe
 
                 int result = 0;
@@ -607,16 +539,12 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 }
 
                 if (fileOpen) {
-                    cout << "They said THIS CODE WOULD NEVER RUN! THEY WERE WRONG!";
-                    cout << "closed file with fileFD "<<fileFD<<"\n";
                     close(fileFD);
                     fileOpen = false;
                 }
-                cout << "Child nr. 2 returned!\n";
                 //TODO: No return value in several spots. Why?
             }
             else {  // child
-                cout << "Inside the child nr. 2!\n";
                 //close(fd[0]); //Read-end
                 //Read input from pipe read end
                 dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end)
@@ -624,14 +552,11 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 //If the next argument is a pipe
                 //TODO: Investigate if this shoudl say "arguments" yup
                 if ( writeToPipe(arguments,i) ) {
-                    cout << "set stdOut to be write-end of pipe\n";
                     dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
                 }
                 //If no more pipes
                 else {
-
                     dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
-                    cout << "made write-end of pipe point to stdout\n";
                 }
                 //close(fd[1]);
 
@@ -669,7 +594,6 @@ vector<string> testFunction(vector<string> arguments, const string& specials) {
 
 
 int main() {
-    cout << "this works?\n";
     string input;
     std::vector<char*>  charArray;
     const string delim = " ";
@@ -682,18 +606,6 @@ int main() {
 
         killZombies();
 
-        //char const *strs[2] = {"awk", "'/pts\/[0-9]/{print $1}'"};
-
-
-        //ps | awk '/pts\/[0-9]/{print $1}''
-        //awk "/pts\/[0-9]/{print $1}"
-/*
-        char* testArr[2];
-        testArr[0] = "ps";
-        testArr[1] = "'/pts\/[0-9]/{print $1}'";
-
-        execvp(testArr[0],testArr);
-          */
         tokens = tokenizeString(input,delim);
         tokens = splitBySpecials(tokens,specials);
         tokens = removeOccurancesOf(tokens,'\'');
@@ -711,7 +623,7 @@ int main() {
                 cout << "error closing fd["<<i<<"]\n";
             }
         }
-        cout << "\nBack in main: Write next command below \n> ";
+        cout << "> ";
     }
 }
 
