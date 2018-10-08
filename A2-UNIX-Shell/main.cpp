@@ -395,7 +395,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
         }
     }
     else if (arguments.at(0) == "exit" || arguments.at(0) == "EXIT") {
-        //do exit logic
+        exit(0);
     }
 
     int fd[2]; //Just in case of piping
