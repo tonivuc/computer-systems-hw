@@ -289,6 +289,46 @@ void splitBasedOnRedir(vector<string> argsIn, char** argsOut) {
     stringVectorToArray(argsIn, argsOut, i);
 }
 
+
+
+char findRedirectType(vector<string> arguments) {
+    string symbols = "<>";
+
+    for (int i = 0; i < arguments.size();i++) {
+
+        if (arguments[i].find_first_of(symbols) != string::npos) {
+            assert(arguments[i].size() == 1);
+            char character = arguments[i][0];
+            return character;
+        }
+    }
+    return 0;
+}
+
+int findFirstArgWith(vector<string> args, string searchChars, int startIndex) {
+    for (int i = startIndex; i < args.size();i++) {
+        if (args[i].find_first_of(searchChars) != string::npos) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void killZombies() {
+    int status;
+    int finishedChild;
+    for (int i = 0; i < bgProcessIDs.size(); i++) {
+        cout << "currently looking at BGprocess with ID "<<bgProcessIDs.at(i)<<"\n";
+        //finishedChild = wait(nullptr);
+        finishedChild = waitpid(bgProcessIDs[i],&status,WNOHANG);
+        //kill(bgProcessIDs[i], SIGKILL);
+        if (finishedChild > 0) {
+            bgProcessIDs.erase(bgProcessIDs.begin()+i);
+            cout << "process "<<finishedChild<<" should now be removed from the process table\n";
+        }
+    }
+}
+
 //Return -1 on failure, 0 otherwise
 //1st input only contains the arguments to be executed
 int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, bool isBGProcess) {
@@ -335,43 +375,58 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, b
     return -1;
 }
 
-char findRedirectType(vector<string> arguments) {
-    string symbols = "<>";
+int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int &fileFD, bool beforePipe) {
 
-    for (int i = 0; i < arguments.size();i++) {
+    char redirType = findRedirectType(arguments);
+    cout << "redirType: "<<redirType<<"\n";
+    if (redirType != 0 && findFirstArgWith(arguments,"|",0) == -1) {
+        cout << "We are in the redirect logic function\n";
+        int redirIndex = findFirstArgWith(arguments,"<>",0);
+        cout << "redirIndex "<<redirIndex<<"\n";
+        char* charArrayRedir[redirIndex+1];
+        stringVectorToArray(arguments,charArrayRedir,redirIndex-1);
 
-        if (arguments[i].find_first_of(symbols) != string::npos) {
-            assert(arguments[i].size() == 1);
-            char character = arguments[i][0];
-            return character;
+        cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
+        if (redirType == '>') {
+            fileFD = open(arguments[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, write only, permission flags at end
+            if (beforePipe) {
+                int noPipe[2] = {-1,-1};
+                pipeFD = noPipe;
+            }
+
+            int retVal = executeRedirect(charArrayRedir, redirType, pipeFD, fileFD, isBackgroundProcess(arguments));
+
+            if (closeFileAfter) close(fileFD);
+            return retVal;
         }
     }
-    return 0;
-}
-
-int findFirstArgWith(vector<string> args, string searchChars, int startIndex) {
-    for (int i = startIndex; i < args.size();i++) {
-        if (args[i].find_first_of(searchChars) != string::npos) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-void killZombies() {
-    int status;
-    int finishedChild;
-    for (int i = 0; i < bgProcessIDs.size(); i++) {
-        cout << "currently looking at BGprocess with ID "<<bgProcessIDs.at(i)<<"\n";
-        //finishedChild = wait(nullptr);
-        finishedChild = waitpid(bgProcessIDs[i],&status,WNOHANG);
-        //kill(bgProcessIDs[i], SIGKILL);
-        if (finishedChild > 0) {
-            bgProcessIDs.erase(bgProcessIDs.begin()+i);
-            cout << "process "<<finishedChild<<" should now be removed from the process table\n";
-        }
+    else {
+        return -1;
     }
 }
+
+/*
+int test(vector<string> argsAfter, int &fileFD) {
+    //This is the code that runs after the pipe
+    char redirType = findRedirectType(argsAfter);
+    cout << "redirType: "<<redirType<<"\n";
+    if (redirType != 0 && findFirstArgWith(argsAfter,"|",0) == -1) {
+        int redirIndex = findFirstArgWith(argsAfter,"<>",0);
+        cout << "redirIndex "<<redirIndex<<"\n";
+        char* charArrayRedir[redirIndex+1];
+        stringVectorToArray(argsAfter,charArrayRedir,redirIndex-1);
+
+        cout << "isn't this a file name? "<<argsAfter[redirIndex+1]<<"\n";
+        fileFD = open(argsAfter[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, write only, permission flags at end
+        int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD, isBackgroundProcess(arguments));
+        close(fileFD);
+        return retVal;
+    }
+}
+ */
+
+
+
 
 
 int evaluateCommand(vector<string> arguments, string specials, int *fd) {
@@ -427,25 +482,10 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
     //Check for redirects in case of no pipes
     if (findFirstArgWith(arguments,"\"\'",0) == string::npos) {
         cout << "A bit of a hack, don't check for redirect if string includes quotes.\n";
-
-        char redirType = findRedirectType(arguments);
-        cout << "redirType: "<<redirType<<"\n";
-        if (redirType != 0 && findFirstArgWith(arguments,"|",0) == -1) {
-            cout << "We are in the redirect logic block outside the for loop\n";
-            int redirIndex = findFirstArgWith(arguments,"<>",0);
-            cout << "redirIndex "<<redirIndex<<"\n";
-            char* charArrayRedir[redirIndex+1];
-            stringVectorToArray(arguments,charArrayRedir,redirIndex-1);
-
-            cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
-            int fileFD = open(arguments[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
-            int noPipe[2] = {-1,-1};
-            int retVal = executeRedirect(charArrayRedir, redirType, noPipe, fileFD, isBackgroundProcess(arguments));
-            close(fileFD);
-            return retVal;
-        }
+        cout << "fd[0] "<<fd[0]<<"\n";
+        doRedirect(arguments,true,fd,fileFD,true);
+        cout << "fd[0] "<<fd[0]<<"\n";
     }
-
 
 
     for (int i = 0; i < arguments.size(); i++) {
@@ -487,7 +527,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 stringVectorToArray(argsBefore,charArrayRedir,redirIndex-1);
 
                 cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
-                fileFD = open(argsBefore[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
+                fileFD = open(argsBefore[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, write only, permission flags at end
                 int noPipe[2] = {-1,-1};
                 int retVal = executeRedirect(charArrayRedir, redirType, noPipe, fileFD, isBackgroundProcess(arguments)); //Assume standard input
                 fileOpen = true;
@@ -556,25 +596,13 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 cout << charArrayAfter[l]<<"\n";
             }
 
-            //Check for redirects in case of no pipes
+            //Takes the arguments after the pipe, and makes sure they are ran!
             if (findFirstArgWith(argsAfter,"\"\'",0) == string::npos) {
                 cout << "A bit of a hack, don't check for redirect if string includes quotes.\n";
                 cout << "In the logic block after the pipe\n";
 
-                char redirType = findRedirectType(argsAfter);
-                cout << "redirType: "<<redirType<<"\n";
-                if (redirType != 0 && findFirstArgWith(argsAfter,"|",0) == -1) {
-                    int redirIndex = findFirstArgWith(argsAfter,"<>",0);
-                    cout << "redirIndex "<<redirIndex<<"\n";
-                    char* charArrayRedir[redirIndex+1];
-                    stringVectorToArray(argsAfter,charArrayRedir,redirIndex-1);
-
-                    cout << "isn't this a file name? "<<argsAfter[redirIndex+1]<<"\n";
-                    fileFD = open(argsAfter[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
-                    int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD, isBackgroundProcess(arguments));
-                    close(fileFD);
-                    return retVal;
-                }
+                int retVal = doRedirect(argsAfter,true,fd,fileFD,false);
+                return retVal;
             }
 
             int pid = fork();
