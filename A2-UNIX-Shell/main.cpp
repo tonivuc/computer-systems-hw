@@ -9,6 +9,7 @@
 #include <cassert>
 #include <fstream>
 #include <fcntl.h>
+#include <zconf.h>
 
 using namespace std;
 
@@ -355,7 +356,7 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, b
         //close(fd[0]); //Read-end
 
         if (redirType == '>') {
-            //cout << "redirtype is >\n";
+            cout << "redirtype is >\n";
 
             if (fd[0] < 0) { //If we don't read from the pipe
                 dup2(fileFD, STDOUT_FILENO); //make stdout point to the new file
@@ -378,7 +379,7 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, b
 int doRedirect(vector<string> arguments, bool closeFileAfter, int pipeFD[], int &fileFD, bool beforePipe, bool &keepFileOpen) {
 
     char redirType = findRedirectType(arguments);
-    //cout << "redirType: "<<redirType<<"\n";
+    cout << "redirType: "<<redirType<<"\n";
     if (redirType != 0 && findFirstArgWith(arguments,"|",0) == -1) {
         cout << "We are in the redirect logic function\n";
         int redirIndex = findFirstArgWith(arguments,"<>",0);
@@ -430,7 +431,9 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
     pipe(fd);
 
     //Check if 'cd' or 'exit'
+    //Took some code from here for this one: https://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
     if (arguments.at(0) == "cd") {
+        char cwd[PATH_MAX];
         int retVal;
         if (arguments.at(1).c_str() == nullptr) {
             fprintf(stderr, "expected argument: \"cd\"\n");
@@ -444,8 +447,15 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
             if (retVal<0) {
                 cout << "Something is wrong with that path. Maybe it doesn't exist?\n";
             }
+            else {
+                if (getcwd(cwd, sizeof(cwd)) != NULL) {
+                    cout <<cwd<< " ";
+                } else {
+                    perror("getcwd() error");
+                    return -1;
+                }
+            }
             return retVal;
-
         }
     }
     else if (arguments.at(0) == "exit" || arguments.at(0) == "EXIT") {
@@ -467,7 +477,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
      * "2", with a unistd.h symbolic constant of STDERR_FILENO
      */
     //Make a pipe to be used from now on
-
+    pipe(fd);
 
     //If there is nothing special going on, just run the execvp
     if ( ! hasSpecials(arguments,specials,0) ) { //if there are pipes or redirects?
@@ -514,7 +524,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
             //Redirect code goes here
             //If it is run, only need to set the dup2 and not run any more forks here
             char redirType = findRedirectType(argsBefore);
-            //cout << "redirType: "<<redirType<<"\n";
+            cout << "redirType: "<<redirType<<"\n";
 
             if ( doRedirect(argsBefore, false, fd,fileFD, true, fileOpen) > -1 ) {
                 close(fileFD);
@@ -636,7 +646,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 }
                 //If no more pipes
                 else {
-                    //close(fd[1]);
+
                     dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
                     cout << "made write-end of pipe point to stdout\n";
                 }
@@ -684,7 +694,7 @@ int main() {
     vector<string> tokens;
     int status;;
 
-    cout << "Enter command please: ";
+    cout << "Enter command: ";
     while ( getline( cin, input )) {
 
         killZombies();
