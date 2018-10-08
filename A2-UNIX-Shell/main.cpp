@@ -14,6 +14,8 @@ using namespace std;
 
 string quotes = "\"\'";
 
+vector<int> bgProcessIDs;
+
 
 //Splits by space, but keeps stuff in quotes together. hm
 //Known bug: A quote starting with " can be closed by '. This can be solved with stack based approach.
@@ -64,6 +66,14 @@ vector<string> removeOccurancesOf(vector<string> arguments, char toRemove) {
         cout << "arugments[" << i << "] = " << arguments[i] << "\n";
     }
     return arguments;
+}
+
+bool isBackgroundProcess(vector<string> arguments) {
+    if (arguments[arguments.size()-1] == "&") {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 //Function returns string vector with all special characters and words seperated in seperate strings
@@ -181,7 +191,7 @@ char *convert(const std::string & s)
     return pc;
 }
 
-int normalExecvp(char* arglist[]) {
+int normalExecvp(char* arglist[], bool isBGProcess) {
     int pid = fork();
     if (pid < 0) {
         perror("fork() error");
@@ -189,8 +199,14 @@ int normalExecvp(char* arglist[]) {
     }
     else if (pid != 0) {  // parent
         cout << "Inside the parent!\n";
-        int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
-        //TODO: This dude does a do-while-loop. Why? https://brennan.io/2015/01/16/write-a-shell-in-c/
+        int result = 0;
+        if (!isBGProcess) {
+            result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+        }
+        else {
+            bgProcessIDs.push_back(pid);
+        }
+
         //Alternative: waitpid(pid, NULL, 0)
         cout << "Child returned!\n";
         return result;
@@ -309,7 +325,7 @@ void splitBasedOnRedir(vector<string> argsIn, char** argsOut) {
 
 //Return -1 on failure, 0 otherwise
 //1st input only contains the arguments to be executed
-int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD) {
+int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD, bool isBGProcess) {
 
     int pid = fork();
     if (pid < 0) {
@@ -318,7 +334,13 @@ int executeRedirect(char** charArrayBfr, char redirType, int fd[], int fileFD) {
     }
     else if (pid != 0) {  // parent
         cout << "Inside the redirect parent!\n";
-        int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+        int result = 0;
+        if (!isBGProcess) {
+            result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+        }
+        else {
+            bgProcessIDs.push_back(pid);
+        }
         cout << "Redirect child returned!\n";
         return result;
     }
@@ -370,6 +392,7 @@ int findFirstArgWith(vector<string> args, string searchChars, int startIndex) {
     return -1;
 }
 
+
 int evaluateCommand(vector<string> arguments, string specials) {
     cout << "in evaluatecommands\n";
 
@@ -411,7 +434,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
 
     //If there is nothing special going on, just run the execvp
     if ( ! hasSpecials(arguments,specials,0) ) { //if there are pipes or redirects?
-        return normalExecvp(arglist);
+        return normalExecvp(arglist, isBackgroundProcess(arguments));
     }
 
     //Check for redirects in case of no pipes
@@ -430,7 +453,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
             cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
             int fileFD = open(arguments[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
             int noPipe[2] = {-1,-1};
-            int retVal = executeRedirect(charArrayRedir, redirType, noPipe, fileFD);
+            int retVal = executeRedirect(charArrayRedir, redirType, noPipe, fileFD, isBackgroundProcess(arguments));
             close(fileFD);
             return retVal;
         }
@@ -479,7 +502,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
                 cout << "isn't this a file name? "<<arguments[redirIndex+1]<<"\n";
                 fileFD = open(argsBefore[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
                 int noPipe[2] = {-1,-1};
-                int retVal = executeRedirect(charArrayRedir, redirType, noPipe, fileFD); //Assume standard input
+                int retVal = executeRedirect(charArrayRedir, redirType, noPipe, fileFD, isBackgroundProcess(arguments)); //Assume standard input
                 fileOpen = true;
                 return retVal;
             }
@@ -492,7 +515,13 @@ int evaluateCommand(vector<string> arguments, string specials) {
             else if (pid != 0) {  // parent
                 cout << "Inside the parent!\n";
                 //Wait until child has finished with the pipe
-                int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                int result = 0;
+                if (!isBackgroundProcess(arguments)) {
+                    result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                }
+                else {
+                    bgProcessIDs.push_back(pid);
+                }
                 alreadyExecutedIndex = i;
                 cout << "Child returned!\n";
             }
@@ -554,7 +583,7 @@ int evaluateCommand(vector<string> arguments, string specials) {
 
                     cout << "isn't this a file name? "<<argsAfter[redirIndex+1]<<"\n";
                     fileFD = open(argsAfter[redirIndex+1].c_str(), O_CREAT|O_WRONLY, S_IRUSR | S_IWUSR); //Create a file if not there, read only, permission flags at end
-                    int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD);
+                    int retVal = executeRedirect(charArrayRedir, redirType, fd, fileFD, isBackgroundProcess(arguments));
                     close(fileFD);
                     return retVal;
                 }
@@ -568,13 +597,23 @@ int evaluateCommand(vector<string> arguments, string specials) {
             else if (pid != 0) {  // parent
                 cout << "Inside the parent nr. 2!\n";
                 //Wait until child has finished with the pipe
-                int result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+
+                int result = 0;
+                if (!isBackgroundProcess(arguments)) {
+                    result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                }
+                else {
+                    bgProcessIDs.push_back(pid);
+                }
+
                 if (fileOpen) {
+                    cout << "They said THIS CODE WOULD NEVER RUN! THEY WERE WRONG!";
                     cout << "closed file with fileFD "<<fileFD<<"\n";
                     close(fileFD);
                     fileOpen = false;
                 }
                 cout << "Child nr. 2 returned!\n";
+                //TODO: No return value in several spots. Why?
             }
             else {  // child
                 cout << "Inside the child nr. 2!\n";
