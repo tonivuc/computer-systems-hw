@@ -481,6 +481,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 int result = 0;
                 if (!isBackgroundProcess(arguments)) {
                     result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                    //close(fd[1]);
                 }
                 else {
                     bgProcessIDs.push_back(pid);
