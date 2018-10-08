@@ -427,17 +427,24 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
 
     stringVectorToArray(arguments,arglist); //No return value, but populates arglist
 
+    pipe(fd);
+
     //Check if 'cd' or 'exit'
     if (arguments.at(0) == "cd") {
+        int retVal;
         if (arguments.at(1).c_str() == nullptr) {
             fprintf(stderr, "expected argument: \"cd\"\n");
             return -1;
         } else {
             if (arguments.at(1) == "-") {
-                return chdir("..");
+                retVal = chdir("..");
             } else {
-                return chdir(arguments.at(1).c_str());
+                retVal = chdir(arguments.at(1).c_str());
             }
+            if (retVal<0) {
+                cout << "Something is wrong with that path. Maybe it doesn't exist?\n";
+            }
+            return retVal;
 
         }
     }
@@ -460,7 +467,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
      * "2", with a unistd.h symbolic constant of STDERR_FILENO
      */
     //Make a pipe to be used from now on
-    pipe(fd);
+
 
     //If there is nothing special going on, just run the execvp
     if ( ! hasSpecials(arguments,specials,0) ) { //if there are pipes or redirects?
