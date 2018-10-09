@@ -544,7 +544,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 int result = 0;
                 if (!isBackgroundProcess(arguments)) {
                     result = wait(nullptr); //Returns child process ID, or -1 if the child had an errorclose(fd[1]);
-                    close(fd[1]);
+                    //close(fd[1]);
                 }
                 else {
                     bgProcessIDs.push_back(pid);
@@ -623,6 +623,11 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 if (!isBackgroundProcess(arguments)) {
                     cout << "Waiting for child\n";
                     result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                    /*
+                    if (!writeToPipe(arguments,i)) {
+                        close(fd[1]);
+                    }
+                     */
                 }
                 else {
                     bgProcessIDs.push_back(pid);
@@ -658,6 +663,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                     dup2(saved_STD_OUT,STDOUT_FILENO); //Set standard out to work as originally
                     //dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
                     cout << "made write-end of pipe point to stdout\n";
+
                 }
                 //close(fd[1]);
 
