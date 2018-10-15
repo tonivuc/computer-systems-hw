@@ -106,8 +106,8 @@ int main(int argc, char * argv[]) {
         cout << "w == " << w << endl;
 
         cout << "CLIENT STARTED:" << endl;
-        cout << "Establishing control channel... " << flush;
-        RequestChannel *chan = new RequestChannel("control", RequestChannel::CLIENT_SIDE);
+        cout << "Establishing control channel... " << flush; //What is this? endl. Forces it to be printed immediately.
+        RequestChannel *chan = new RequestChannel("control", RequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
         cout << "done." << endl<< flush;
 
 		SafeBuffer request_buffer;
@@ -126,14 +126,17 @@ int main(int argc, char * argv[]) {
         }
         cout << "done." << endl;
 
-	
-        chan->cwrite("newchannel");
-		string s = chan->cread ();
+    	//Handshake start
+        chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
+        //cwrite is a method in the RequestChannel chan object
+        //Response to request newchannel returns a key
+		string s = chan->cread (); //cread gets the response
         RequestChannel *workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
+        //Handshake end
 
         while(true) {
             string request = request_buffer.pop();
-			workerChannel->cwrite(request);
+			workerChannel->cwrite(request); //Sends "requests" to the server
 
 			if(request == "quit") {
 			   	delete workerChannel;
