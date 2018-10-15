@@ -35,8 +35,18 @@
 #include "Histogram.h"
 using namespace std;
 
+struct dataForThread {    /* Used as argument to thread_start() */
+     int     n;       
+     char    *data_string;
+     SafeBuffer *req_buffer; //Need to know where to push
+     };
 
+
+//This function is fed to the thread as "start_routine"
 void* request_thread_function(void* arg) {
+    
+    struct dataForThread * data = (struct dataForThread*)arg;
+    SafeBuffer request_buffer = *data->req_buffer;
 	/*
 		Fill in this function.
 
@@ -51,9 +61,31 @@ void* request_thread_function(void* arg) {
 		create 3 copies of this function, one for each "patient".
 	 */
 
-	for(;;) {
+	for(int i = 0; i < data->n; i++) {
+        request_buffer.push(data->data_string);
+	};
+	//Retval is used by the pthread_join() function
+	return NULL; //For now
+}
 
-	}
+void pushUsingThreads(SafeBuffer *buffer, int n) {
+    
+    struct thread_info {    /* Used as argument to thread_start() */
+         pthread_t thread_id;        /* ID returned by pthread_create() */
+         int       thread_num;       /* Application-defined thread # */
+         char     *argv_string;      /* From command-line argument */
+     };
+    
+    SafeBuffer request_buffer = *buffer;
+    
+    for(int i = 0; i < n; ++i) {
+        request_buffer.push("data John Smith");
+        request_buffer.push("data Jane Smith");
+        request_buffer.push("data Joe Smith");
+    }
+    
+    
+    
 }
 
 void* worker_thread_function(void* arg) {
