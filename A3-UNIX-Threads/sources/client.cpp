@@ -45,6 +45,16 @@ struct dataForThread {    /* Used as argument to thread_start() */
         n(nInp), data_string(data_string_inp), req_buffer(req_buffer_inp) {}
      };
 
+struct workerData {    /* Used as argument to thread_start() */
+    RequestChannel *work_channel;
+    SafeBuffer *req_buffer; //Need to know where to push
+    Histogram *hist;
+
+    //Constructor
+    workerData(RequestChannel *work_channel_inp, SafeBuffer *req_buffer_inp, Histogram *hist_inp) :
+            work_channel(work_channel_inp), req_buffer(req_buffer_inp), hist(hist_inp) {}
+};
+
 //This function is fed to the thread as "start_routine"
 void* request_thread_function(void* arg) {
     
@@ -61,6 +71,10 @@ void* request_thread_function(void* arg) {
 }
 
 void* worker_thread_function(void* arg) {
+
+    workerData* data = (workerData*)arg;
+
+
     /*
 		Fill in this function. 
 
@@ -76,8 +90,12 @@ void* worker_thread_function(void* arg) {
 		whether you used "new" for it.
      */
 
-    while(true) {
-
+    while(data->req_buffer->size() > 0) {
+        string request = data->req_buffer->pop();
+        cout << "Popping from request buffer, string is "<<request<<"\n";
+        data->work_channel->cwrite(request); //Sends "requests" to the server
+        string response = data->work_channel->cread();
+        data->hist->update(request,response);
     }
 }
 
@@ -140,8 +158,35 @@ int main(int argc, char * argv[]) {
 		Histogram hist;
 
 		pushData(n, &request_buffer);
-        cout << "size of request buffer "<<request_buffer.size();
+        cout << "size of request buffer "<<request_buffer.size()<<"\n";
 
+        vector<RequestChannel*> workerChannels;
+        vector<pthread_t> threadIDs;
+        for (int i = 0; i < w; i++) {
+            cout << "In here\n";
+            chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
+            string s = chan->cread (); //cread gets the response
+            workerChannels.push_back(new RequestChannel(s, RequestChannel::CLIENT_SIDE));
+            pthread_create(&threadIDs.at(i), NULL, worker_thread_function,NULL); //Last args is null atm.
+            //STUCK RIGHT HERE
+        }
+
+        cout << "Finished making workerthreads\n";
+        for (int i = 0; i < workerChannels.size(); i++) {
+            cout << "In there\n";
+            pthread_join(threadIDs.at(i), NULL);
+            delete workerChannels.at(i);
+        }
+
+        //The work the thread does:
+        //Pop anything from the buffer
+        //Send data it popped
+        //If buffer is empty, quit the thread?
+
+        //Update a quit variable, saying how many quits it has seen.
+        //If quit == n. Close thread.
+
+        /*
     	//Handshake start
         chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
         //cwrite is a method in the RequestChannel chan object
@@ -149,8 +194,8 @@ int main(int argc, char * argv[]) {
 		string s = chan->cread (); //cread gets the response
         RequestChannel *workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
         //Handshake end
-
-
+        */
+        /*
         while(true) {
 
             string request = request_buffer.pop();
@@ -165,6 +210,7 @@ int main(int argc, char * argv[]) {
 				hist.update (request, response);
 			}
         }
+         */
         chan->cwrite ("quit");
         delete chan;
         cout << "All Done!!!" << endl; 
