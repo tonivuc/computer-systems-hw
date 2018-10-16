@@ -167,7 +167,8 @@ int main(int argc, char * argv[]) {
             chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
             string s = chan->cread (); //cread gets the response
             workerChannels.push_back(new RequestChannel(s, RequestChannel::CLIENT_SIDE));
-            pthread_create(&threadIDs.at(i), NULL, worker_thread_function,NULL); //Last args is null atm.
+            threadIDs.push_back(i);
+            pthread_create(&threadIDs.at(i), NULL, worker_thread_function,new workerData(workerChannels.at(i),&request_buffer,&hist)); //Last args is null atm.
             //STUCK RIGHT HERE
         }
 
