@@ -95,8 +95,11 @@ void* worker_thread_function(void* arg) {
         cout << "Popping from request buffer, string is "<<request<<"\n";
         data->work_channel->cwrite(request); //Sends "requests" to the server
         string response = data->work_channel->cread();
-        data->hist->update(request,response);
+        if(request != "quit") {
+            data->hist->update(request, response);
+        }
     }
+    return NULL;
 }
 
 void pushData(int n, SafeBuffer * request_buffer) {
@@ -176,6 +179,7 @@ int main(int argc, char * argv[]) {
         for (int i = 0; i < workerChannels.size(); i++) {
             cout << "In there\n";
             pthread_join(threadIDs.at(i), NULL);
+            cout << "Joined!\n";
             delete workerChannels.at(i);
         }
 
