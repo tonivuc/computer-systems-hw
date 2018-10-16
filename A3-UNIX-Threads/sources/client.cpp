@@ -49,21 +49,6 @@ struct dataForThread {    /* Used as argument to thread_start() */
 void* request_thread_function(void* arg) {
     
     dataForThread* data = (dataForThread*)arg;
-    //SafeBuffer request_buffer = *data->req_buffer;
-
-	/*
-		Fill in this function.
-
-		The loop body scout << "size() "<<request_buffer.size();hould require only a single line of code.
-		The loop conditions should be somewhat intuitive.
-
-		In both thread functions, the arg parameter
-		will be used to pass parameters to the function.
-		One of the parameters for the request thread
-		function MUST be the name of the "patient" for whom
-		the data requests are being pushed: you MAY NOT
-		create 3 copies of this function, one for each "patient".
-	 */
 
 	for(int i = 0; i < data->n; i++) {
         data->req_buffer->push(data->data_string);
@@ -94,6 +79,28 @@ void* worker_thread_function(void* arg) {
     while(true) {
 
     }
+}
+
+void pushData(int n, SafeBuffer * request_buffer) {
+    //Start 3 local threads here
+    pthread_t johnThread;
+    pthread_t janeThread;
+    pthread_t joeThread;
+
+
+    dataForThread* john = new dataForThread(n,"data John Smith",request_buffer); //Will be destroyed by the join apparently;
+    dataForThread* jane = new dataForThread(n,"data Jane Smith",request_buffer);
+    dataForThread* joe  = new dataForThread(n,"data Joe Smith",request_buffer);
+
+    //Create the buffer pushing threads
+    pthread_create(&johnThread, NULL, request_thread_function,john);
+    pthread_create(&janeThread, NULL, request_thread_function,jane);
+    pthread_create(&joeThread, NULL, request_thread_function,joe);
+
+    //Join the buffer pushing threads
+    pthread_join(johnThread, NULL);
+    pthread_join(janeThread, NULL);
+    pthread_join(joeThread, NULL);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -132,47 +139,8 @@ int main(int argc, char * argv[]) {
 		SafeBuffer request_buffer;
 		Histogram hist;
 
-		//Start 3 local threads here
-		pthread_t johnThread;
-
-		/*
-		dataForThread *john;
-		john->data_string = "data John Smith";
-		john->n = n;
-		john->req_buffer = &request_buffer;
-
-
-		 */
-        string arg = "howdy";
-
-        dataForThread* john = new dataForThread(n,"data John Smith",&request_buffer); //Will be destroyed by the join apparently
-
-        cout << "data: "<<john->data_string<<"\n";
-
-		pthread_create(&johnThread, NULL, request_thread_function,john);
-
-        pthread_join(johnThread, NULL);
-        cout << "Request buffer address we are checking the size of: "<<&request_buffer<<"\n";
-        cout << "size() "<<request_buffer.size();
-
-
-		/*
-        for(int i = 0; i < n; ++i) {
-            request_buffer.push("data John Smith");
-            request_buffer.push("data Jane Smith");
-            request_buffer.push("data Joe Smith");
-        }
-        */
-        cout << "Done populating request buffer" << endl;
-
-        /*
-        cout << "Pushing quit requests... ";
-        for(int i = 0; i < w; ++i) {
-            request_buffer.push("quit");
-        }
-
-        cout << "done." << endl;
-        */
+		pushData(n, &request_buffer);
+        cout << "size of request buffer "<<request_buffer.size();
 
     	//Handshake start
         chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
@@ -182,8 +150,6 @@ int main(int argc, char * argv[]) {
         RequestChannel *workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
         //Handshake end
 
-
-        //Join the buffer pushing threads
 
         while(true) {
 
