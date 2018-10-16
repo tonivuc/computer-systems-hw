@@ -39,18 +39,22 @@ struct dataForThread {    /* Used as argument to thread_start() */
      int     n;       
      char    *data_string;
      SafeBuffer *req_buffer; //Need to know where to push
-     };
 
+     //Constructor
+     dataForThread(int nInp, char *data_string_inp, SafeBuffer *req_buffer_inp) :
+        n(nInp), data_string(data_string_inp), req_buffer(req_buffer_inp) {}
+     };
 
 //This function is fed to the thread as "start_routine"
 void* request_thread_function(void* arg) {
     
-    struct dataForThread * data = (struct dataForThread*)arg;
-    SafeBuffer request_buffer = *data->req_buffer;
+    dataForThread* data = (dataForThread*)arg;
+    //SafeBuffer request_buffer = *data->req_buffer;
+
 	/*
 		Fill in this function.
 
-		The loop body should require only a single line of code.
+		The loop body scout << "size() "<<request_buffer.size();hould require only a single line of code.
 		The loop conditions should be somewhat intuitive.
 
 		In both thread functions, the arg parameter
@@ -62,30 +66,13 @@ void* request_thread_function(void* arg) {
 	 */
 
 	for(int i = 0; i < data->n; i++) {
-        request_buffer.push(data->data_string);
+        data->req_buffer->push(data->data_string);
 	};
+    data->req_buffer->push("quit");
+    cout << "Request buffer address we pushed to: "<<data->req_buffer<<"\n";
+    cout << "Finished pushing data to request buffer from client\n";
 	//Retval is used by the pthread_join() function
 	return NULL; //For now
-}
-
-void pushUsingThreads(SafeBuffer *buffer, int n) {
-    
-    struct thread_info {    /* Used as argument to thread_start() */
-         pthread_t thread_id;        /* ID returned by pthread_create() */
-         int       thread_num;       /* Application-defined thread # */
-         char     *argv_string;      /* From command-line argument */
-     };
-    
-    SafeBuffer request_buffer = *buffer;
-    
-    for(int i = 0; i < n; ++i) {
-        request_buffer.push("data John Smith");
-        request_buffer.push("data Jane Smith");
-        request_buffer.push("data Joe Smith");
-    }
-    
-    
-    
 }
 
 void* worker_thread_function(void* arg) {
@@ -114,7 +101,7 @@ void* worker_thread_function(void* arg) {
 /*--------------------------------------------------------------------------*/
 
 int main(int argc, char * argv[]) {
-    int n = 100; //default number of requests per "patient"
+    int n = 10; //default number of requests per "patient"
     int w = 1; //default number of worker threads
     int opt = 0;
     while ((opt = getopt(argc, argv, "n:w:")) != -1) {
@@ -145,18 +132,47 @@ int main(int argc, char * argv[]) {
 		SafeBuffer request_buffer;
 		Histogram hist;
 
+		//Start 3 local threads here
+		pthread_t johnThread;
+
+		/*
+		dataForThread *john;
+		john->data_string = "data John Smith";
+		john->n = n;
+		john->req_buffer = &request_buffer;
+
+
+		 */
+        string arg = "howdy";
+
+        dataForThread* john = new dataForThread(n,"data John Smith",&request_buffer); //Will be destroyed by the join apparently
+
+        cout << "data: "<<john->data_string<<"\n";
+
+		pthread_create(&johnThread, NULL, request_thread_function,john);
+
+        pthread_join(johnThread, NULL);
+        cout << "Request buffer address we are checking the size of: "<<&request_buffer<<"\n";
+        cout << "size() "<<request_buffer.size();
+
+
+		/*
         for(int i = 0; i < n; ++i) {
             request_buffer.push("data John Smith");
             request_buffer.push("data Jane Smith");
             request_buffer.push("data Joe Smith");
         }
+        */
         cout << "Done populating request buffer" << endl;
 
+        /*
         cout << "Pushing quit requests... ";
         for(int i = 0; i < w; ++i) {
             request_buffer.push("quit");
         }
+
         cout << "done." << endl;
+        */
 
     	//Handshake start
         chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
@@ -166,8 +182,13 @@ int main(int argc, char * argv[]) {
         RequestChannel *workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
         //Handshake end
 
+
+        //Join the buffer pushing threads
+
         while(true) {
+
             string request = request_buffer.pop();
+            cout << "Popping from request buffer, string is "<<request<<"\n";
 			workerChannel->cwrite(request); //Sends "requests" to the server
 
 			if(request == "quit") {
