@@ -125,6 +125,10 @@ void pushData(int n, SafeBuffer * request_buffer) {
     pthread_join(johnThread, NULL);
     pthread_join(janeThread, NULL);
     pthread_join(joeThread, NULL);
+
+    delete john;
+    delete jane;
+    delete joe;
 }
 
 /*--------------------------------------------------------------------------*/
