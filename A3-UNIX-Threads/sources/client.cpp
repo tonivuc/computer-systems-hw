@@ -178,14 +178,15 @@ int main(int argc, char * argv[]) {
 
         vector<RequestChannel*> workerChannels;
         vector<pthread_t> threadIDs;
+        vector<workerData*> workerDataVector;
         for (int i = 0; i < w; i++) {
-            cout << "In here\n";
             chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
             string s = chan->cread (); //cread gets the response
             workerChannels.push_back(new RequestChannel(s, RequestChannel::CLIENT_SIDE));
             threadIDs.push_back(i);
-            pthread_create(&threadIDs.at(i), NULL, worker_thread_function,new workerData(workerChannels.at(i),&request_buffer,&hist)); //Last args is null atm.
-            //STUCK RIGHT HERE
+            workerData* wData = new workerData(workerChannels.at(i),&request_buffer,&hist);
+            workerDataVector.push_back(wData);
+            pthread_create(&threadIDs.at(i), NULL, worker_thread_function,wData); //Last args is null atm.
         }
         cout << "Finished making workerthreads\n";
 
@@ -193,6 +194,7 @@ int main(int argc, char * argv[]) {
         for (int i = 0; i < workerChannels.size(); i++) {
             pthread_join(threadIDs.at(i), NULL);
             delete workerChannels.at(i);
+            delete workerDataVector.at(i);
         }
 
         chan->cwrite ("quit");
