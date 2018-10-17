@@ -63,7 +63,6 @@ void* request_thread_function(void* arg) {
 	for(int i = 0; i < data->n; i++) {
         data->req_buffer->push(data->data_string);
 	};
-    cout << "Request buffer address we pushed to: "<<data->req_buffer<<"\n";
     cout << "Finished pushing data to request buffer from client\n";
 	//Retval is used by the pthread_join() function
 	return NULL; //For now
@@ -93,15 +92,12 @@ void* worker_thread_function(void* arg) {
 
     while(run) {
         string request = data->req_buffer->pop();
-        cout << "Popping from request buffer, string is "<<request<<"\n";
         data->work_channel->cwrite(request); //Sends "requests" to the server
         if(request == "quit") {
             run = false;
         }
         else {
-            cout << "cwrite didn't freeze\n";
             string response = data->work_channel->cread();
-            cout << "cread ran\n";
             data->hist->update(request, response);
         }
     }
@@ -136,8 +132,8 @@ void pushData(int n, SafeBuffer * request_buffer) {
 /*--------------------------------------------------------------------------*/
 
 int main(int argc, char * argv[]) {
-    int n = 10; //default number of requests per "patient"
-    int w = 1; //default number of worker threads
+    int n = 1000; //default number of requests per "patient"
+    int w = 50; //default number of worker threads
     int opt = 0;
     while ((opt = getopt(argc, argv, "n:w:")) != -1) {
         switch (opt) {
@@ -187,12 +183,11 @@ int main(int argc, char * argv[]) {
             pthread_create(&threadIDs.at(i), NULL, worker_thread_function,new workerData(workerChannels.at(i),&request_buffer,&hist)); //Last args is null atm.
             //STUCK RIGHT HERE
         }
-
         cout << "Finished making workerthreads\n";
+
+        cout << "Closing worker threads as they finish\n";
         for (int i = 0; i < workerChannels.size(); i++) {
-            cout << "In there\n";
             pthread_join(threadIDs.at(i), NULL);
-            cout << "Joined!\n";
             delete workerChannels.at(i);
         }
 
