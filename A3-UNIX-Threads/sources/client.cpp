@@ -63,7 +63,6 @@ void* request_thread_function(void* arg) {
 	for(int i = 0; i < data->n; i++) {
         data->req_buffer->push(data->data_string);
 	};
-    data->req_buffer->push("quit");
     cout << "Request buffer address we pushed to: "<<data->req_buffer<<"\n";
     cout << "Finished pushing data to request buffer from client\n";
 	//Retval is used by the pthread_join() function
@@ -90,15 +89,23 @@ void* worker_thread_function(void* arg) {
 		whether you used "new" for it.
      */
 
-    while(data->req_buffer->size() > 0) {
+    bool run = true;
+
+    while(run) {
         string request = data->req_buffer->pop();
         cout << "Popping from request buffer, string is "<<request<<"\n";
         data->work_channel->cwrite(request); //Sends "requests" to the server
-        string response = data->work_channel->cread();
-        if(request != "quit") {
+        if(request == "quit") {
+            run = false;
+        }
+        else {
+            cout << "cwrite didn't freeze\n";
+            string response = data->work_channel->cread();
+            cout << "cread ran\n";
             data->hist->update(request, response);
         }
     }
+    cout << "Quitting thread\n";
     return NULL;
 }
 
@@ -161,6 +168,12 @@ int main(int argc, char * argv[]) {
 		Histogram hist;
 
 		pushData(n, &request_buffer);
+
+		//Adding all the quits to the end of the buffer
+		for (int i = 0; i < w; i++) {
+            request_buffer.push("quit");;
+		}
+
         cout << "size of request buffer "<<request_buffer.size()<<"\n";
 
         vector<RequestChannel*> workerChannels;
@@ -183,39 +196,6 @@ int main(int argc, char * argv[]) {
             delete workerChannels.at(i);
         }
 
-        //The work the thread does:
-        //Pop anything from the buffer
-        //Send data it popped
-        //If buffer is empty, quit the thread?
-
-        //Update a quit variable, saying how many quits it has seen.
-        //If quit == n. Close thread.
-
-        /*
-    	//Handshake start
-        chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
-        //cwrite is a method in the RequestChannel chan object
-        //Response to request newchannel returns a key
-		string s = chan->cread (); //cread gets the response
-        RequestChannel *workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
-        //Handshake end
-        */
-        /*
-        while(true) {
-
-            string request = request_buffer.pop();
-            cout << "Popping from request buffer, string is "<<request<<"\n";
-			workerChannel->cwrite(request); //Sends "requests" to the server
-
-			if(request == "quit") {
-			   	delete workerChannel;
-                break;
-            }else{
-				string response = workerChannel->cread();
-				hist.update (request, response);
-			}
-        }
-         */
         chan->cwrite ("quit");
         delete chan;
         cout << "All Done!!!" << endl; 
