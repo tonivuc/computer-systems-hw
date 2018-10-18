@@ -72,22 +72,6 @@ void* worker_thread_function(void* arg) {
 
     workerData* data = (workerData*)arg;
 
-
-    /*
-		Fill in this function. 
-
-		Make sure it terminates only when, and not before,
-		all the requests have been processed.
-
-		Each thread must have its own dedicated
-		RequestChannel. Make sure that if you
-		construct a RequestChannel (or any object)
-		using "new" that you "delete" it properly,
-		and that you send a "quit" request for every
-		RequestChannel you construct regardless of
-		whether you used "new" for it.
-     */
-
     bool run = true;
 
     while(run) {
