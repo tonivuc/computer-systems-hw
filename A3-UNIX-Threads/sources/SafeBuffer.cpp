@@ -30,9 +30,7 @@ void SafeBuffer::push(string str) {
 	Make necessary modifications to make it thread-safe
 	*/
 	pthread_mutex_lock (&m);
-	std::cout << "pushing "<<str<<" to SafeBuffer\n";
 	q.push (str);
-	std::cout << "size: "<<q.size()<<"\n";
 	pthread_mutex_unlock (&m);
 }
 

@@ -101,7 +101,7 @@ void* worker_thread_function(void* arg) {
             data->hist->update(request, response);
         }
     }
-    cout << "Quitting thread\n";
+    //cout << "Quitting thread\n";
     return NULL;
 }
 
@@ -136,8 +136,11 @@ void pushData(int n, SafeBuffer * request_buffer) {
 /*--------------------------------------------------------------------------*/
 
 int main(int argc, char * argv[]) {
-    int n = 1000; //default number of requests per "patient"
-    int w = 50; //default number of worker threads
+
+    struct timeval start, end;
+
+    int n = 100000; //default number of requests per "patient"
+    int w = 500; //default number of worker threads
     int opt = 0;
     while ((opt = getopt(argc, argv, "n:w:")) != -1) {
         switch (opt) {
@@ -176,6 +179,9 @@ int main(int argc, char * argv[]) {
 
         cout << "size of request buffer "<<request_buffer.size()<<"\n";
 
+		//Timing:
+        gettimeofday(&start, NULL);
+
         vector<RequestChannel*> workerChannels;
         vector<pthread_t> threadIDs;
         vector<workerData*> workerDataVector;
@@ -188,6 +194,7 @@ int main(int argc, char * argv[]) {
             workerDataVector.push_back(wData);
             pthread_create(&threadIDs.at(i), NULL, worker_thread_function,wData); //Last args is null atm.
         }
+
         cout << "Finished making workerthreads\n";
 
         cout << "Closing worker threads as they finish\n";
@@ -196,10 +203,14 @@ int main(int argc, char * argv[]) {
             delete workerChannels.at(i);
             delete workerDataVector.at(i);
         }
+        gettimeofday(&end, NULL); //Timing end
 
         chan->cwrite ("quit");
         delete chan;
-        cout << "All Done!!!" << endl; 
+        cout << "All Done!!!" << endl;
+        //Print time spent im microseconds
+        printf("%ld\n", ((end.tv_sec * 1000000 + end.tv_usec)
+                         - (start.tv_sec * 1000000 + start.tv_usec)));
 
 		hist.print ();
     }
