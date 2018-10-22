@@ -4,7 +4,9 @@
 using namespace std;
 
 BoundedBuffer::BoundedBuffer(int _cap) {
-
+    pthread_mutex_init (&m, 0);
+    pthread_cond_init (&prod_done, 0);
+    pthread_cond_init (&cons_done, 0);
 }
 
 BoundedBuffer::~BoundedBuffer() {
@@ -15,6 +17,7 @@ int BoundedBuffer::size() {
 	return q.size();
 }
 
+//Producer
 void BoundedBuffer::push(string str) {
 	/*
 	Is this function thread-safe??? Does this automatically wait for the pop() to make room 
@@ -22,9 +25,11 @@ void BoundedBuffer::push(string str) {
 	*/
 
 
-	//This one mutex is for the entire boundedbuffer? To avoid race conditions?
+
+
+	//This one mutex is for the entire boundedbuffer? To avoid race conditions? Yeah.
     pthread_mutex_lock(&mtx);
-    while (buffer.size () == 0){ //The correct solution for this is of course to check if the wakeup was actually legit before proceding. (Because pthread wait is sometimes woken even if it wasn't signaled to be woken)
+    while (size() == 0){ //The correct solution for this is of course to check if the wakeup was actually legit before proceding. (Because pthread wait is sometimes woken even if it wasn't signaled to be woken)
         pthread_cond_wait(&cond, &mtx);
         //V--?
     }
@@ -34,11 +39,19 @@ void BoundedBuffer::push(string str) {
     pthread_mutex_unlock(&mtx);
 }
 
+//Consumer
 string BoundedBuffer::pop() {
 	/*
 	Is this function thread-safe??? Does this automatically wait for the push() to make data available???
 	*/
+
+    pthread_mutex_lock (&m);
+    //We want code to stop if there is nothing to pop ye?
+    while (size() == 0) //While empty
+        pthread_cond_wait (&prod_done, &m); //Wait until a producer actually added something to the buffer
+
 	string s = q.front();
 	q.pop();
+    pthread_mutex_unlock (&m);
 	return s;
 }

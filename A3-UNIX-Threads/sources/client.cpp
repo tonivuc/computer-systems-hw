@@ -153,7 +153,6 @@ int main(int argc, char * argv[]) {
 
 		SafeBuffer request_buffer;
 		Histogram hist;
-
 		pushData(n, &request_buffer);
 
 		//Adding all the quits to the end of the buffer
