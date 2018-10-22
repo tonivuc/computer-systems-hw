@@ -150,7 +150,7 @@ int BuddyAllocator::free(char* _a) { //free() function does not give you the siz
 	char* buddyBlock = getbuddy((char*)header);
 	BlockHeader* test = (BlockHeader*)buddyBlock;
 
-	if(((BlockHeader*)buddyBlock)->isFree()) {
+	if(((BlockHeader*)buddyBlock)->isFree() && arebuddies((char*)header,buddyBlock)) {
 		merge(_a,buddyBlock);
 	}
 	else {
@@ -222,7 +222,7 @@ bool BuddyAllocator::isvalid(char *addr) {
 }
 
 bool BuddyAllocator::arebuddies(char *block1, char *block2) {
-	if (getbuddy(block1) == block2) {
+	if ((getbuddy(block1) == block2) && (((BlockHeader*)block1)->getBlocksize() == ((BlockHeader*)block2)->getBlocksize())) {
 		return true;
 	}
 	return false;
