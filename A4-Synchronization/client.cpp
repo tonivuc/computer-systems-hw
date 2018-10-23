@@ -85,7 +85,7 @@ void* worker_thread_function(void* arg) {
             data->hist->update(request, response);
         }
     }
-    //cout << "Quitting thread\n";
+    cout << "Quitting worker-thread\n";
     return NULL;
 }
 
@@ -139,10 +139,11 @@ int main(int argc, char * argv[]) {
 
     struct timeval start, end;
 
-    int n = 10000; //default number of requests per "patient"
-    int w = 500; //default number of worker threads
+    int n = 10; //default number of requests per "patient"
+    int w = 3; //default number of worker threads
+    int b = 10;
     int opt = 0;
-    while ((opt = getopt(argc, argv, "n:w:")) != -1) {
+    while ((opt = getopt(argc, argv, "n:w:b:")) != -1) {
         switch (opt) {
             case 'n':
                 n = atoi(optarg);
@@ -150,7 +151,9 @@ int main(int argc, char * argv[]) {
             case 'w':
                 w = atoi(optarg); //This won't do a whole lot until you fill in the worker thread function
                 break;
-
+            case 'b':
+                w = atoi(optarg); //This won't do a whole lot until you fill in the worker thread function
+                break;
         }
     }
 
@@ -168,7 +171,9 @@ int main(int argc, char * argv[]) {
         RequestChannel *chan = new RequestChannel("control", RequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
         cout << "done." << endl<< flush;
 
-        BoundedBuffer request_buffer;
+        BoundedBuffer request_buffer(10); //
+
+
         Histogram hist;
         //pushData(n, &request_buffer);
 
@@ -185,9 +190,10 @@ int main(int argc, char * argv[]) {
         pthread_t janeThread;
         pthread_t joeThread;
 
-        dataForThread* john = new dataForThread(n,"data John Smith",request_buffer);
-        dataForThread* jane = new dataForThread(n,"data Jane Smith",request_buffer);
-        dataForThread* joe  = new dataForThread(n,"data Joe Smith",request_buffer);
+        dataForThread* john = new dataForThread(n,"data John Smith",&request_buffer);
+        dataForThread* jane = new dataForThread(n,"data Jane Smith",&request_buffer);
+        dataForThread* joe  = new dataForThread(n,"data Joe Smith",&request_buffer);
+
 
         //Create the buffer pushing threads
         pthread_create(&johnThread, NULL, request_thread_function,john);
@@ -213,6 +219,7 @@ int main(int argc, char * argv[]) {
         pthread_join(johnThread, NULL);
         pthread_join(janeThread, NULL);
         pthread_join(joeThread, NULL);
+        cout << "Joined the request (buffer pushing) threads\n";
 
         delete john;
         delete jane;
@@ -222,6 +229,7 @@ int main(int argc, char * argv[]) {
         for (int i = 0; i < w; i++) {
             request_buffer.push("quit");;
         }
+        cout << "Pushed quit commands to request buffer\n";
 
         cout << "Closing worker threads as they finish\n";
         for (int i = 0; i < workerChannels.size(); i++) {
