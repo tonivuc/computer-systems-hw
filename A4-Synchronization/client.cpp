@@ -150,6 +150,7 @@ int main(int argc, char * argv[]) {
             case 'w':
                 w = atoi(optarg); //This won't do a whole lot until you fill in the worker thread function
                 break;
+
         }
     }
 
@@ -169,18 +170,31 @@ int main(int argc, char * argv[]) {
 
         BoundedBuffer request_buffer;
         Histogram hist;
-        pushData(n, &request_buffer);
+        //pushData(n, &request_buffer);
 
-        //Adding all the quits to the end of the buffer
-        for (int i = 0; i < w; i++) {
-            request_buffer.push("quit");;
-        }
+
 
         cout << "size of request buffer "<<request_buffer.size()<<"\n";
 
         //Timing:
         gettimeofday(&start, NULL);
 
+
+        //Add the Request Threads
+        pthread_t johnThread;
+        pthread_t janeThread;
+        pthread_t joeThread;
+
+        dataForThread* john = new dataForThread(n,"data John Smith",request_buffer);
+        dataForThread* jane = new dataForThread(n,"data Jane Smith",request_buffer);
+        dataForThread* joe  = new dataForThread(n,"data Joe Smith",request_buffer);
+
+        //Create the buffer pushing threads
+        pthread_create(&johnThread, NULL, request_thread_function,john);
+        pthread_create(&janeThread, NULL, request_thread_function,jane);
+        pthread_create(&joeThread, NULL, request_thread_function,joe);
+
+        //Create worker threads and channels
         vector<RequestChannel*> workerChannels;
         vector<pthread_t> threadIDs;
         vector<workerData*> workerDataVector;
@@ -193,8 +207,21 @@ int main(int argc, char * argv[]) {
             workerDataVector.push_back(wData);
             pthread_create(&threadIDs.at(i), NULL, worker_thread_function,wData); //Last args is null atm.
         }
-
         cout << "Finished making workerthreads\n";
+
+        //Join the buffer pushing threads
+        pthread_join(johnThread, NULL);
+        pthread_join(janeThread, NULL);
+        pthread_join(joeThread, NULL);
+
+        delete john;
+        delete jane;
+        delete joe;
+
+        //Adding all the quits to the end of the buffer. Only added after all pushing threads are done pushing
+        for (int i = 0; i < w; i++) {
+            request_buffer.push("quit");;
+        }
 
         cout << "Closing worker threads as they finish\n";
         for (int i = 0; i < workerChannels.size(); i++) {
