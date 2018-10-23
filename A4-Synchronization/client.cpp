@@ -52,7 +52,22 @@ struct workerData {    /* Used as argument to thread_start() */
 
     //Constructor
     workerData(RequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, Histogram *hist_inp) :
-            work_channel(work_channel_inp), req_buffer(req_buffer_inp), hist(hist_inp) {}
+            work_channel(work_channel_inp), req_buffer(req_buffer_inp), hist(hist_inp) {} ///NANI???
+};
+
+struct histogramData {    /* Used as argument to thread_start() */
+    RequestChannel *work_channel;
+    BoundedBuffer *hist_buffer[3]; //ACTUALLY an array
+    Histogram *hist;
+
+    //Constructor
+    histogramData(RequestChannel *work_channel_inp, BoundedBuffer *hist_buffer_inp[3], Histogram *hist_inp) :
+            work_channel(work_channel_inp), hist(hist_inp) {
+
+        hist_buffer[0] = hist_buffer_inp[0];
+        hist_buffer[1] = hist_buffer_inp[1];
+        hist_buffer[2] = hist_buffer_inp[2];
+    }
 };
 
 //This function is fed to the thread as "start_routine"
@@ -90,6 +105,8 @@ void* worker_thread_function(void* arg) {
 }
 
 void* stat_thread_function(void* arg) {
+
+    histogramData* data = (histogramData*)arg;
     /*
 		Fill in this function.
 
@@ -129,17 +146,6 @@ void pushData(int n, BoundedBuffer * request_buffer) {
     delete john;
     delete jane;
     delete joe;
-}
-
-void populatePointerArray(BoundedBuffer* responseBuffers[3], int b) {
-
-    BoundedBuffer responseBufferJohn(b/3);
-    BoundedBuffer responseBufferJane(b/3);
-    BoundedBuffer responseBufferJoe(b/3);
-
-    responseBuffers[0] = &responseBufferJohn;
-    responseBuffers[1] = &responseBufferJane;
-    responseBuffers[2] = &responseBufferJoe;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -185,10 +191,17 @@ int main(int argc, char * argv[]) {
         //Making BoundedBuffers
         BoundedBuffer request_buffer(b);
 
-
         //Store pointers to the response buffers in an array
-        BoundedBuffer *responseBuffers[3];
-        populatePointerArray(responseBuffers, b);
+        BoundedBuffer responseBufferJohn(b/3);
+        BoundedBuffer responseBufferJane(b/3);
+        BoundedBuffer responseBufferJoe(b/3);
+        //Array of BoundedBuffer pointers
+        BoundedBuffer *responseBuffers[3]; //Pass this to histogram-threads
+        responseBuffers[0] = &responseBufferJohn;
+        responseBuffers[1] = &responseBufferJane;
+        responseBuffers[2] = &responseBufferJoe;
+
+
 
 
         Histogram hist;
