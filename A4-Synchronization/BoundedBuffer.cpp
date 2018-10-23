@@ -7,6 +7,7 @@ BoundedBuffer::BoundedBuffer(int _cap) {
     pthread_mutex_init (&m, 0);
     pthread_cond_init (&prod_done, 0);
     pthread_cond_init (&cons_done, 0);
+    maxSize = _cap; //TODO: Make this const.
 }
 
 BoundedBuffer::~BoundedBuffer() {
@@ -14,6 +15,7 @@ BoundedBuffer::~BoundedBuffer() {
 }
 
 int BoundedBuffer::size() {
+    //No point adding mutex here. If I'm using the size, I should be doing it inside the mutex of push or pop to keep it all atomic.
 	return q.size();
 }
 
@@ -24,19 +26,15 @@ void BoundedBuffer::push(string str) {
 	when the buffer if full to capacity???
 	*/
 
-
-
-
-	//This one mutex is for the entire boundedbuffer? To avoid race conditions? Yeah.
-    pthread_mutex_lock(&mtx);
+    pthread_mutex_lock(&m);
     while (size() == 0){ //The correct solution for this is of course to check if the wakeup was actually legit before proceding. (Because pthread wait is sometimes woken even if it wasn't signaled to be woken)
-        pthread_cond_wait(&cond, &mtx);
+        pthread_cond_wait(&cons_done, &m);
         //V--?
     }
     // now consume
     q.push (str);
     pthread_cond_signal (&cond2); // send signal to Producer(s) that we have consumed. (V++)
-    pthread_mutex_unlock(&mtx);
+    pthread_mutex_unlock(&m);
 }
 
 //Consumer
@@ -48,10 +46,10 @@ string BoundedBuffer::pop() {
     pthread_mutex_lock (&m);
     //We want code to stop if there is nothing to pop ye?
     while (size() == 0) //While empty
-        pthread_cond_wait (&prod_done, &m); //Wait until a producer actually added something to the buffer
+        pthread_cond_wait (&prod_done, &m); //Wait for push to signal it has produced something
 
 	string s = q.front();
 	q.pop();
-    pthread_mutex_unlock (&m);
+    pthread_mutex_unlock(&m);
 	return s;
 }

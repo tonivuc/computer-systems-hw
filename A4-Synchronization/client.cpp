@@ -139,7 +139,7 @@ int main(int argc, char * argv[]) {
 
     struct timeval start, end;
 
-    int n = 100000; //default number of requests per "patient"
+    int n = 10000; //default number of requests per "patient"
     int w = 500; //default number of worker threads
     int opt = 0;
     while ((opt = getopt(argc, argv, "n:w:")) != -1) {

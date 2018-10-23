@@ -15,7 +15,8 @@ class BoundedBuffer {
 private:
     pthread_mutex_t m;
     pthread_cond_t prod_done, cons_done;
-	queue<string> q;	
+	queue<string> q;
+	int maxSize;
 public:
     BoundedBuffer(int);
 	~BoundedBuffer();
