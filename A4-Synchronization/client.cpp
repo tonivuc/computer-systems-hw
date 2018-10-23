@@ -131,6 +131,17 @@ void pushData(int n, BoundedBuffer * request_buffer) {
     delete joe;
 }
 
+void populatePointerArray(BoundedBuffer* responseBuffers[3], int b) {
+
+    BoundedBuffer responseBufferJohn(b/3);
+    BoundedBuffer responseBufferJane(b/3);
+    BoundedBuffer responseBufferJoe(b/3);
+
+    responseBuffers[0] = &responseBufferJohn;
+    responseBuffers[1] = &responseBufferJane;
+    responseBuffers[2] = &responseBufferJoe;
+}
+
 /*--------------------------------------------------------------------------*/
 /* MAIN FUNCTION */
 /*--------------------------------------------------------------------------*/
@@ -139,9 +150,9 @@ int main(int argc, char * argv[]) {
 
     struct timeval start, end;
 
-    int n = 10; //default number of requests per "patient"
-    int w = 3; //default number of worker threads
-    int b = 10;
+    int n = 10000; //default number of requests per "patient"
+    int w = 100; //default number of worker threads
+    int b = 200;
     int opt = 0;
     while ((opt = getopt(argc, argv, "n:w:b:")) != -1) {
         switch (opt) {
@@ -171,7 +182,13 @@ int main(int argc, char * argv[]) {
         RequestChannel *chan = new RequestChannel("control", RequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
         cout << "done." << endl<< flush;
 
-        BoundedBuffer request_buffer(10); //
+        //Making BoundedBuffers
+        BoundedBuffer request_buffer(b);
+
+
+        //Store pointers to the response buffers in an array
+        BoundedBuffer *responseBuffers[3];
+        populatePointerArray(responseBuffers, b);
 
 
         Histogram hist;
