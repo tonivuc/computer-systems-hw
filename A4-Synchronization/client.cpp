@@ -48,21 +48,34 @@ struct dataForThread {    /* Used as argument to thread_start() */
 struct workerData {    /* Used as argument to thread_start() */
     RequestChannel *work_channel;
     BoundedBuffer *req_buffer; //Need to know where to push
-    Histogram *hist;
+    BoundedBuffer *responseBuffer[3];
 
     //Constructor
-    workerData(RequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, Histogram *hist_inp) :
-            work_channel(work_channel_inp), req_buffer(req_buffer_inp), hist(hist_inp) {} ///NANI???
+    workerData(RequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3]) :
+            work_channel(work_channel_inp), req_buffer(req_buffer_inp) {
+
+        responseBuffer[0] = responseBufferInp[0];
+        responseBuffer[1] = responseBufferInp[1];
+        responseBuffer[2] = responseBufferInp[2];
+    }
+};
+
+struct requestResponse {
+    string request;
+    string response;
+
+    requestResponse(string req_input, string resp_inp) :
+    request(req_input), response(resp_inp) {};
 };
 
 struct histogramData {    /* Used as argument to thread_start() */
-    RequestChannel *work_channel;
+    int n;
     BoundedBuffer *hist_buffer[3]; //ACTUALLY an array
     Histogram *hist;
 
     //Constructor
-    histogramData(RequestChannel *work_channel_inp, BoundedBuffer *hist_buffer_inp[3], Histogram *hist_inp) :
-            work_channel(work_channel_inp), hist(hist_inp) {
+    histogramData(int n_inp, BoundedBuffer *hist_buffer_inp[3], Histogram *hist_inp) :
+            n(n_inp), hist(hist_inp) {
 
         hist_buffer[0] = hist_buffer_inp[0];
         hist_buffer[1] = hist_buffer_inp[1];
@@ -97,7 +110,23 @@ void* worker_thread_function(void* arg) {
         }
         else {
             string response = data->work_channel->cread();
-            data->hist->update(request, response);
+            if (request.compare("data John Smith")) {
+                data->responseBuffer[0]->push()
+            }
+            else if (request.compare("data Jane Smith")) {
+
+            }
+            else if (request.compare("data Joe Smith")) {
+
+            }
+            else {
+                cout<<"ERROR in WorkerThread. Request data is not correct!\n";
+            }
+            data->responseBuffer
+            //Need to put request + response in the histogram buffer. Struct?
+            //data->hist->update(request, response); No longer allowed. Histogram threads do this now
+
+
         }
     }
     cout << "Quitting worker-thread\n";
@@ -117,7 +146,7 @@ void* stat_thread_function(void* arg) {
 
      */
 
-    for(;;) {
+    for(int i = 0; i < data->n; i++) {
 
     }
 }
@@ -160,6 +189,8 @@ int main(int argc, char * argv[]) {
     int w = 100; //default number of worker threads
     int b = 200;
     int opt = 0;
+
+    vector<string> data = {"data john"};
     while ((opt = getopt(argc, argv, "n:w:b:")) != -1) {
         switch (opt) {
             case 'n':
