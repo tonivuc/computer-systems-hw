@@ -60,27 +60,15 @@ struct workerData {    /* Used as argument to thread_start() */
     }
 };
 
-struct requestResponse {
-    string request;
-    string response;
-
-    requestResponse(string req_input, string resp_inp) :
-    request(req_input), response(resp_inp) {};
-};
 
 struct histogramData {    /* Used as argument to thread_start() */
     int n;
-    BoundedBuffer *hist_buffer[3]; //ACTUALLY an array
+    BoundedBuffer *response_buffer; //ACTUALLY an array
     Histogram *hist;
 
     //Constructor
-    histogramData(int n_inp, BoundedBuffer *hist_buffer_inp[3], Histogram *hist_inp) :
-            n(n_inp), hist(hist_inp) {
-
-        hist_buffer[0] = hist_buffer_inp[0];
-        hist_buffer[1] = hist_buffer_inp[1];
-        hist_buffer[2] = hist_buffer_inp[2];
-    }
+    histogramData(int n_inp, BoundedBuffer *resp_buffer_inp, Histogram *hist_inp) :
+            n(n_inp), response_buffer(resp_buffer_inp), hist(hist_inp) {}
 };
 
 //This function is fed to the thread as "start_routine"
@@ -111,18 +99,17 @@ void* worker_thread_function(void* arg) {
         else {
             string response = data->work_channel->cread();
             if (request.compare("data John Smith")) {
-                data->responseBuffer[0]->push()
+                data->responseBuffer[0]->push(response);
             }
             else if (request.compare("data Jane Smith")) {
-
+                data->responseBuffer[1]->push(response);
             }
             else if (request.compare("data Joe Smith")) {
-
+                data->responseBuffer[2]->push(response);
             }
             else {
                 cout<<"ERROR in WorkerThread. Request data is not correct!\n";
             }
-            data->responseBuffer
             //Need to put request + response in the histogram buffer. Struct?
             //data->hist->update(request, response); No longer allowed. Histogram threads do this now
 
@@ -270,7 +257,7 @@ int main(int argc, char * argv[]) {
             string s = chan->cread (); //cread gets the response
             workerChannels.push_back(new RequestChannel(s, RequestChannel::CLIENT_SIDE));
             threadIDs.push_back(i);
-            workerData* wData = new workerData(workerChannels.at(i),&request_buffer,&hist);
+            workerData* wData = new workerData(workerChannels.at(i),&request_buffer,responseBuffers); //RequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3])
             workerDataVector.push_back(wData);
             pthread_create(&threadIDs.at(i), NULL, worker_thread_function,wData); //Last args is null atm.
         }
