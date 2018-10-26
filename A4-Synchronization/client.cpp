@@ -63,12 +63,13 @@ struct workerData {    /* Used as argument to thread_start() */
 
 struct histogramData {    /* Used as argument to thread_start() */
     int n;
+    string data_name;
     BoundedBuffer *response_buffer; //ACTUALLY an array
     Histogram *hist;
 
     //Constructor
-    histogramData(int n_inp, BoundedBuffer *resp_buffer_inp, Histogram *hist_inp) :
-            n(n_inp), response_buffer(resp_buffer_inp), hist(hist_inp) {}
+    histogramData(int n_inp, BoundedBuffer *resp_buffer_inp, string data_name_inp, Histogram *hist_inp) :
+            n(n_inp), response_buffer(resp_buffer_inp), data_name(data_name_inp), hist(hist_inp) {}
 };
 
 //This function is fed to the thread as "start_routine"
@@ -134,7 +135,7 @@ void* stat_thread_function(void* arg) {
      */
 
     for(int i = 0; i < data->n; i++) {
-
+        data->hist->update(data->response_buffer->pop());
     }
 }
 
@@ -177,7 +178,8 @@ int main(int argc, char * argv[]) {
     int b = 200;
     int opt = 0;
 
-    vector<string> data = {"data john"};
+    vector<string> data = {"data John Smith","data Jane Smith","data Joe Smith"};
+
     while ((opt = getopt(argc, argv, "n:w:b:")) != -1) {
         switch (opt) {
             case 'n':
@@ -220,11 +222,7 @@ int main(int argc, char * argv[]) {
         responseBuffers[2] = &responseBufferJoe;
 
 
-
-
         Histogram hist;
-        //pushData(n, &request_buffer);
-
 
 
         cout << "size of request buffer "<<request_buffer.size()<<"\n";
@@ -232,21 +230,22 @@ int main(int argc, char * argv[]) {
         //Timing:
         gettimeofday(&start, NULL);
 
+        //Create request and stat/histogram threads
+        vector<pthread_t> req_thread_IDs(3,0);
+        vector<pthread_t> histThreadIDs(3, 0);
+        vector<dataForThread*> req_thread_data;
+        vector<histogramData*> data_for_hist_threads;
 
-        //Add the Request Threads
-        pthread_t johnThread;
-        pthread_t janeThread;
-        pthread_t joeThread;
+        for (int i = 0; i < data.size(); i++) {
+            //Request threads pushing data to server starting
+            dataForThread* req_t_data = new dataForThread(n,data.at(i).c_str(),&request_buffer);
+            req_thread_data.push_back(req_t_data);
+            pthread_create(&req_thread_IDs.at(i), NULL, request_thread_function, req_thread_data.at(i)); //Create request threads
 
-        dataForThread* john = new dataForThread(n,"data John Smith",&request_buffer);
-        dataForThread* jane = new dataForThread(n,"data Jane Smith",&request_buffer);
-        dataForThread* joe  = new dataForThread(n,"data Joe Smith",&request_buffer);
-
-
-        //Create the buffer pushing threads
-        pthread_create(&johnThread, NULL, request_thread_function,john);
-        pthread_create(&janeThread, NULL, request_thread_function,jane);
-        pthread_create(&joeThread, NULL, request_thread_function,joe);
+            //Histogram updating threads starting
+            data_for_hist_threads.push_back(new histogramData(n, data.at(i).c_str(), &responseBuffers[i])); //Create data for requestThreads
+            pthread_create(&histThreadIDs.at(i), NULL, stat_thread_function,data_for_hist_threads.at(i)); //Create request threads
+        }
 
         //Create worker threads and channels
         vector<RequestChannel*> workerChannels;
@@ -262,16 +261,15 @@ int main(int argc, char * argv[]) {
             pthread_create(&threadIDs.at(i), NULL, worker_thread_function,wData); //Last args is null atm.
         }
         cout << "Finished making workerthreads\n";
+        //pushData(n, &request_buffer);
 
         //Join the buffer pushing threads
-        pthread_join(johnThread, NULL);
-        pthread_join(janeThread, NULL);
-        pthread_join(joeThread, NULL);
+        for (int i = 0; i < data.size(); i++) {
+            pthread_join(req_thread_IDs.at(i), NULL);
+            delete req_thread_data.at(i); //Clear this from heap
+        }
         cout << "Joined the request (buffer pushing) threads\n";
 
-        delete john;
-        delete jane;
-        delete joe;
 
         //Adding all the quits to the end of the buffer. Only added after all pushing threads are done pushing
         for (int i = 0; i < w; i++) {
@@ -285,6 +283,13 @@ int main(int argc, char * argv[]) {
             delete workerChannels.at(i);
             delete workerDataVector.at(i);
         }
+
+        //Close the histogram threads
+        for (int i = 0; i < data.size(); i++) {
+            pthread_join(histThreadIDs.at(i), NULL);
+            delete data_for_hist_threads.at(i); //Clear this from heap
+        }
+
         gettimeofday(&end, NULL); //Timing end
 
         chan->cwrite ("quit");
