@@ -37,11 +37,11 @@ using namespace std;
 
 struct dataForThread {    /* Used as argument to thread_start() */
     int     n;
-    char    *data_string;
+    string   data_string;
     BoundedBuffer *req_buffer; //Need to know where to push
 
     //Constructor
-    dataForThread(int nInp, char *data_string_inp, BoundedBuffer *req_buffer_inp) :
+    dataForThread(int nInp, string data_string_inp, BoundedBuffer *req_buffer_inp) :
             n(nInp), data_string(data_string_inp), req_buffer(req_buffer_inp) {}
 };
 
@@ -236,15 +236,18 @@ int main(int argc, char * argv[]) {
         vector<dataForThread*> req_thread_data;
         vector<histogramData*> data_for_hist_threads;
 
+
+        //I wish I could have this in my for-loop, but for some reason I cannot
+
         for (int i = 0; i < data.size(); i++) {
             //Request threads pushing data to server starting
-            dataForThread* req_t_data = new dataForThread(n,data.at(i).c_str(),&request_buffer);
+            dataForThread* req_t_data = new dataForThread(n,data.at(i),&request_buffer);
             req_thread_data.push_back(req_t_data);
             pthread_create(&req_thread_IDs.at(i), NULL, request_thread_function, req_thread_data.at(i)); //Create request threads
 
             //Histogram updating threads starting
-            data_for_hist_threads.push_back(new histogramData(n, data.at(i).c_str(), &responseBuffers[i])); //Create data for requestThreads
-            pthread_create(&histThreadIDs.at(i), NULL, stat_thread_function,data_for_hist_threads.at(i)); //Create request threads
+            data_for_hist_threads.push_back(new histogramData(n, responseBuffers[i], data.at(i), &hist));
+            pthread_create(&histThreadIDs.at(i), NULL, stat_thread_function,data_for_hist_threads.at(i));
         }
 
         //Create worker threads and channels
