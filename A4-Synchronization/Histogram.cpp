@@ -6,6 +6,9 @@ using namespace std;
 #include "Histogram.h"
 
 Histogram::Histogram(){
+
+    pthread_mutex_init (&m, NULL);
+
 	for (int i=0; i<3; i++){
 		memset (hist[i], 0, 10 * sizeof (int));	
 	}
@@ -17,13 +20,20 @@ Histogram::Histogram(){
 	names.push_back ("Jane Smith");
 	names.push_back ("Joe Smith");
 }
+
+Histogram::~Histogram() {
+	pthread_mutex_destroy(&m);
+}
+
 void Histogram::update (string request, string response){
 	/*
 	Is this function thread-safe???
 	Make necessary modifications to make it thread-safe
 	*/
+    pthread_mutex_lock (&m);
 	int person_index = map [request];
 	hist [person_index][stoi(response) / 10] ++;
+    pthread_mutex_unlock (&m);
 }
 void Histogram::print(){
 	cout << setw(10) << right << "Range";
