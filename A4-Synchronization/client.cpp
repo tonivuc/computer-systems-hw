@@ -192,7 +192,7 @@ int main(int argc, char * argv[]) {
     struct timeval start, end;
 
     int n = 100; //default number of requests per "patient"
-    int w = 20; //default number of worker threads
+    int w = 500; //default number of worker threads
     int b = 10;
     int opt = 0;
 
@@ -210,6 +210,11 @@ int main(int argc, char * argv[]) {
                 w = atoi(optarg); //This won't do a whole lot until you fill in the worker thread function
                 break;
         }
+    }
+
+    if (b < 3) {
+        b = 3;
+        printf("Error. Buffer size too small, has been changed to 3");
     }
 
     int pid = fork();
