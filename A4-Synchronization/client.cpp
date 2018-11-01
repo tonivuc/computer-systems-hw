@@ -188,7 +188,7 @@ int main(int argc, char * argv[]) {
                 n = atoi(optarg);
                 break;
             case 'w':
-                w = atoi(optarg); //This won't do a whole lot until you fill in the worker thread function
+                w = atoi(optarg); //This won't do a whole lot until you fill in the worker thread function hmm
                 break;
             case 'b':
                 w = atoi(optarg); //This won't do a whole lot until you fill in the worker thread function
