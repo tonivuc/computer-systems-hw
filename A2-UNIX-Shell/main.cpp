@@ -17,6 +17,8 @@ string quotes = "\"\'";
 
 vector<int> bgProcessIDs;
 bool backgroundProcces = false;
+int saved_STD_IN;
+int saved_STD_OUT;
 
 
 //Splits by space, but keeps stuff in quotes together. hm
@@ -477,7 +479,6 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
      * "2", with a unistd.h symbolic constant of STDERR_FILENO
      */
     //Make a pipe to be used from now on
-    pipe(fd);
 
     //If there is nothing special going on, just run the execvp
     if ( ! hasSpecials(arguments,specials,0) ) { //if there are pipes or redirects?
@@ -542,7 +543,8 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 //Wait until child has finished with the pipe
                 int result = 0;
                 if (!isBackgroundProcess(arguments)) {
-                    result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                    result = wait(nullptr); //Returns child process ID, or -1 if the child had an errorclose(fd[1]);
+                    //close(fd[1]);
                 }
                 else {
                     bgProcessIDs.push_back(pid);
@@ -556,7 +558,9 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 //close(fd[0]); //Read-end
 
                 //Output to pipe write-end
+
                 dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
+
                 //close(fd[1]);
                 execvp(charArrayBfr[0],charArrayBfr);
             }
@@ -608,7 +612,7 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
 
             int pid = fork();
             if (pid < 0) {
-                perror("fork() error");
+                perror("fork() error");dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end) (read next command from pipe read)
                 exit(-1);
             }
             else if (pid != 0) {  // parent
@@ -617,7 +621,13 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
 
                 int result = 0;
                 if (!isBackgroundProcess(arguments)) {
+                    cout << "Waiting for child\n";
                     result = wait(nullptr); //Returns child process ID, or -1 if the child had an error
+                    /*
+                    if (!writeToPipe(arguments,i)) {
+                        close(fd[1]);
+                    }
+                     */
                 }
                 else {
                     bgProcessIDs.push_back(pid);
@@ -636,19 +646,24 @@ int evaluateCommand(vector<string> arguments, string specials, int *fd) {
                 cout << "Inside the child nr. 2!\n";
                 //close(fd[0]); //Read-end
                 //Read input from pipe read end
-                dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end)
+
 
                 //If the next argument is a pipe
                 //TODO: Investigate if this shoudl say "arguments" yup
                 if ( writeToPipe(arguments,i) ) {
                     cout << "set stdOut to be write-end of pipe\n";
+                    dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end) (read next command from pipe read)
                     dup2(fd[1], STDOUT_FILENO); //make stdout fd[1] (write-end of pipe)
                 }
                 //If no more pipes
                 else {
-
-                    dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
+                    //close(fd[1]);
+                    //int dup2(int oldfd, int newfd); dup2() makes newfd be the copy of oldfd
+                    dup2(fd[0], STDIN_FILENO); //make stdin fd[0] (read-end) (read next command from pipe read)
+                    dup2(saved_STD_OUT,STDOUT_FILENO); //Set standard out to work as originally
+                    //dup2(STDOUT_FILENO,fd[1]); //make fd[1] (write-end of pipe) point to stdout
                     cout << "made write-end of pipe point to stdout\n";
+
                 }
                 //close(fd[1]);
 
@@ -716,6 +731,8 @@ int main() {
         tokens = removeOccurancesOf(tokens,'\'');
 
         int fd[2];
+        saved_STD_IN = dup(STDIN_FILENO);
+        saved_STD_OUT = dup(STDOUT_FILENO);
 
         evaluateCommand(tokens,specials,fd);
         backgroundProcces = false; //Reset this
@@ -723,11 +740,15 @@ int main() {
         killZombies();
 
         //Close the pipe that gets opened every time we run a command.
+        /*
         for (int i = 0; i < 2;i++) {
             if (close(fd[i])!=0) {
                 cout << "error closing fd["<<i<<"]\n";
             }
         }
+         */
+        close(saved_STD_OUT);
+        close(saved_STD_IN);
         cout << "\nBack in main: Write next command below \n> ";
     }
 }
