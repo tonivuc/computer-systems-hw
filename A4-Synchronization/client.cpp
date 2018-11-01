@@ -177,6 +177,7 @@ void pushData(int n, BoundedBuffer * request_buffer) {
     delete joe;
 }
 
+//Runs 2 seconds after alarm(2) is called
 void sigalarm_handler(int input) {
     system("clear");
     hist.print();
@@ -189,17 +190,8 @@ void sigalarm_handler(int input) {
 
 int main(int argc, char * argv[]) {
 
-    signal(SIGALRM, sigalarm_handler);
-
-    alarm(2);
-
-    /*
-    // install our interrupt handler
-    pthread_t threadID;
-    void* nothing;
-    pthread_create(&threadID, NULL, alarm_thread_function, (void*) &hist); //Create request threads
-     */
-
+    signal(SIGALRM, sigalarm_handler); //Map SIGALARM to the sigalarm_handler function
+    alarm(2); //Start sigalarm_handler after 2 seconds
 
     //New thread in main
     struct timeval start, end;
