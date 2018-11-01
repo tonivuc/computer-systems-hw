@@ -24,16 +24,26 @@
 #include <list>
 #include <vector>
 
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <bits/signum.h>
 
 #include "reqchannel.h"
 #include "BoundedBuffer.h"
 #include "Histogram.h"
+
+#ifdef __cplusplus__
+#include <cstdlib>
+#else
+#include <stdlib.h>
+#endif
+
 using namespace std;
+Histogram hist;
 
 struct dataForThread {    /* Used as argument to thread_start() */
     int     n;
@@ -167,16 +177,35 @@ void pushData(int n, BoundedBuffer * request_buffer) {
     delete joe;
 }
 
+void sigalarm_handler(int input) {
+    system("clear");
+    hist.print();
+    alarm(2);
+}
+
 /*--------------------------------------------------------------------------*/
 /* MAIN FUNCTION */
 /*--------------------------------------------------------------------------*/
 
 int main(int argc, char * argv[]) {
 
+    signal(SIGALRM, sigalarm_handler);
+
+    alarm(2);
+
+    /*
+    // install our interrupt handler
+    pthread_t threadID;
+    void* nothing;
+    pthread_create(&threadID, NULL, alarm_thread_function, (void*) &hist); //Create request threads
+     */
+
+
+    //New thread in main
     struct timeval start, end;
 
     int n = 100000; //default number of requests per "patient"
-    int w = 500; //default number of worker threads
+    int w = 100; //default number of worker threads
     int b = 10;
     int opt = 0;
 
@@ -196,11 +225,6 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    if (b < 3) {
-        b = 3;
-        printf("Error. Buffer size too small, has been changed to 3");
-    }
-
     int pid = fork();
     if (pid == 0){
         execl("dataserver", (char*) NULL);
@@ -218,6 +242,12 @@ int main(int argc, char * argv[]) {
         //Making BoundedBuffers
         BoundedBuffer request_buffer(b);
 
+        //Keep the response buffers > 0.
+        if (b < 3) {
+        b = 3;
+            printf("Changed buffer size so responseBuffers have size 1");
+        }
+
         //Store pointers to the response buffers in an array
         BoundedBuffer responseBufferJohn(b/3);
         BoundedBuffer responseBufferJane(b/3);
@@ -229,7 +259,7 @@ int main(int argc, char * argv[]) {
         responseBuffers[2] = &responseBufferJoe;
 
 
-        Histogram hist;
+
 
         //Timing:
         gettimeofday(&start, NULL);
@@ -307,7 +337,7 @@ int main(int argc, char * argv[]) {
         //Print time spent im microseconds
         printf("%ld\n", ((end.tv_sec * 1000000 + end.tv_usec)
                          - (start.tv_sec * 1000000 + start.tv_usec)));
-
+        system("clear");
         hist.print ();
     }
 }
