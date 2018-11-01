@@ -38,14 +38,11 @@ void BoundedBuffer::push(string str) {
 
     pthread_mutex_lock(&m);
     while (size() == maxSize){ //The correct solution for this is of course to check if the wakeup was actually legit before proceding. (Because pthread wait is sometimes woken even if it wasn't signaled to be woken)
-        cout << "BoundedBuffer is full!"<<endl;
         pthread_cond_wait(&cons_done, &m); //Wait until a consumer takes out something to free space
         //DEADLOCK
     }
-    cout << "--BoundedBuffer size before PUSH: "<<size()<<"\n";
     // now consume
     q.push (str);
-    cout << "--Pushed "<<str<<" to BoundedBuffer\n";
     pthread_mutex_unlock(&m);
     pthread_cond_signal (&prod_done); // send signal to Producer(s) that we have consumed. (V++)
 
@@ -62,11 +59,9 @@ string BoundedBuffer::pop() {
     while (size() == 0) {//While empty
         pthread_cond_wait(&prod_done, &m); //Wait for push to signal it has produced something
     }
-    cout << "--BoundedBuffer size before pop: "<<size()<<"\n";
 
 	string s = q.front();
-	q.pop();
-    cout << "--POPPED "<<s<<" from BoundedBuffer\n";
+	q.pop();;
     pthread_mutex_unlock(&m);
     pthread_cond_signal (&cons_done); //There is space now
 

@@ -72,16 +72,14 @@ struct histogramData {    /* Used as argument to thread_start() */
             n(n_inp), response_buffer(resp_buffer_inp), data_name(data_name_inp), hist(hist_inp) {}
 };
 
-//This function is fed to the thread as "start_routine"
+//This function is fed to the thread as "start_routine"F
 void* request_thread_function(void* arg) {
 
     dataForThread* data = (dataForThread*)arg;
 
     for(int i = 0; i < data->n; i++) {
-        cout << "Pushing "<<data->data_string<<" to requestBuffer"<<endl;
         data->req_buffer->push(data->data_string);
     };
-    cout << "request_thread_function finished pushing "<<data->data_string<<" to request buffer from client\n";
     //Retval is used by the pthread_join() function
     return NULL; //For now
 }
@@ -94,30 +92,20 @@ void* worker_thread_function(void* arg) {
 
     while(run) {
         string request = data->req_buffer->pop(); //Already has mutex in the buffer
-        cout << "Popped "<<request<<" from request buffer"<<endl;
         data->work_channel->cwrite(request); //Sends "requests" to the server
         if(request == "quit") {
-            cout << "Worker thread hit a quit!"<<endl;
             run = false;
         }
         else {
-            cout << "In the else-statement!!!";
             string response = data->work_channel->cread();
-            cout << "reqChannel server response: "<<response<<" for request "<<request<<endl;
             if (request.compare("data John Smith") == 0) {
-                cout << "Pushing John Smith ("<<request<<") response "<<response<<" from server to responseBuffer"<<endl;
                 data->responseBuffer[0]->push(response); //ResponseBuffer already has built-in mutex
-                cout << "Pushed "<<response<<" for data John Smith" <<"into responseBuffer[0]"<<endl;
             }
             else if (request.compare("data Jane Smith") == 0) {
-                cout << "Pushing Jane Smith response "<<response<<" from server to responseBuffer"<<endl;
                 data->responseBuffer[1]->push(response);
-                cout << "Pushed "<<response<<" for data Jane Smith" <<"into responseBuffer[1]"<<endl;
             }
             else if (request.compare("data Joe Smith") == 0) {
-                cout << "Pushing Joe Smith response "<<response<<"from server to responseBuffer"<<endl;
                 data->responseBuffer[2]->push(response);
-                cout << "Pushed "<<response<<" for data Joe Smith" <<"into responseBuffer[2]"<<endl;
             }
             else {
                 cout<<"ERROR in WorkerThread. Request data is not correct!\n";
@@ -128,7 +116,6 @@ void* worker_thread_function(void* arg) {
 
         }
     }
-    cout << "Quitting worker-thread\n";
     return NULL;
 }
 
@@ -148,11 +135,8 @@ void* stat_thread_function(void* arg) {
     for(int i = 0; i < data->n; i++) {
 
         //Would need a mutex here to sync pushing and popping of response_buffer?
-        cout << "\n___ Stats/Histogram thread initiate popping of responseBuffer for "<<data->data_name<<endl;
         string response = data->response_buffer->pop();
-        cout << "\n___ Stats/Histogram thread for "<<data->data_name<<" popped entry nr. "<<i<<" from response buffer\n";
         data->hist->update(data->data_name,response);
-        cout << "\n___ Stats/Histogram thread for "<<data->data_name<<" updated the entry with data "<<response<<endl;
 
     }
 }
@@ -191,7 +175,7 @@ int main(int argc, char * argv[]) {
 
     struct timeval start, end;
 
-    int n = 100; //default number of requests per "patient"
+    int n = 100000; //default number of requests per "patient"
     int w = 500; //default number of worker threads
     int b = 10;
     int opt = 0;
@@ -247,9 +231,6 @@ int main(int argc, char * argv[]) {
 
         Histogram hist;
 
-
-        cout << "size of request buffer "<<request_buffer.size()<<"\n";
-
         //Timing:
         gettimeofday(&start, NULL);
 
@@ -261,13 +242,11 @@ int main(int argc, char * argv[]) {
 
 
         for (int i = 0; i < data.size(); i++) {
-            cout << "***Creating a request thread\n";
             //Request threads pushing data to server starting
             dataForThread* req_t_data = new dataForThread(n,data.at(i),&request_buffer);
             req_thread_data.push_back(req_t_data);
             pthread_create(&req_thread_IDs.at(i), NULL, request_thread_function, req_thread_data.at(i)); //Create request threads
 
-            cout << "***Creating a statistics/histogram thread\n";
             //Histogram updating threads starting
             data_for_hist_threads.push_back(new histogramData(n, responseBuffers[i], data.at(i), &hist));
             pthread_create(&histThreadIDs.at(i), NULL, stat_thread_function,data_for_hist_threads.at(i));
@@ -279,7 +258,6 @@ int main(int argc, char * argv[]) {
         vector<pthread_t> threadIDs;
         vector<workerData*> workerDataVector;
         for (int i = 0; i < w; i++) {
-            cout << "Creating worker thread \n";
             chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
             string s = chan->cread (); //cread gets the response
             workerChannels.push_back(new RequestChannel(s, RequestChannel::CLIENT_SIDE));
