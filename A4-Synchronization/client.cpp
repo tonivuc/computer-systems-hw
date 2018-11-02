@@ -191,7 +191,7 @@ void sigalarm_handler(int input) {
 int main(int argc, char * argv[]) {
 
     signal(SIGALRM, sigalarm_handler); //Map SIGALARM to the sigalarm_handler function
-    alarm(2); //Start sigalarm_handler after 2 seconds
+    alarm(1); //Start sigalarm_handler after 2 seconds
 
     //New thread in main
     struct timeval start, end;
@@ -334,5 +334,7 @@ int main(int argc, char * argv[]) {
                          - (start.tv_sec * 1000000 + start.tv_usec)));
         system("clear");
         hist.print ();
+        printf("Runtime: %ld microseconds\n", ((end.tv_sec * 1000000 + end.tv_usec)
+                         - (start.tv_sec * 1000000 + start.tv_usec)));
     }
 }
