@@ -176,7 +176,7 @@ int main(int argc, char * argv[]) {
     struct timeval start, end;
 
     int n = 100000; //default number of requests per "patient"
-    int w = 500; //default number of worker threads
+    int w = 300; //default number of worker threads
     int b = 10;
     int opt = 0;
 
@@ -191,14 +191,9 @@ int main(int argc, char * argv[]) {
                 w = atoi(optarg); //This won't do a whole lot until you fill in the worker thread function hmm
                 break;
             case 'b':
-                w = atoi(optarg); //This won't do a whole lot until you fill in the worker thread function
+                b = atoi(optarg); //This won't do a whole lot until you fill in the worker thread function
                 break;
         }
-    }
-
-    if (b < 3) {
-        b = 3;
-        printf("Error. Buffer size too small, has been changed to 3");
     }
 
     int pid = fork();
@@ -209,14 +204,26 @@ int main(int argc, char * argv[]) {
 
         cout << "n == " << n << endl;
         cout << "w == " << w << endl;
+        cout << "b == " << b << endl;
 
         cout << "CLIENT STARTED:" << endl;
         cout << "Establishing control channel... " << flush; //What is this? endl. Forces it to be printed immediately.
         RequestChannel *chan = new RequestChannel("control", RequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
         cout << "done." << endl<< flush;
 
+        //Timing:
+        gettimeofday(&start, NULL);
+
+
+
+
         //Making BoundedBuffers
         BoundedBuffer request_buffer(b);
+
+        if (b < 3) {
+            b = 3;
+            printf("response buffer sizes set to 1");
+        }
 
         //Store pointers to the response buffers in an array
         BoundedBuffer responseBufferJohn(b/3);
@@ -231,9 +238,6 @@ int main(int argc, char * argv[]) {
 
         Histogram hist;
 
-        //Timing:
-        gettimeofday(&start, NULL);
-
         //Create request and stat/histogram threads
         vector<pthread_t> req_thread_IDs(3,0);
         vector<pthread_t> histThreadIDs(3, 0);
@@ -241,6 +245,7 @@ int main(int argc, char * argv[]) {
         vector<histogramData*> data_for_hist_threads;
 
 
+        //Create 3 request threads
         for (int i = 0; i < data.size(); i++) {
             //Request threads pushing data to server starting
             dataForThread* req_t_data = new dataForThread(n,data.at(i),&request_buffer);
