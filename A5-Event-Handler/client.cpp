@@ -132,57 +132,58 @@ void* worker_thread_function(void* arg) {
 void* stat_thread_function(void* arg) {
 
     histogramData* data = (histogramData*)arg;
-    /*
-		Fill in this function.
-
-		There should 1 such thread for each person. Each stat thread
-        must consume from the respective statistics buffer and update
-        the histogram. Since a thread only works on its own part of
-        histogram, does the Histogram class need to be thread-safe????
-
-     */
 
     for(int i = 0; i < data->n; i++) {
 
-        //Would need a mutex here to sync pushing and popping of response_buffer?
         string response = data->response_buffer->pop();
         data->hist->update(data->data_name,response);
 
     }
 }
 
-void pushData(int n, BoundedBuffer * request_buffer) {
-    //Start 3 local threads here
-    pthread_t johnThread;
-    pthread_t janeThread;
-    pthread_t joeThread;
+#define STDIN 0 // file descriptor for standard input
 
+//Returns pointer to vector of data channels?
+void create_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, int w) {
 
-    dataForThread* john = new dataForThread(n,"data John Smith",request_buffer); //Will be destroyed by the join apparently;
-    dataForThread* jane = new dataForThread(n,"data Jane Smith",request_buffer);
-    dataForThread* joe  = new dataForThread(n,"data Joe Smith",request_buffer);
-
-    //Create the buffer pushing threads
-    pthread_create(&johnThread, NULL, request_thread_function,john);
-    pthread_create(&janeThread, NULL, request_thread_function,jane);
-    pthread_create(&joeThread, NULL, request_thread_function,joe);
-
-    //Join the buffer pushing threads
-    pthread_join(johnThread, NULL);
-    pthread_join(janeThread, NULL);
-    pthread_join(joeThread, NULL);
-
-    delete john;
-    delete jane;
-    delete joe;
+    vector<pthread_t> threadIDs;
+    vector<workerData*> workerDataVector;
+    for (int i = 0; i < w; i++) {
+        controlChannel.cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
+        string s = chan->cread (); //cread gets the response
+        dataChannels.push_back(new RequestChannel(s, RequestChannel::CLIENT_SIDE));
+    }
 }
 
-//Runs 2 seconds after alarm(2) is called
+void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, int w) {
+    struct timeval tv;
+    fd_set readfds; //A set containing all the file descriptors that are ready for reading
+    tv.tv_sec = 2;
+    tv.tv_usec = 500000;
+
+    //Create data channel (Request Channel)
+    //Get the file descriptor from there
+
+    create_data_channels(controlChannel, dataChannels, w)
+
+    FD_ZERO(&readfds);
+    FD_SET(STDIN, &readfds);
+    // don't care about writefds and exceptfds:
+    select(STDIN+1, &readfds, NULL, NULL, &tv);
+
+    //What is actually happening here?
+    //Request threads are no longer to be used. In stead one function will handle all the request channels.
+}
+
+
+
+/*//Runs 2 seconds after alarm(2) is called
 void sigalarm_handler(int input) {
     system("clear");
     hist.print();
     alarm(2);
 }
+ */
 
 /*--------------------------------------------------------------------------*/
 /* MAIN FUNCTION */
@@ -190,14 +191,14 @@ void sigalarm_handler(int input) {
 
 int main(int argc, char * argv[]) {
 
-    signal(SIGALRM, sigalarm_handler); //Map SIGALARM to the sigalarm_handler function
-    alarm(1); //Start sigalarm_handler after 2 seconds
+    //signal(SIGALRM, sigalarm_handler); //Map SIGALARM to the sigalarm_handler function
+    //alarm(1); //Start sigalarm_handler after 2 seconds
 
     //New thread in main
     struct timeval start, end;
 
     int n = 100000; //default number of requests per "patient"
-    int w = 500; //default number of worker threads
+    int w = 500; //Default number of data channels
     int b = 10;
     int opt = 0;
 
@@ -234,9 +235,6 @@ int main(int argc, char * argv[]) {
 
         //Timing:
         gettimeofday(&start, NULL);
-
-
-
 
         //Making BoundedBuffers
         BoundedBuffer request_buffer(b);
