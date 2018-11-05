@@ -144,15 +144,23 @@ void* stat_thread_function(void* arg) {
 #define STDIN 0 // file descriptor for standard input
 
 //Returns pointer to vector of data channels?
-void create_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, int w) {
+int create_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, int w, fd_set &readfds, vector<int> &fileDescriptors) {
 
-    vector<pthread_t> threadIDs;
-    vector<workerData*> workerDataVector;
+    //These have to be empty for indexing to work out later.
+    dataChannels.clear();
+    fileDescriptors.clear();
+
+    RequestChannel* dataChannel;
     for (int i = 0; i < w; i++) {
         controlChannel.cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
         string s = chan->cread (); //cread gets the response
-        dataChannels.push_back(new RequestChannel(s, RequestChannel::CLIENT_SIDE));
+        dataChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
+        int readFD = dataChannel->read_fd();
+        FD_SET(readFD, &readfds); //Add the file descriptor used for reading from the channel, to the set.
+        fileDescriptors.push_back(readFD);
+        dataChannels.push_back(dataChannel);
     }
+    return dataChannel->read_fd(); //Returns highest file descriptor
 }
 
 void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, int w) {
@@ -160,16 +168,32 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
     fd_set readfds; //A set containing all the file descriptors that are ready for reading
     tv.tv_sec = 2;
     tv.tv_usec = 500000;
+    vector<int> allReadFDVector;
 
     //Create data channel (Request Channel)
     //Get the file descriptor from there
 
-    create_data_channels(controlChannel, dataChannels, w)
+    FD_ZERO(&readfds); //Clear the set before we begin (might not need this?)
 
-    FD_ZERO(&readfds);
-    FD_SET(STDIN, &readfds);
+    int maxfds = create_data_channels(controlChannel, dataChannels, w, readfds, allReadFDVector);
+    fd_set allReadFDSet = readfds;
+
+    bool kek = true;
+
     // don't care about writefds and exceptfds:
-    select(STDIN+1, &readfds, NULL, NULL, &tv);
+    while (kek) {
+        select(maxfds+1, &readfds, NULL, NULL, &tv);
+        //After running select, the readfds set only contains the file descriptors that are ready
+
+        //Call RequestChannel::cread() on the file descriptors that are ready
+        for (int i = 0; i < allReadFDVector.size(); i++) {
+            if FD_ISSET(allReadFDVector.at(i), &readfds) { //If this fd has been changed
+                string s = dataChannels.at(i)->cread();
+            }
+        }
+        kek = false;
+    }
+
 
     //What is actually happening here?
     //Request threads are no longer to be used. In stead one function will handle all the request channels.
