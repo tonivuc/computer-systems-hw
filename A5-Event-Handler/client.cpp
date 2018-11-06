@@ -153,7 +153,7 @@ int create_data_channels(RequestChannel &controlChannel, vector<RequestChannel*>
     RequestChannel* dataChannel;
     for (int i = 0; i < w; i++) {
         controlChannel.cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
-        string s = chan->cread (); //cread gets the response
+        string s = controlChannel.cread (); //cread gets the response
         dataChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
         int readFD = dataChannel->read_fd();
         FD_SET(readFD, &readfds); //Add the file descriptor used for reading from the channel, to the set.
@@ -163,12 +163,23 @@ int create_data_channels(RequestChannel &controlChannel, vector<RequestChannel*>
     return dataChannel->read_fd(); //Returns highest file descriptor
 }
 
-void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, int w) {
+void sendInitialData(void* arg) {
+    workerData* data = (workerData*)arg;
+
+    //Instead, the we would send cwrite() on all channels and then
+    //try to do cread() on them.
+    string request = data->req_buffer->pop(); //Already has mutex in the buffer
+    data->work_channel->cwrite(request); //Sends "requests" to the server
+
+}
+
+void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, int w, void* arg) {
     struct timeval tv;
     fd_set readfds; //A set containing all the file descriptors that are ready for reading
     tv.tv_sec = 2;
     tv.tv_usec = 500000;
     vector<int> allReadFDVector;
+    ;
 
     //Create data channel (Request Channel)
     //Get the file descriptor from there
@@ -180,6 +191,9 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
 
     bool kek = true;
 
+
+
+
     // don't care about writefds and exceptfds:
     while (kek) {
         select(maxfds+1, &readfds, NULL, NULL, &tv);
@@ -188,7 +202,12 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
         //Call RequestChannel::cread() on the file descriptors that are ready
         for (int i = 0; i < allReadFDVector.size(); i++) {
             if FD_ISSET(allReadFDVector.at(i), &readfds) { //If this fd has been changed
-                string s = dataChannels.at(i)->cread();
+                //Have to write some data to the channels
+                //Pop from RequestBuffer
+
+                string s = dataChannels.at(i)->cread(); //Re
+
+                //Deal with that string and send some stuff.
             }
         }
         kek = false;
@@ -300,6 +319,15 @@ int main(int argc, char * argv[]) {
         }
         cout << "***Finished making request and histogram threads\n";
 
+
+        //////////////////////////////////
+
+
+
+        // New code goes here
+
+
+        /////////////////////////////////
         //Create worker threads and channels
         vector<RequestChannel*> workerChannels;
         vector<pthread_t> threadIDs;
