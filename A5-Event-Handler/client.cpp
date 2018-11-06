@@ -106,6 +106,7 @@ void* worker_thread_function(void* arg) {
         if(request == "quit") {
             run = false;
         }
+        /*
         else {
             string response = data->work_channel->cread();
             if (request.compare("data John Smith") == 0) {
@@ -122,9 +123,8 @@ void* worker_thread_function(void* arg) {
             }
             //Need to put request + response in the histogram buffer. Struct?
             //data->hist->update(request, response); No longer allowed. Histogram threads do this now
-
-
         }
+         */ //Handling of responses moved somewhere else
     }
     return NULL;
 }
@@ -141,7 +141,6 @@ void* stat_thread_function(void* arg) {
     }
 }
 
-#define STDIN 0 // file descriptor for standard input
 
 //Returns pointer to vector of data channels?
 int create_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, int w, fd_set &readfds, vector<int> &fileDescriptors) {
@@ -163,6 +162,8 @@ int create_data_channels(RequestChannel &controlChannel, vector<RequestChannel*>
     return dataChannel->read_fd(); //Returns highest file descriptor
 }
 
+//I'm keeping the worker threads for now
+/*
 void sendInitialData(void* arg) {
     workerData* data = (workerData*)arg;
 
@@ -170,10 +171,10 @@ void sendInitialData(void* arg) {
     //try to do cread() on them.
     string request = data->req_buffer->pop(); //Already has mutex in the buffer
     data->work_channel->cwrite(request); //Sends "requests" to the server
-
 }
+ */
 
-void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, int w, void* arg) {
+void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, int w) {
     struct timeval tv;
     fd_set readfds; //A set containing all the file descriptors that are ready for reading
     tv.tv_sec = 2;
@@ -320,14 +321,7 @@ int main(int argc, char * argv[]) {
         cout << "***Finished making request and histogram threads\n";
 
 
-        //////////////////////////////////
 
-
-
-        // New code goes here
-
-
-        /////////////////////////////////
         //Create worker threads and channels
         vector<RequestChannel*> workerChannels;
         vector<pthread_t> threadIDs;
@@ -365,6 +359,17 @@ int main(int argc, char * argv[]) {
             delete workerDataVector.at(i);
         }
         cout << "***Worker threads closed\n";
+
+        //////////////////////////////////
+
+
+
+        // New code goes here
+
+        handle_data_channels(*chan, workerChannels,w);
+
+
+        /////////////////////////////////
 
         //Close the histogram threads
         cout << "***Closing histogram threads as they finish\n";
