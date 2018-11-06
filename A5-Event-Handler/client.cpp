@@ -104,6 +104,8 @@ void* worker_thread_function(void* arg) {
     while(run) {
         string request = data->req_buffer->pop(); //Already has mutex in the buffer
         data->work_channel->cwrite(request); //Sends "requests" to the server
+        //Add to that string thing
+
         if(request == "quit") {
             run = false;
         }
