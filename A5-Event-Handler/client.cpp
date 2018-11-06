@@ -166,28 +166,26 @@ int create_data_channels(RequestChannel &controlChannel, vector<RequestChannel*>
 }
 
 
-void sendInitialData(void* arg) {
-    workerData* data = (workerData*)arg;
-
-    //Instead, the we would send cwrite() on all channels and then
-    //try to do cread() on them.
+void sendInitialData(vector<string> currentRequestChannelData, vector<RequestChannel*> &dataChannels, int &k) {
 
 }
 
-void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, BoundedBuffer &requestBuffer, vector<BoundedBuffer> &responseBuffers, int w, int n) {
+void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, BoundedBuffer &requestBuffer, BoundedBuffer responseBuffers[3], int w, int n) {
+    //Local variables
     struct timeval tv;
-    fd_set readfds; //A set containing all the file descriptors that are ready for reading
     tv.tv_sec = 2;
     tv.tv_usec = 500000;
+    fd_set readfds; //A set containing all the file descriptors that are ready for reading
     vector<int> allReadFDVector;
-    int k = 0; //How many data pieces we have pushed to server so far
     vector<string> currentRequestChannelData;
     FD_ZERO(&readfds); //Clear the set before we begin (might not need this?)
+    bool loop = true;
+    int k = 0; //How many data pieces we have pushed to server so far
+
 
     //Create the data channels (without pushing anything to them)
     int maxfds = create_data_channels(controlChannel, dataChannels, w, readfds, allReadFDVector);
     fd_set allReadFDSet = readfds;
-
 
     //Send data to all channels
     for (int i = 0; i < w; i++) {
@@ -197,11 +195,9 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
         k++;
     }
 
-
-    bool loop = true;
-
     // don't care about writefds and exceptfds:
     while (loop) {
+        readfds = allReadFDSet; //Reset the set before a new selection
         select(maxfds+1, &readfds, NULL, NULL, &tv);
         //After running select, the readfds set only contains the file descriptors that are ready
 
@@ -243,10 +239,6 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
             }
         }
     }
-
-
-    //What is actually happening here?
-    //Request threads are no longer to be used. In stead one function will handle all the request channels.
 }
 
 
@@ -396,8 +388,7 @@ int main(int argc, char * argv[]) {
 
         // New code goes here
 
-        handle_data_channels(*chan, workerChannels,w);
-
+        handle_data_channels(*chan, workerChannels,request_buffer,*responseBuffers,w,n);
 
         /////////////////////////////////
 
