@@ -159,76 +159,89 @@ int create_data_channels(RequestChannel &controlChannel, vector<RequestChannel*>
         dataChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
         int readFD = dataChannel->read_fd();
         FD_SET(readFD, &readfds); //Add the file descriptor used for reading from the channel, to the set.
-        fileDescriptors.push_back(readFD);
+        fileDescriptors.push_back(readFD); //Only pushing the read file descriptors. So size is the same as the request channel size
         dataChannels.push_back(dataChannel);
     }
     return dataChannel->read_fd(); //Returns highest file descriptor
 }
 
-//I'm keeping the worker threads for now
-/*
+
 void sendInitialData(void* arg) {
     workerData* data = (workerData*)arg;
 
     //Instead, the we would send cwrite() on all channels and then
     //try to do cread() on them.
-    string request = data->req_buffer->pop(); //Already has mutex in the buffer
-    data->work_channel->cwrite(request); //Sends "requests" to the server
-}
- */
 
-void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, int w) {
+}
+
+void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, BoundedBuffer &requestBuffer, vector<BoundedBuffer> &responseBuffers, int w, int n) {
     struct timeval tv;
     fd_set readfds; //A set containing all the file descriptors that are ready for reading
     tv.tv_sec = 2;
     tv.tv_usec = 500000;
     vector<int> allReadFDVector;
-    vector<string> dataPushedEachChannel;
-
-    //Create data channel (Request Channel)
-    //Get the file descriptor from there
-
+    int k = 0; //How many data pieces we have pushed to server so far
+    vector<string> currentRequestChannelData;
     FD_ZERO(&readfds); //Clear the set before we begin (might not need this?)
 
+    //Create the data channels (without pushing anything to them)
     int maxfds = create_data_channels(controlChannel, dataChannels, w, readfds, allReadFDVector);
     fd_set allReadFDSet = readfds;
 
-    bool kek = true;
+
+    //Send data to all channels
+    for (int i = 0; i < w; i++) {
+        string request = requestBuffer.pop(); //Already has mutex in the buffer
+        currentRequestChannelData.push_back(request);
+        dataChannels.at(i)->cwrite(request); //Sends "requests" to the serve;
+        k++;
+    }
 
 
-
+    bool loop = true;
 
     // don't care about writefds and exceptfds:
-    while (kek) {
+    while (loop) {
         select(maxfds+1, &readfds, NULL, NULL, &tv);
         //After running select, the readfds set only contains the file descriptors that are ready
 
-        //Call RequestChannel::cread() on the file descriptors that are ready
+        //Call RequestChannel::cread() on the channels that are ready and write new data to available channels
         for (int i = 0; i < allReadFDVector.size(); i++) {
-            //Each data/workerchannel can only send one request at a time. Keep track of what request it sent/popped, when handling the response for that channel.
-            if FD_ISSET(allReadFDVector.at(i), &readfds) { //If this fd has been changed
-                //Have to write some data to the channels
-                //Pop from RequestBuffer
 
-                string s = dataChannels.at(i)->cread(); //Re
-                //Push to histogram threads yeees
+            if FD_ISSET(allReadFDVector.at(i), &readfds) { //If this fd has been changed
+
+                string response = dataChannels.at(i)->cread(); // i = the ith channel
+                string request = currentRequestChannelData.at(i); //i lets us know which datachannel we are looking at
+
                 if (request.compare("data John Smith") == 0) {
-                    data->responseBuffer[0]->push(response); //ResponseBuffer already has built-in mutex
+                    responseBuffers[0].push(response); //ResponseBuffer already has built-in mutex
+                    k++;
                 }
                 else if (request.compare("data Jane Smith") == 0) {
-                    data->responseBuffer[1]->push(response);
+                    responseBuffers[1].push(response);
+                    k++;
                 }
                 else if (request.compare("data Joe Smith") == 0) {
-                    data->responseBuffer[2]->push(response);
+                    responseBuffers[2].push(response);
+                    k++;
                 }
                 else {
                     cout<<"ERROR in WorkerThread. Request data is not correct!\n";
                 }
 
-                //Deal with that string and send some stuff.
+                //Send more data to the server
+                if (k < n) {
+                    string request = requestBuffer.pop();
+                    currentRequestChannelData.at(i) = request;
+                    dataChannels.at(i)->cwrite(request); //Sends "requests" to the server
+                    k++;
+                }
+                else {
+                    loop = false;
+                }
+
             }
         }
-        kek = false;
     }
 
 
