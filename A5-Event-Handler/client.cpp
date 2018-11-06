@@ -234,22 +234,27 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
                 }
                 else {
                     loop = false;
-                }
+                    //Loop through the channels and send quit                }
 
             }
         }
+    }
+
+    for (int i = 0; i < w; i++) {
+        dataChannels.at(i)->cwrite("quit");
+    }
     }
 }
 
 
 
-/*//Runs 2 seconds after alarm(2) is called
+//Runs 2 seconds after alarm(2) is called
 void sigalarm_handler(int input) {
     system("clear");
     hist.print();
     alarm(2);
 }
- */
+
 
 /*--------------------------------------------------------------------------*/
 /* MAIN FUNCTION */
@@ -264,7 +269,7 @@ int main(int argc, char * argv[]) {
     struct timeval start, end;
 
     int n = 100000; //default number of requests per "patient"
-    int w = 500; //Default number of data channels
+    int w = 5; //Default number of data channels
     int b = 10;
     int opt = 0;
 
