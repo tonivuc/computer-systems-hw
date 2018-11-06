@@ -98,6 +98,7 @@ void* worker_thread_function(void* arg) {
 
     workerData* data = (workerData*)arg;
 
+
     bool run = true;
 
     while(run) {
@@ -180,7 +181,7 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
     tv.tv_sec = 2;
     tv.tv_usec = 500000;
     vector<int> allReadFDVector;
-    ;
+    vector<string> dataPushedEachChannel;
 
     //Create data channel (Request Channel)
     //Get the file descriptor from there
@@ -202,11 +203,25 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
 
         //Call RequestChannel::cread() on the file descriptors that are ready
         for (int i = 0; i < allReadFDVector.size(); i++) {
+            //Each data/workerchannel can only send one request at a time. Keep track of what request it sent/popped, when handling the response for that channel.
             if FD_ISSET(allReadFDVector.at(i), &readfds) { //If this fd has been changed
                 //Have to write some data to the channels
                 //Pop from RequestBuffer
 
                 string s = dataChannels.at(i)->cread(); //Re
+                //Push to histogram threads yeees
+                if (request.compare("data John Smith") == 0) {
+                    data->responseBuffer[0]->push(response); //ResponseBuffer already has built-in mutex
+                }
+                else if (request.compare("data Jane Smith") == 0) {
+                    data->responseBuffer[1]->push(response);
+                }
+                else if (request.compare("data Joe Smith") == 0) {
+                    data->responseBuffer[2]->push(response);
+                }
+                else {
+                    cout<<"ERROR in WorkerThread. Request data is not correct!\n";
+                }
 
                 //Deal with that string and send some stuff.
             }
