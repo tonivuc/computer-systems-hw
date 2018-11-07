@@ -136,13 +136,14 @@ void* worker_thread_function(void* arg) {
 void* stat_thread_function(void* arg) {
 
     histogramData* data = (histogramData*)arg;
-
+    cout << "Before for-loop in stat_thread_function"<<endl;
     for(int i = 0; i < data->n; i++) {
-
         string response = data->response_buffer->pop();
+        cout << "n = "<<i<<" Popped "<<response<<" from responsebuffer "<<data->data_name<<endl;
         data->hist->update(data->data_name,response);
-
     }
+    cout << "Finished stat_thread!"<<endl;
+    return NULL;
 }
 
 
@@ -196,6 +197,8 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
         k++;
     }
 
+    cout << "allReadFDVector.size() "<<allReadFDVector.size()<<endl;
+
     // don't care about writefds and exceptfds:
     while (loop) {
         readfds = allReadFDSet; //Reset the set before a new selection
@@ -209,7 +212,7 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
 
                 string response = dataChannels.at(i)->cread(); // i = the ith channel
                 string request = currentRequestChannelData.at(i); //i lets us know which datachannel we are looking at
-                cout << "Found a channel that has data ready to read. That's "<<request<<" w. response "<<response<<endl;
+                //cout << "Reading from channel w. request"<<request<<", w. response "<<response<<endl;
 
                 if (request.compare("data John Smith") == 0) {
                     responseBuffers[0].push(response); //ResponseBuffer already has built-in mutex
@@ -223,7 +226,7 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
                 else {
                     cout<<"ERROR in WorkerThread. Request data is not correct!\n";
                 }
-                cout << "k: "<<k<<" n: "<<n<<endl;
+                //cout << "k: "<<k<<" n: "<<n<<endl;
                 //Send more data to the server
                 if (k < n*3) {
                     string request = requestBuffer.pop();
@@ -269,7 +272,7 @@ int main(int argc, char * argv[]) {
     struct timeval start, end;
 
     int n = 10; //default number of requests per "patient"
-    int w = 5; //Default number of data channels
+    int w = 3; //Default number of data channels
     int b = 6;
     int opt = 0;
 
