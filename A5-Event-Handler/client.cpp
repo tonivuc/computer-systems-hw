@@ -170,11 +170,6 @@ int create_data_channels(RequestChannel &controlChannel, vector<RequestChannel*>
     return dataChannel->read_fd(); //Returns highest file descriptor
 }
 
-
-void sendInitialData(vector<string> currentRequestChannelData, vector<RequestChannel*> &dataChannels, int &k) {
-
-}
-
 void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, BoundedBuffer &requestBuffer, BoundedBuffer responseBuffers[3], int w, int n) {
     //Local variables
     struct timeval tv;
@@ -197,7 +192,6 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
         string request = requestBuffer.pop(); //Already has mutex in the buffer
         currentRequestChannelData.push_back(request);
         dataChannels.at(i)->cwrite(request); //Sends "requests" to the serve;
-        cout << "Pushing "<<request<<" to server."<<endl;
         k++;
     }
     bool debug = false;
@@ -269,8 +263,8 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
 
 
     for (int i = 0; i < w; i++) {
-        //cout << "Pushing quit to server"<<endl;
-        //dataChannels.at(i)->cwrite("quit");
+        cout << "Pushing quit to server"<<endl;
+        dataChannels.at(i)->cwrite("quit");
     }
 }
 
@@ -385,15 +379,8 @@ int main(int argc, char * argv[]) {
             workerChannels.push_back(new RequestChannel(s, RequestChannel::CLIENT_SIDE));
         }
         cout << "***Finished making workerchannels (actually datachannels)\n";
-        //pushData(n, &request_buffer);
-
-        //////////////////////////////////
-
-        // New code goes here
 
         handle_data_channels(*chan, workerChannels,request_buffer,*responseBuffers,w,n);
-
-        /////////////////////////////////
 
         //Join the buffer pushing threads
         cout << "***Joining requestBuffer pushing threads";
@@ -435,7 +422,7 @@ int main(int argc, char * argv[]) {
         //Print time spent im microseconds
         printf("%ld\n", ((end.tv_sec * 1000000 + end.tv_usec)
                          - (start.tv_sec * 1000000 + start.tv_usec)));
-        system("clear");
+        //system("clear");
         hist.print ();
         printf("Runtime: %ld microseconds\n", ((end.tv_sec * 1000000 + end.tv_usec)
                          - (start.tv_sec * 1000000 + start.tv_usec)));
