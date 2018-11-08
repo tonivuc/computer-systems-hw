@@ -261,11 +261,12 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
     cout <<endl;
     cout << "one "<<one<<" two "<<two<<" three "<<three<<endl;
 
-
+    /*
     for (int i = 0; i < w; i++) {
         cout << "Pushing quit to server"<<endl;
         dataChannels.at(i)->cwrite("quit");
     }
+     */
 }
 
 
@@ -373,11 +374,7 @@ int main(int argc, char * argv[]) {
 
         //Create worker threads and channels
         vector<RequestChannel*> workerChannels; //dataChannel
-        for (int i = 0; i < w; i++) {
-            chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
-            string s = chan->cread (); //cread gets the response
-            workerChannels.push_back(new RequestChannel(s, RequestChannel::CLIENT_SIDE));
-        }
+
         cout << "***Finished making workerchannels (actually datachannels)\n";
 
         handle_data_channels(*chan, workerChannels,request_buffer,*responseBuffers,w,n);
