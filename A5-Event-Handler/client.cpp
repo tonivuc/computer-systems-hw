@@ -55,21 +55,6 @@ struct dataForThread {    /* Used as argument to thread_start() */
             n(nInp), data_string(data_string_inp), req_buffer(req_buffer_inp) {}
 };
 
-struct workerData {    /* Used as argument to thread_start() */
-    RequestChannel *work_channel;
-    BoundedBuffer *req_buffer; //Need to know where to push
-    BoundedBuffer *responseBuffer[3];
-
-    //Constructor
-    workerData(RequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3]) :
-            work_channel(work_channel_inp), req_buffer(req_buffer_inp) {
-
-        responseBuffer[0] = responseBufferInp[0];
-        responseBuffer[1] = responseBufferInp[1];
-        responseBuffer[2] = responseBufferInp[2];
-    }
-};
-
 
 struct histogramData {    /* Used as argument to thread_start() */
     int n;
@@ -94,44 +79,6 @@ void* request_thread_function(void* arg) {
     };
     //Retval is used by the pthread_join() function
     return NULL; //For now
-}
-
-void* worker_thread_function(void* arg) {
-
-    workerData* data = (workerData*)arg;
-
-
-    bool run = true;
-
-    while(run) {
-        string request = data->req_buffer->pop(); //Already has mutex in the buffer
-        data->work_channel->cwrite(request); //Sends "requests" to the server
-        //Add to that string thing
-
-        if(request == "quit") {
-            run = false;
-        }
-        /*
-        else {
-            string response = data->work_channel->cread();
-            if (request.compare("data John Smith") == 0) {
-                data->responseBuffer[0]->push(response); //ResponseBuffer already has built-in mutex
-            }
-            else if (request.compare("data Jane Smith") == 0) {
-                data->responseBuffer[1]->push(response);
-            }
-            else if (request.compare("data Joe Smith") == 0) {
-                data->responseBuffer[2]->push(response);
-            }
-            else {
-                cout<<"ERROR in WorkerThread. Request data is not correct!\n";
-            }
-            //Need to put request + response in the histogram buffer. Struct?
-            //data->hist->update(request, response); No longer allowed. Histogram threads do this now
-        }
-         */ //Handling of responses moved somewhere else
-    }
-    return NULL;
 }
 
 void* stat_thread_function(void* arg) {
@@ -180,7 +127,8 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
     vector<string> currentRequestChannelData;
     FD_ZERO(&readfds); //Clear the set before we begin (might not need this?)
     bool loop = true;
-    int k = 0; //How many data pieces we have pushed to server so far
+    int countDataPushed = 0; //How many data pieces we have pushed to server so far
+    int one = 0, two = 0, three = 0;
 
 
     //Create the data channels (without pushing anything to them)
@@ -192,19 +140,16 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
         string request = requestBuffer.pop(); //Already has mutex in the buffer
         currentRequestChannelData.push_back(request);
         dataChannels.at(i)->cwrite(request); //Sends "requests" to the serve;
-        k++;
+        countDataPushed++;
     }
-    bool debug = false;
 
-    int one = 0, two = 0, three = 0;
 
     cout << "allReadFDVector.size() "<<allReadFDVector.size()<<endl;
 
-    // don't care about writefds and exceptfds:
     while (loop) {
         readfds = allReadFDSet; //Reset the set before a new selection
-        select(maxfds+1, &readfds, NULL, NULL, NULL);
-        //After running select, the readfds set only contains the file descriptors that are ready
+        select(maxfds+1, &readfds, NULL, NULL, NULL); //After running select, the readfds set only contains the file descriptors that are ready
+
 
         //Call RequestChannel::cread() on the channels that are ready and write new data to available channels
         for (int i = 0; i < allReadFDVector.size(); i++) {
@@ -213,47 +158,35 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
 
                 string response = dataChannels.at(i)->cread(); // i = the ith channel
                 string request = currentRequestChannelData.at(i); //i lets us know which datachannel we are looking at
-                //cout << "Reading from channel w. request"<<request<<", w. response "<<response<<endl;
 
                 if (request.compare("data John Smith") == 0) {
-
                     responseBuffers[0].push(response); //ResponseBuffer already has built-in mutex
-                    cout << "size of responeBuffer1 is "<<responseBuffers[0].size()<<endl;
                     one++;
-                    if (debug) cout << "Pushing "<<i<<" "<<request<<" to responsebuffer 0."<<endl;
                 }
                 else if (request.compare("data Jane Smith") == 0) {
 
                     responseBuffers[1].push(response);
-                    cout << "size of responeBuffer2 is "<<responseBuffers[1].size()<<endl;
                     two++;
-                    if (debug) cout << "Pushing "<<i<<" "<<request<<" to responsebuffer 1."<<endl;
                 }
                 else if (request.compare("data Joe Smith") == 0) {
-                    three++;
-
                     responseBuffers[2].push(response);
-                    cout << "size of responeBuffer3 is "<<responseBuffers[2].size()<<endl;
-                    if (debug) cout << "Pushing "<<i<<" "<<request<<" to responsebuffer 2."<<endl;
+                    three++;
                 }
                 else {
-                    cout<<"ERROR ERROR ERROR ERROR in WorkerThread. Request data is not correct!\n";
+                    cout<<"ERROR ERROR ERROR in WorkerThread. Request data is not correct!\n";
                 }
-                //cout << "k: "<<k<<" n: "<<n<<endl;
+
                 //Send more data to the server
-                if (k < 3*n) {
+                if (countDataPushed < 3*n) {
                     string request = requestBuffer.pop();
                     currentRequestChannelData.at(i) = request;
                     dataChannels.at(i)->cwrite(request); //Sends "requests" to the server
-                    k++;
+                    countDataPushed++;
                 }
                 else if ((one + two + three) == n*3){
                     cout << "Loop = false"<<endl;
                     loop = false;
-                    //Loop through the channels and send quit
-                }
-                else {
-                    cout<<"Waiting for all responses from server"<<endl;
+
                 }
             }
         }
@@ -261,12 +194,12 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
     cout <<endl;
     cout << "one "<<one<<" two "<<two<<" three "<<three<<endl;
 
-    /*
+
+    //Loop through the channels and send quit
     for (int i = 0; i < w; i++) {
-        cout << "Pushing quit to server"<<endl;
         dataChannels.at(i)->cwrite("quit");
     }
-     */
+
 }
 
 
@@ -292,8 +225,8 @@ int main(int argc, char * argv[]) {
     struct timeval start, end;
 
     int n = 10000; //default number of requests per "patient"
-    int w = 100; //Default number of data channels
-    int b = 6;
+    int w = 500; //Default number of data channels
+    int b = 10;
     int opt = 0;
 
     vector<string> data = {"data John Smith","data Jane Smith","data Joe Smith"};
@@ -380,7 +313,7 @@ int main(int argc, char * argv[]) {
         handle_data_channels(*chan, workerChannels,request_buffer,*responseBuffers,w,n);
 
         //Join the buffer pushing threads
-        cout << "***Joining requestBuffer pushing threads";
+        cout << "***Joining requestBuffer pushing threads"<<endl;
         for (int i = 0; i < data.size(); i++) {
             pthread_join(req_thread_IDs.at(i), NULL);
             delete req_thread_data.at(i); //Clear this from heap
