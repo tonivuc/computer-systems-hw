@@ -117,13 +117,83 @@ int create_data_channels(RequestChannel &controlChannel, vector<RequestChannel*>
     return dataChannel->read_fd(); //Returns highest file descriptor
 }
 
-//Need to create 
+//Need to create -u amount of event_handler (handle_data_channels) threads
+//They each have w/u amount of dataChannels/read file descriptors
+//They all pop from the RequestBuffer
+//RequestBuffer must have the quits
+
+struct eventHandlerData {    /* Used as argument to thread_start() */
+    RequestChannel &controlChannel;
+    vector<RequestChannel*> &dataChannels;
+    BoundedBuffer &requestBuffer;
+    BoundedBuffer responseBuffers[3];
+    int w;
+    int n;
+
+    //Constructor
+    histogramData(int n_inp, BoundedBuffer *resp_buffer_inp, string data_name_inp, Histogram *hist_inp) :
+            n(n_inp), response_buffer(resp_buffer_inp), data_name(data_name_inp), hist(hist_inp) {}
+};
+
+void* event_handler_function(void* arg) {
+    //Does the while-loop part of the code
+
+    fd_set readfds; //A set containing all the file descriptors that are ready for reading
+    vector<int> allReadFDVector;
+    vector<string> currentRequestChannelData;
+    FD_ZERO(&readfds); //Clear the set before we begin (might not need this?)
+    bool loop = true;
+    int countDataPushed = 0; //How many data pieces we have pushed to server so far
+    int one = 0, two = 0, three = 0;
+    eventHandlerData* data = (eventHandlerData*)arg;
+
+    while (loop) {
+        readfds = allReadFDSet; //Reset the set before a new selection
+        select(maxfds+1, &readfds, NULL, NULL, NULL); //After running select, the readfds set only contains the file descriptors that are ready
+
+
+        //Call RequestChannel::cread() on the channels that are ready and write new data to available channels
+        for (int i = 0; i < allReadFDVector.size(); i++) {
+
+            if FD_ISSET(allReadFDVector.at(i), &readfds) { //If this fd has been changed
+
+                string response = dataChannels.at(i)->cread(); // i = the ith channel
+                string request = currentRequestChannelData.at(i); //i lets us know which datachannel we are looking at
+
+                if (request.compare("data John Smith") == 0) {
+                    responseBuffers[0].push(response); //ResponseBuffer already has built-in mutex
+                    one++;
+                }
+                else if (request.compare("data Jane Smith") == 0) {
+
+                    responseBuffers[1].push(response);
+                    two++;
+                }
+                else if (request.compare("data Joe Smith") == 0) {
+                    responseBuffers[2].push(response);
+                    three++;
+                }
+                else {
+                    cout<<"ERROR ERROR ERROR in WorkerThread. Request data is not correct!\n";
+                }
+
+                //Send more data to the server
+                if (countDataPushed < 3*n) {
+                    string request = requestBuffer.pop();
+                    currentRequestChannelData.at(i) = request;
+                    dataChannels.at(i)->cwrite(request); //Sends "requests" to the server
+                    countDataPushed++;
+                }
+                else if ((one + two + three) == n*3){
+                    cout << "Loop = false"<<endl;
+                    loop = false;
+
+                }
+            }
+        }
+}
 
 void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*> &dataChannels, BoundedBuffer &requestBuffer, BoundedBuffer responseBuffers[3], int w, int n) {
-    //Local variables
-    struct timeval tv;
-    tv.tv_sec = 2;
-    tv.tv_usec = 500000;
     fd_set readfds; //A set containing all the file descriptors that are ready for reading
     vector<int> allReadFDVector;
     vector<string> currentRequestChannelData;
@@ -144,7 +214,6 @@ void handle_data_channels(RequestChannel &controlChannel, vector<RequestChannel*
         dataChannels.at(i)->cwrite(request); //Sends "requests" to the serve;
         countDataPushed++;
     }
-
 
     cout << "allReadFDVector.size() "<<allReadFDVector.size()<<endl;
 
