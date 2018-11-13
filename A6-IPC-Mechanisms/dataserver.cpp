@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "reqchannel.h"
+#include "fifo_req_channel.h"
 #include <pthread.h>
 using namespace std;
 
@@ -19,11 +19,11 @@ int nchannels = 0;
 pthread_mutex_t newchannel_lock;
 void* handle_process_loop (void* _channel);
 
-void process_newchannel(RequestChannel* _channel) {
+void process_newchannel(FIFORequestChannel* _channel) {
 	nchannels ++;
 	string new_channel_name = "data" + to_string(nchannels) + "_";
 	_channel->cwrite(new_channel_name);
-	RequestChannel * data_channel = new RequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
+	FIFORequestChannel * data_channel = new FIFORequestChannel(new_channel_name, FIFORequestChannel::SERVER_SIDE);
 	pthread_t thread_id;
 	if (pthread_create(& thread_id, NULL, handle_process_loop, data_channel) < 0 ) {
 		EXITONERROR ("");
@@ -31,7 +31,7 @@ void process_newchannel(RequestChannel* _channel) {
 	
 }
 
-void process_request(RequestChannel* _channel, string _request) {
+void process_request(FIFORequestChannel* _channel, string _request) {
 
 	if (_request.compare(0, 5, "hello") == 0) {
 		_channel->cwrite("hello to you too");
@@ -49,7 +49,7 @@ void process_request(RequestChannel* _channel, string _request) {
 }
 
 void* handle_process_loop (void* _channel) {
-	RequestChannel* channel = (RequestChannel *) _channel;
+	FIFORequestChannel* channel = (FIFORequestChannel *) _channel;
 	for(;;) {
 		string request = channel->cread();
 		if (request.compare("quit") == 0) {
@@ -67,7 +67,7 @@ void* handle_process_loop (void* _channel) {
 
 int main(int argc, char * argv[]) {
 	newchannel_lock = PTHREAD_MUTEX_INITIALIZER;
-	RequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
+	FIFORequestChannel control_channel("control", FIFORequestChannel::SERVER_SIDE);
 	handle_process_loop (&control_channel);	
 }
 

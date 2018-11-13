@@ -30,13 +30,13 @@
 #include <signal.h>
 #include <errno.h>
 
-#include "reqchannel.h"
+#include "fifo_req_channel.h"
 
 void EXITONERROR (string msg){
 	perror (msg.c_str());
 	exit (-1);
 }
-std::string RequestChannel::pipe_name(Mode _mode) {
+std::string FIFORequestChannel::pipe_name(Mode _mode) {
 	std::string pname = "fifo_" + my_name;
 
 	if (my_side == CLIENT_SIDE) {
@@ -54,14 +54,14 @@ std::string RequestChannel::pipe_name(Mode _mode) {
 	}
 	return pname;
 }
-void RequestChannel::create_pipe (string _pipe_name){
+void FIFORequestChannel::create_pipe (string _pipe_name){
 	mkfifo(_pipe_name.c_str(), 0600) < 0; //{
 	//	EXITONERROR (_pipe_name);
 	//}
 }
 
 
-void RequestChannel::open_write_pipe(string _pipe_name) {
+void FIFORequestChannel::open_write_pipe(string _pipe_name) {
 	
 	//if (my_side == SERVER_SIDE)
 		create_pipe (_pipe_name);
@@ -72,7 +72,7 @@ void RequestChannel::open_write_pipe(string _pipe_name) {
 	}
 }
 
-void RequestChannel::open_read_pipe(string _pipe_name) {
+void FIFORequestChannel::open_read_pipe(string _pipe_name) {
 
 	//if (my_side == SERVER_SIDE)
 		create_pipe (_pipe_name);
@@ -87,8 +87,8 @@ void RequestChannel::open_read_pipe(string _pipe_name) {
 /* CONSTRUCTOR/DESTRUCTOR FOR CLASS   R e q u e s t C h a n n e l  */
 /*--------------------------------------------------------------------------*/
 
-RequestChannel::RequestChannel(const std::string _name, const Side _side) :
-my_name(_name), my_side(_side), side_name((_side == RequestChannel::SERVER_SIDE) ? "SERVER" : "CLIENT")
+FIFORequestChannel::FIFORequestChannel(const std::string _name, const Side _side) :
+my_name(_name), my_side(_side), side_name((_side == FIFORequestChannel::SERVER_SIDE) ? "SERVER" : "CLIENT")
 {
 	if (_side == SERVER_SIDE) {
 		open_write_pipe(pipe_name(WRITE_MODE).c_str());
@@ -100,7 +100,7 @@ my_name(_name), my_side(_side), side_name((_side == RequestChannel::SERVER_SIDE)
 	}
 }
 
-RequestChannel::~RequestChannel() {
+FIFORequestChannel::~FIFORequestChannel() {
 	close(wfd);
 	close(rfd);
 	//if (my_side == SERVER_SIDE) {
@@ -111,7 +111,7 @@ RequestChannel::~RequestChannel() {
 
 const int MAX_MESSAGE = 255;
 
-string RequestChannel::cread() {
+string FIFORequestChannel::cread() {
 
 	char buf [MAX_MESSAGE];
 	if (read(rfd, buf, MAX_MESSAGE) <= 0) {
@@ -122,7 +122,7 @@ string RequestChannel::cread() {
 
 }
 
-void RequestChannel::cwrite(string msg) {
+void FIFORequestChannel::cwrite(string msg) {
 
 	if (msg.size() > MAX_MESSAGE) {
 		EXITONERROR ("cwrite");
@@ -132,16 +132,16 @@ void RequestChannel::cwrite(string msg) {
 	}
 }
 
-std::string RequestChannel::name() {
+std::string FIFORequestChannel::name() {
 	return my_name;
 }
 
 
-int RequestChannel::read_fd() {
+int FIFORequestChannel::read_fd() {
 	return rfd;
 }
 
-int RequestChannel::write_fd() {
+int FIFORequestChannel::write_fd() {
 	return wfd;
 }
 

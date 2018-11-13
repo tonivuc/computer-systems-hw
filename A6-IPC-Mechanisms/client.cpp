@@ -32,7 +32,7 @@
 #include <pthread.h>
 #include <bits/signum.h>
 
-#include "reqchannel.h"
+#include "fifo_req_channel.h"
 #include "BoundedBuffer.h"
 #include "Histogram.h"
 
@@ -56,12 +56,12 @@ struct dataForThread {    /* Used as argument to thread_start() */
 };
 
 struct workerData {    /* Used as argument to thread_start() */
-    RequestChannel *work_channel;
+    FIFORequestChannel *work_channel;
     BoundedBuffer *req_buffer; //Need to know where to push
     BoundedBuffer *responseBuffer[3];
 
     //Constructor
-    workerData(RequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3]) :
+    workerData(FIFORequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3]) :
             work_channel(work_channel_inp), req_buffer(req_buffer_inp) {
 
         responseBuffer[0] = responseBufferInp[0];
@@ -229,7 +229,7 @@ int main(int argc, char * argv[]) {
 
         cout << "CLIENT STARTED:" << endl;
         cout << "Establishing control channel... " << flush; //What is this? endl. Forces it to be printed immediately.
-        RequestChannel *chan = new RequestChannel("control", RequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
+        FIFORequestChannel *chan = new FIFORequestChannel("control", FIFORequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
         cout << "done." << endl<< flush;
 
         //Timing:
@@ -279,15 +279,15 @@ int main(int argc, char * argv[]) {
         cout << "***Finished making request and histogram threads\n";
 
         //Create worker threads and channels
-        vector<RequestChannel*> workerChannels;
+        vector<FIFORequestChannel*> workerChannels;
         vector<pthread_t> threadIDs;
         vector<workerData*> workerDataVector;
         for (int i = 0; i < w; i++) {
             chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
             string s = chan->cread (); //cread gets the response
-            workerChannels.push_back(new RequestChannel(s, RequestChannel::CLIENT_SIDE));
+            workerChannels.push_back(new FIFORequestChannel(s, FIFORequestChannel::CLIENT_SIDE));
             threadIDs.push_back(i);
-            workerData* wData = new workerData(workerChannels.at(i),&request_buffer,responseBuffers); //RequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3])
+            workerData* wData = new workerData(workerChannels.at(i),&request_buffer,responseBuffers); //FIFORequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3])
             workerDataVector.push_back(wData);
             pthread_create(&threadIDs.at(i), NULL, worker_thread_function,wData); //Last args is null atm.
         }

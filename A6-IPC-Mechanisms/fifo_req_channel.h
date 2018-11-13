@@ -2,15 +2,13 @@
 #ifndef _reqchannel_H_                   
 #define _reqchannel_H_
 
-#include <iostream>
-#include <fstream>
-#include <exception>
-#include <string>
+#include "requestchannel.h"
+
 using namespace std;
 
 void EXITONERROR (string msg);
 
-class RequestChannel {
+class FIFORequestChannel : public RequestChannel{
 
 public:
 
@@ -39,7 +37,7 @@ public:
 
 	/* -- CONSTRUCTOR/DESTRUCTOR */
 
-	RequestChannel(const string _name, const Side _side);
+	FIFORequestChannel(const string _name, const Side _side);
 	/* Creates a "local copy" of the channel specified by the given name. 
 	 If the channel does not exist, the associated IPC mechanisms are 
 	 created. If the channel exists already, this object is associated with the channel.
@@ -56,7 +54,7 @@ public:
 	 request channels to 125.
 	*/
 
-	~RequestChannel();
+	~FIFORequestChannel();
 	/* Destructor of the local copy of the bus. By default, the Server Side deletes any IPC 
 	 mechanisms associated with the channel. */
 
