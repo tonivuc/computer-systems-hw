@@ -18,6 +18,8 @@ public:
 
     /* CONSTRUCTOR/DESTRUCTOR */
     RequestChannel ( const string _name , const Side _side) ;
+    RequestChannel() {};
+
     ~RequestChannel ( );
 
     virtual string cread() = 0;
