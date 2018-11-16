@@ -11,16 +11,16 @@
 #include <string>
 using namespace std;
 
-class RequestChannel {
+class FIFORequestChannel :{
 public:
     typedef enum {SERVER_SIDE, CLIENT_SIDE} Side ;
     typedef enum {READ_MODE, WRITE_MODE} Mode ;
 
     /* CONSTRUCTOR/DESTRUCTOR */
-    RequestChannel ( const string _name , const Side _side) ;
-    RequestChannel() {};
+    FIFORequestChannel ( const string _name , const Side _side) {}
+    FIFORequestChannel() {}
 
-    ~RequestChannel ( );
+    ~FIFORequestChannel (){}
 
     virtual string cread() = 0;
     /* Blocking read of data from the channel. Returns a string of
