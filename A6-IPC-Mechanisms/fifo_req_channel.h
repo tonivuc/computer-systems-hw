@@ -66,7 +66,7 @@ public:
 	/* Blocking read of data from the channel. Returns a string of characters
 	 read from the channel. Returns NULL if read failed. */
 
-	void cwrite(string _msg);
+	int cwrite(string _msg);
 	/* Write the data to the channel. The function returns the number of characters written
 	 to the channel. */
 

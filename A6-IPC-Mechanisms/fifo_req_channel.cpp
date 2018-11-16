@@ -30,7 +30,7 @@
 #include <signal.h>
 #include <errno.h>
 
-#include "fifo_request_channel.h"
+#include "fifo_req_channel.h"
 
 void EXITONERROR (string msg){
 	perror (msg.c_str());
@@ -122,14 +122,17 @@ string FIFORequestChannel::cread() {
 
 }
 
-void FIFORequestChannel::cwrite(string msg) {
+int FIFORequestChannel::cwrite(string msg) {
 
 	if (msg.size() > MAX_MESSAGE) {
 		EXITONERROR ("cwrite");
+		return -1;
 	}
 	if (write(wfd, msg.c_str(), msg.size()+1) < 0) { // msg.size() + 1 to include the NULL byte
 		EXITONERROR ("cwrite");
+		return -1;
 	}
+	return 0;
 }
 
 std::string FIFORequestChannel::name() {

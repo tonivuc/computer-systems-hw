@@ -28,7 +28,7 @@ void process_newchannel(FIFORequestChannel* _channel) {
 	if (pthread_create(& thread_id, NULL, handle_process_loop, data_channel) < 0 ) {
 		EXITONERROR ("");
 	}
-	
+
 }
 
 void process_request(FIFORequestChannel* _channel, string _request) {
@@ -38,7 +38,7 @@ void process_request(FIFORequestChannel* _channel, string _request) {
 	}
 	else if (_request.compare(0, 4, "data") == 0) {
 		usleep(1000 + (rand() % 5000));
-		_channel->cwrite(to_string(rand() % 100));	
+		_channel->cwrite(to_string(rand() % 100));
 	}
 	else if (_request.compare(0, 10, "newchannel") == 0) {
 		process_newchannel(_channel);
