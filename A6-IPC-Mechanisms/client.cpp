@@ -56,12 +56,12 @@ struct dataForThread {    /* Used as argument to thread_start() */
 };
 
 struct workerData {    /* Used as argument to thread_start() */
-    FIFORequestChannel *work_channel;
+    RequestChannel *work_channel;
     BoundedBuffer *req_buffer; //Need to know where to push
     BoundedBuffer *responseBuffer[3];
 
     //Constructor
-    workerData(FIFORequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3]) :
+    workerData(RequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3]) :
             work_channel(work_channel_inp), req_buffer(req_buffer_inp) {
 
         responseBuffer[0] = responseBufferInp[0];
@@ -240,9 +240,25 @@ int main(int argc, char * argv[]) {
         cout << "w == " << w << endl;
         cout << "b == " << b << endl;
 
+        RequestChannel *chan;
+
         cout << "CLIENT STARTED:" << endl;
         cout << "Establishing control channel... " << flush; //What is this? endl. Forces it to be printed immediately.
-        FIFORequestChannel *chan = new FIFORequestChannel("control", RequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
+        switch (mqType) {
+            case 'f': {
+                chan = new FIFORequestChannel("control", RequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
+                break;
+            }
+            case 'q': {
+                break;
+            }
+            case 's': {
+                break;
+            }
+            default:
+                chan = new FIFORequestChannel("control", RequestChannel::CLIENT_SIDE);
+        }
+
         cout << "done." << endl<< flush;
 
         //Timing:
@@ -292,13 +308,29 @@ int main(int argc, char * argv[]) {
         cout << "***Finished making request and histogram threads\n";
 
         //Create worker threads and channels
-        vector<FIFORequestChannel*> workerChannels;
+        vector<RequestChannel*> workerChannels;
         vector<pthread_t> threadIDs;
         vector<workerData*> workerDataVector;
         for (int i = 0; i < w; i++) {
-            chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
-            string s = chan->cread (); //cread gets the response
-            workerChannels.push_back(new FIFORequestChannel(s, RequestChannel::CLIENT_SIDE));
+
+            switch (mqType) {
+                case 'f': {
+                    chan->cwrite("newchannelFIFO"); //Used for sending strings to server, other commands: data <data>
+                    string s = chan->cread (); //cread gets the response
+                    workerChannels.push_back(new FIFORequestChannel(s, RequestChannel::CLIENT_SIDE));
+                    break;
+                }
+                case 'q': {
+                    break;
+                }
+                case 's': {
+                    break;
+                }
+                default:
+                    chan->cwrite("newchannelFIFO"); //Used for sending strings to server, other commands: data <data>
+                    string s = chan->cread (); //cread gets the response
+                    workerChannels.push_back(new FIFORequestChannel(s, RequestChannel::CLIENT_SIDE));
+            }
             threadIDs.push_back(i);
             workerData* wData = new workerData(workerChannels.at(i),&request_buffer,responseBuffers); //FIFORequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3])
             workerDataVector.push_back(wData);

@@ -12,7 +12,7 @@ using namespace std;
 
 void EXITONERROR (string msg);
 
-class FIFORequestChannel : RequestChannel {
+class FIFORequestChannel : public RequestChannel {
 
 private:
 

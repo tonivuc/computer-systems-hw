@@ -19,11 +19,26 @@ int nchannels = 0;
 pthread_mutex_t newchannel_lock;
 void* handle_process_loop (void* _channel);
 
-void process_newchannel(FIFORequestChannel* _channel) {
+void process_newchannel(RequestChannel* _channel, char mqType) {
 	nchannels ++;
 	string new_channel_name = "data" + to_string(nchannels) + "_";
 	_channel->cwrite(new_channel_name);
-	FIFORequestChannel * data_channel = new FIFORequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
+	RequestChannel* data_channel;
+    switch (mqType) {
+        case 'f': {
+            data_channel = new FIFORequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
+            break;
+        }
+        case 'q': {
+            break;
+        }
+        case 's': {
+            break;
+        }
+        default:
+            data_channel = new FIFORequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
+    }
+
 	pthread_t thread_id;
 	if (pthread_create(& thread_id, NULL, handle_process_loop, data_channel) < 0 ) {
 		EXITONERROR ("");
@@ -31,8 +46,7 @@ void process_newchannel(FIFORequestChannel* _channel) {
 
 }
 
-void process_request(FIFORequestChannel* _channel, string _request) {
-
+void process_request(RequestChannel* _channel, string _request) {
 	if (_request.compare(0, 5, "hello") == 0) {
 		_channel->cwrite("hello to you too");
 	}
@@ -40,16 +54,25 @@ void process_request(FIFORequestChannel* _channel, string _request) {
 		usleep(1000 + (rand() % 5000));
 		_channel->cwrite(to_string(rand() % 100));
 	}
-	else if (_request.compare(0, 10, "newchannel") == 0) {
-		process_newchannel(_channel);
+	else if (_request.compare("newchannelFIFO") == 0) {
+		process_newchannel(_channel, 'f');
 	}
-	else {
+    else if (_request.compare("newchannelMQ") == 0) {
+        process_newchannel(_channel, 'q');
+    }
+    else if (_request.compare("newchannelSHM") == 0) {
+        process_newchannel(_channel, 's');
+    }
+    else if (_request.compare("newchannel") == 0) { //Default
+        process_newchannel(_channel, 'f');
+    }
+    else {
 		_channel->cwrite("unknown request");
 	}
 }
 
 void* handle_process_loop (void* _channel) {
-	FIFORequestChannel* channel = (FIFORequestChannel *) _channel;
+	RequestChannel* channel = (RequestChannel*) _channel;
 	for(;;) {
 		string request = channel->cread();
 		if (request.compare("quit") == 0) {
@@ -85,6 +108,10 @@ int main(int argc, char * argv[]) {
             }
             case 's': {
                 break;
+            }
+            default: {
+                FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
+                handle_process_loop (&control_channel);
             }
         }
     }

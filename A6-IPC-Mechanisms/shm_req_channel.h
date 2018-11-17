@@ -7,7 +7,7 @@
 #import "requestchannel.h"
 
 
-class SHMRequestChannel : RequestChannel {
+class SHMRequestChannel : public RequestChannel {
 
 };
 
