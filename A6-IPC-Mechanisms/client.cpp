@@ -200,6 +200,7 @@ int main(int argc, char * argv[]) {
     int w = 500; //default number of worker threads
     int b = 10;
     int opt = 0;
+    char mqType = 0;
 
     vector<string> data = {"data John Smith","data Jane Smith","data Joe Smith"};
 
@@ -214,12 +215,22 @@ int main(int argc, char * argv[]) {
             case 'b':
                 b = atoi(optarg); //This won't do a whole lot until you fill in the worker thread function
                 break;
+            case 'i':
+                mqType = *optarg; //This won't do a whole lot until you fill in the worker thread function
+                break;
         }
     }
 
+    cout << "mqType is: "<<mqType<<endl;
+
     int pid = fork();
     if (pid == 0){
-        execl("dataserver", (char*) NULL);
+        if (mqType != 0) {
+            execl("dataserver", &mqType, NULL); //Array of char pointers, so passing a char pointer
+        }
+        else {
+            execl("dataserver", NULL); //Array of char pointers, so passing a char pointer
+        }
     }
     else {
 

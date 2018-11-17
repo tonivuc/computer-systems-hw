@@ -67,7 +67,26 @@ void* handle_process_loop (void* _channel) {
 
 int main(int argc, char * argv[]) {
 	newchannel_lock = PTHREAD_MUTEX_INITIALIZER;
-	FIFORequestChannel control_channel("control", FIFORequestChannel::SERVER_SIDE);
-	handle_process_loop (&control_channel);	
+    char input;
+    if (argv[1] != NULL) {
+        input = *argv[1];
+    }
+
+
+    switch (input) {
+        case 'f': {
+            FIFORequestChannel control_channel("control", FIFORequestChannel::SERVER_SIDE);
+            handle_process_loop (&control_channel); //Delete control_channel?
+            break;
+        }
+        case 'q': {
+            break;
+        }
+        case 's': {
+            break;
+        }
+    }
+
+
 }
 
