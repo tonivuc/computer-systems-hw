@@ -23,7 +23,7 @@ void process_newchannel(FIFORequestChannel* _channel) {
 	nchannels ++;
 	string new_channel_name = "data" + to_string(nchannels) + "_";
 	_channel->cwrite(new_channel_name);
-	FIFORequestChannel * data_channel = new FIFORequestChannel(new_channel_name, FIFORequestChannel::SERVER_SIDE);
+	FIFORequestChannel * data_channel = new FIFORequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
 	pthread_t thread_id;
 	if (pthread_create(& thread_id, NULL, handle_process_loop, data_channel) < 0 ) {
 		EXITONERROR ("");
@@ -76,7 +76,7 @@ int main(int argc, char * argv[]) {
 
         switch (input) {
             case 'f': {
-                FIFORequestChannel control_channel("control", FIFORequestChannel::SERVER_SIDE);
+                FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
                 handle_process_loop (&control_channel); //Delete control_channel?
                 break;
             }
@@ -89,8 +89,8 @@ int main(int argc, char * argv[]) {
         }
     }
     else {
-        cout << "ELSE"<<endl;
-        FIFORequestChannel control_channel("control", FIFORequestChannel::SERVER_SIDE);
+        cout << "ELSE in dataserver"<<endl;
+        FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
         handle_process_loop (&control_channel); //Delete control_channel?
     }
 

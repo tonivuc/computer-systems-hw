@@ -14,12 +14,6 @@ void EXITONERROR (string msg);
 
 class FIFORequestChannel : RequestChannel {
 
-public:
-
-	typedef enum {SERVER_SIDE, CLIENT_SIDE} Side;
-
-	typedef enum {READ_MODE, WRITE_MODE} Mode;
-
 private:
 
 	string   my_name = "";

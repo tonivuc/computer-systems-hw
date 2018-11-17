@@ -242,7 +242,7 @@ int main(int argc, char * argv[]) {
 
         cout << "CLIENT STARTED:" << endl;
         cout << "Establishing control channel... " << flush; //What is this? endl. Forces it to be printed immediately.
-        FIFORequestChannel *chan = new FIFORequestChannel("control", FIFORequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
+        FIFORequestChannel *chan = new FIFORequestChannel("control", RequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
         cout << "done." << endl<< flush;
 
         //Timing:
@@ -298,7 +298,7 @@ int main(int argc, char * argv[]) {
         for (int i = 0; i < w; i++) {
             chan->cwrite("newchannel"); //Used for sending strings to server, other commands: data <data>
             string s = chan->cread (); //cread gets the response
-            workerChannels.push_back(new FIFORequestChannel(s, FIFORequestChannel::CLIENT_SIDE));
+            workerChannels.push_back(new FIFORequestChannel(s, RequestChannel::CLIENT_SIDE));
             threadIDs.push_back(i);
             workerData* wData = new workerData(workerChannels.at(i),&request_buffer,responseBuffers); //FIFORequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3])
             workerDataVector.push_back(wData);
