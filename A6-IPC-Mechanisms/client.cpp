@@ -190,8 +190,10 @@ void sigalarm_handler(int input) {
 
 int main(int argc, char * argv[]) {
 
+    /*
     signal(SIGALRM, sigalarm_handler); //Map SIGALARM to the sigalarm_handler function
     alarm(1); //Start sigalarm_handler after 2 seconds
+     */
 
     //New thread in main
     struct timeval start, end;
@@ -204,7 +206,7 @@ int main(int argc, char * argv[]) {
 
     vector<string> data = {"data John Smith","data Jane Smith","data Joe Smith"};
 
-    while ((opt = getopt(argc, argv, "n:w:b:")) != -1) {
+    while ((opt = getopt(argc, argv, "n:w:b:i:")) != -1) {
         switch (opt) {
             case 'n':
                 n = atoi(optarg);
