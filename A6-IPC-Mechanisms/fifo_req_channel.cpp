@@ -32,6 +32,7 @@
 
 #include "fifo_req_channel.h"
 
+
 void EXITONERROR (string msg){
 	perror (msg.c_str());
 	exit (-1);

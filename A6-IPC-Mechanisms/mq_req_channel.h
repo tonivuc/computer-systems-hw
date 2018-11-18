@@ -8,35 +8,40 @@
 #import "requestchannel.h"
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <sys/types.h>
 
+#define MSGMAX 8192 //I feel like this should have been defined already, but this is the default anyway
+
+using namespace std;
+
+void EXITONERROR (string msg);
 
 struct my_msgbuf {
     long mtype;
     char mtext[200];
 };
 
-class mq_req_channel : public RequestChannel {
 
+class MQRequestChannel : public RequestChannel {
+
+private:
     struct my_msgbuf buf;
-    //buf.mtype = 1;
-    key_t key = ftok ("a.txt", 100); // create a pseudo-random key
-    int msqid = msgget(key, 0644 | IPC_CREAT); // create the msg queue
-    if (msqid < 0){
-        perror ("Message Queue could not be created");
-        return 0;
-    }
-    printf ("Message Queued ID: %ld\n", msqid);
-    // int msqid2 = msgget(key, 0644 | IPC_CREAT); // create the msg queue
-    // printf ("Message Queued ID: %ld\n", msqid2);
+    int msgqID;
 
-    while(fgets(buf.mtext, sizeof buf.mtext, stdin) != NULL) {
-        int len = strlen(buf.mtext);
-        if (msgsnd(msqid, &buf, len+1, 0) == -1)
-            perror ("msgsnd");
-    }
-    //msgctl(msqid, IPC_RMID, NULL);  // delete the msg queue
-    return 0;
+public:
+
+    MQRequestChannel ( const string _name , const Side _side);
+    MQRequestChannel();
+
+    string cread() = 0;
+    /* Blocking read of data from the channel. Returns a string of
+    characters read from the channel. Returns NULL if read failed. */
+
+    int cwrite(string msg) = 0;
+
+    ~MQRequestChannel();
+    /* Write the data to the channel. The function returns
+    the number of characters written to the channel. */
 };
-
 
 #endif //A6_IPC_MECHANISMS_MQ_REQ_CHANNEL_H
