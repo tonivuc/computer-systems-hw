@@ -14,10 +14,11 @@ void EXITONERROR (string msg){
 MQRequestChannel::MQRequestChannel(const std::string _name, const Side _side) {
 
     if (_side == SERVER_SIDE) {
+        my_side = SERVER_SIDE;
 
     }
     else {
-
+        my_side = CLIENT_SIDE;
     }
 }
 
@@ -38,16 +39,16 @@ MQRequestChannel::CreateQueue() {
 
 int MQRequestChannel::cwrite(string msg) {
 
-    /*
-    while(fgets(buf.mtext, sizeof buf.mtext, stdin) != NULL) {
-        int len = strlen(buf.mtext);
-        if (msgsnd(msqid, &buf, len+1, 0) == -1)
-            perror ("msgsnd");
-    }
-     */
-    int len = msg.length();
+    int msgqID;
+    if (my_side==SERVER_SIDE) msgqID = serverToClientMqId;
+    else msgqID = clientToServerMqId;
+
+    struct my_msgbuf msgStruct;
+    strncpy(msgStruct.mtext, msg.c_str(), MSGMAX);
+
+    int len = strlen(msgStruct.mtext);;
     if (msg.size() > MSGMAX) {
-        EXITONERROR ("cwrite");
+        EXITONERROR ("cwrite message length exceeded");
         return -1;
     }
     if (msgsnd(msgqID, &msg, len+1, 0) == -1) {
@@ -59,13 +60,18 @@ int MQRequestChannel::cwrite(string msg) {
 
 string MQRequestChannel::cread() {
 
-    char buf [MAX_MESSAGE];
-    if (read(rfd, buf, MAX_MESSAGE) <= 0) {
-        EXITONERROR ("cread");
-    }
-    string s = buf;
-    return s;
+    struct my_msgbuf msgStruct;
+    int msgqID;
+    if (my_side==SERVER_SIDE) msgqID = serverToClientMqId;
+    else msgqID = clientToServerMqId;
 
+
+    if (msgrcv(msgqID, &msgStruct.mtext, sizeof(msgStruct.mtext), 0, 0)<= 0) {
+        EXITONERROR ("cread error");
+    }
+
+    string s = msgStruct.mtext;
+    return s;
 }
 
 

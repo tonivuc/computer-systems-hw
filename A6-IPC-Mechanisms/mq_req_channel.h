@@ -10,7 +10,7 @@
 #include <sys/msg.h>
 #include <sys/types.h>
 
-#define MSGMAX 8192 //I feel like this should have been defined already, but this is the default anyway
+#define MSGMAX 200// default: 8192 //I feel like this should have been defined already, but this is the default anyway
 
 using namespace std;
 
@@ -26,7 +26,10 @@ class MQRequestChannel : public RequestChannel {
 
 private:
     struct my_msgbuf buf;
-    int msgqID;
+    int clientToServerMqId;
+    int serverToClientMqId;
+    Side     my_side;
+
 
 public:
 
