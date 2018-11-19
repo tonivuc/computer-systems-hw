@@ -33,10 +33,6 @@
 #include "fifo_req_channel.h"
 
 
-void EXITONERROR (string msg){
-	perror (msg.c_str());
-	exit (-1);
-}
 std::string FIFORequestChannel::pipe_name(Mode _mode) {
 	std::string pname = "fifo_" + my_name; //my_name being data1_
 	//Ending up with fifo_data1_1

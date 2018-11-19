@@ -11,6 +11,8 @@
 #include <string>
 using namespace std;
 
+void EXITONERROR (string msg);
+
 class RequestChannel {
 public:
     typedef enum {SERVER_SIDE, CLIENT_SIDE} Side ;

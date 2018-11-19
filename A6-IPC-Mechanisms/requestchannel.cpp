@@ -5,6 +5,10 @@
 #include "requestchannel.h"
 
 
+void EXITONERROR (string msg){
+    perror (msg.c_str());
+    exit (-1);
+}
 
 RequestChannel::~RequestChannel() {}
 

@@ -10,8 +10,6 @@
 #include "requestchannel.h"
 using namespace std;
 
-void EXITONERROR (string msg);
-
 class FIFORequestChannel : public RequestChannel {
 
 private:

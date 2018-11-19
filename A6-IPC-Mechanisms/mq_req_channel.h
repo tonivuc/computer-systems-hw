@@ -14,8 +14,6 @@
 
 using namespace std;
 
-void EXITONERROR (string msg);
-
 struct my_msgbuf {
     long mtype;
     char mtext[200];

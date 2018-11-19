@@ -5,12 +5,6 @@
 #include <cstring>
 #include "mq_req_channel.h"
 
-void EXITONERROR (string msg){
-    perror (msg.c_str());
-    exit (-1);
-}
-
-
 MQRequestChannel::MQRequestChannel(const std::string _name, const Side _side) {
     my_name = _name;
     my_side = _side;
