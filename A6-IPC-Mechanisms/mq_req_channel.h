@@ -9,6 +9,8 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/types.h>
+#include <vector>
+#include <unistd.h>
 
 #define MSGMAX 200// default: 8192 //I feel like this should have been defined already, but this is the default anyway
 
@@ -30,6 +32,8 @@ private:
     int writeMqId;
     int readMqId;
     string my_name;
+    //vector<ofstream> files;
+    vector<string> filenames;
 
 
 public:

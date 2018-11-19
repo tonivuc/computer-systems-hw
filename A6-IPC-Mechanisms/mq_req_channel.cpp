@@ -12,14 +12,16 @@ MQRequestChannel::MQRequestChannel(const std::string _name, const Side _side) {
     string mqFileName = mq_name(WRITE_MODE);
 
     if (_side == SERVER_SIDE) {
-        cout << "Serverside MQ started!"<<endl;
+
         writeMqId = createQueue(mqFileName.c_str(), WRITE_MODE); //Open mq to write to
         readMqId = createQueue(mqFileName.c_str(), READ_MODE); //Open mq to read from
+        cout << "Serverside MQs started!"<<endl;
     }
     else {
-        cout << "Clientside MQ started!"<<endl;
+
         writeMqId = createQueue(mqFileName.c_str(), WRITE_MODE); //Open mq to read from
         readMqId = createQueue(mqFileName.c_str(), READ_MODE); //Open mq to write to
+        cout << "Clientside MQs started!"<<endl;
     }
     cout << getServerOrClient() << " writing to "<<writeMqId<<endl;
     cout << getServerOrClient() << " reading from " << readMqId<<endl;

@@ -22,8 +22,9 @@ void* handle_process_loop (void* _channel);
 
 void process_newchannel(RequestChannel* _channel, char mqType) {
 	nchannels ++;
-	string new_channel_name = "data" + to_string(nchannels) + "_";
-	_channel->cwrite(new_channel_name); //Writing to control channel
+	string new_channel_name = "data" + to_string(nchannels);
+	cout << "###New channel name in dataserver: "<<new_channel_name<<endl;
+	_channel->cwrite(new_channel_name); //Writing to control channel. AAAH, so MAIN can get it back.
 	RequestChannel* data_channel;
     switch (mqType) {
         case 'f': {
@@ -78,7 +79,6 @@ void* handle_process_loop (void* _channel) {
 	for(;;) {
 	    cout << "---Server reading from control channel: "<<((MQRequestChannel*)channel)->getReadMQId() <<endl;
 		string request = channel->cread();
-		cout << "Did we get stuck reading from the control channel?"<<endl;
 		if (request.compare("quit") == 0) {
 		    cout << "--- SERVER RECEIVED QUIT ---"<<endl;
 			break;                  // break out of the loop;

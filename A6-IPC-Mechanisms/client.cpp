@@ -327,6 +327,9 @@ int main(int argc, char * argv[]) {
                     chan->cwrite("newchannelMQ"); //Used for sending strings to server, other commands: data <data>
                     cout << "Sent newchannelMQ from client to server"<<endl;
                     string s = chan->cread (); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
+                    cout << "********************************************************"<<endl;
+                    cout << "******* RESPONSE FROM SERVER TO MAIN: *******************"<<s<<endl;
+                    cout << "********************************************************"<<endl;
                     workerChannels.push_back(new MQRequestChannel(s, RequestChannel::CLIENT_SIDE));
                     break;
                 }
@@ -384,7 +387,7 @@ int main(int argc, char * argv[]) {
         //Print time spent im microseconds
         printf("%ld\n", ((end.tv_sec * 1000000 + end.tv_usec)
                          - (start.tv_sec * 1000000 + start.tv_usec)));
-        system("clear");
+        //system("clear");
         hist.print ();
         printf("Runtime: %ld microseconds\n", ((end.tv_sec * 1000000 + end.tv_usec)
                          - (start.tv_sec * 1000000 + start.tv_usec)));
