@@ -14,19 +14,14 @@ void EXITONERROR (string msg){
 MQRequestChannel::MQRequestChannel(const std::string _name, const Side _side) {
     my_name = _name;
     my_side = _side;
+    string mqFileName = mq_name(WRITE_MODE);
 
     if (_side == SERVER_SIDE) {
-        string mqFileName = mq_name(WRITE_MODE);
         writeMqId = createQueue(mqFileName.c_str(), WRITE_MODE); //Open mq to write to
-
-        mqFileName = mq_name(READ_MODE);
         readMqId = createQueue(mqFileName.c_str(), READ_MODE); //Open mq to write to
     }
     else {
-        string mqFileName = mq_name(READ_MODE);
-        writeMqId = createQueue(mqFileName.c_str(), READ_MODE)); //Open mq to write to
-
-        mqFileName = mq_name(WRITE_MODE);
+        writeMqId = createQueue(mqFileName.c_str(), READ_MODE); //Open mq to write to
         readMqId = createQueue(mqFileName.c_str(), WRITE_MODE); //Open mq to write to
     }
 }
@@ -36,11 +31,18 @@ int MQRequestChannel::createQueue(string mqFileName, Mode mode) {
     //Programs that want to use the same queue must generate the same key, so they must pass the
     //same parameters to ftok().
     key_t key;
-    if (mode == READ_MODE) {
-        key = ftok (mqFileName.c_str(), 'A'); // create a pseudo-random key. 2nd argument is usually some set number
+    if (my_side == CLIENT_SIDE) {
+        if (mode == READ_MODE)
+            key = ftok (mqFileName.c_str(), 'A'); // create a pseudo-random key. 2nd argument is usually some set number
+        else
+            key = ftok (mqFileName.c_str(), 'B'); // create a pseudo-random key. 2nd argument is usually some set number
     }
     else {
-        key = ftok (mqFileName.c_str(), 'B'); // create a pseudo-random key. 2nd argument is usually some set number
+        // SERVER_SIDE
+        if (mode == READ_MODE)
+            key = ftok (mqFileName.c_str(), 'B'); // create a pseudo-random key. 2nd argument is usually some set number
+        else
+            key = ftok (mqFileName.c_str(), 'A'); // create a pseudo-random key. 2nd argument is usually some set number
     }
 
     if (key == -1) {
@@ -59,6 +61,7 @@ int MQRequestChannel::createQueue(string mqFileName, Mode mode) {
 std::string MQRequestChannel::mq_name(Mode _mode) {
     std::string qname = "mq_" + my_name;
 
+    /*
     if (my_side == CLIENT_SIDE) {
         if (_mode == READ_MODE)
             qname += "1";
@@ -66,12 +69,13 @@ std::string MQRequestChannel::mq_name(Mode _mode) {
             qname += "2";
     }
     else {
-        /* SERVER_SIDE */
+        // SERVER_SIDE
         if (_mode == READ_MODE)
             qname += "2";
         else
             qname += "1";
     }
+    */
     return qname;
 }
 
