@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include "fifo_req_channel.h"
+#include "mq_req_channel.h"
 #include <pthread.h>
 using namespace std;
 
@@ -30,6 +31,7 @@ void process_newchannel(RequestChannel* _channel, char mqType) {
             break;
         }
         case 'q': {
+            data_channel = new MQRequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
             break;
         }
         case 's': {
@@ -104,6 +106,7 @@ int main(int argc, char * argv[]) {
                 break;
             }
             case 'q': {
+                MQRequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
                 break;
             }
             case 's': {

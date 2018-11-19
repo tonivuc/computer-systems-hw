@@ -33,6 +33,7 @@
 #include <bits/signum.h>
 
 #include "fifo_req_channel.h"
+#include "mq_req_channel.h"
 #include "BoundedBuffer.h"
 #include "Histogram.h"
 
@@ -250,6 +251,7 @@ int main(int argc, char * argv[]) {
                 break;
             }
             case 'q': {
+                chan = new MQRequestChannel("control", RequestChannel::CLIENT_SIDE);
                 break;
             }
             case 's': {
@@ -321,6 +323,9 @@ int main(int argc, char * argv[]) {
                     break;
                 }
                 case 'q': {
+                    chan->cwrite("newchannelMQ"); //Used for sending strings to server, other commands: data <data>
+                    string s = chan->cread (); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
+                    workerChannels.push_back(new MQRequestChannel(s, RequestChannel::CLIENT_SIDE));
                     break;
                 }
                 case 's': {
