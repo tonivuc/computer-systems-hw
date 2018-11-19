@@ -46,6 +46,10 @@ public:
     int createQueue(string mqFileName, Mode mode);
     string mq_name(Mode _mode);
 
+    int getReadMQId();
+    int getWriteMQId();
+    string getServerOrClient();
+
     ~MQRequestChannel();
     /* Write the data to the channel. The function returns
     the number of characters written to the channel. */

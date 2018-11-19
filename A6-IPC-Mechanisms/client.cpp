@@ -224,14 +224,16 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    cout << "mqType is: "<<mqType<<endl;
+    cout << "***: mqType is: "<<mqType<<endl;
 
     int pid = fork();
     if (pid == 0){
         if (mqType != 0) {
+            cout << "***: Right before starting server, mqType: "<<mqType<<endl;
             execl("dataserver", &mqType, NULL); //Array of char pointers, so passing a char pointer
         }
         else {
+            cout << "*** Error in mqType" << endl;
             execl("dataserver", NULL); //Array of char pointers, so passing a char pointer
         }
     }
@@ -243,8 +245,8 @@ int main(int argc, char * argv[]) {
 
         RequestChannel *chan;
 
-        cout << "CLIENT STARTED:" << endl;
-        cout << "Establishing control channel... " << flush; //What is this? endl. Forces it to be printed immediately.
+        cout << "Client.cpp: CLIENT STARTED:" << endl;
+        cout << "Client.cpp: Establishing control channel... "<< endl << flush; //What is this? endl. Forces it to be printed immediately.
         switch (mqType) {
             case 'f': {
                 chan = new FIFORequestChannel("control", RequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
@@ -267,15 +269,13 @@ int main(int argc, char * argv[]) {
         gettimeofday(&start, NULL);
 
 
-
-
         //Making BoundedBuffers
         BoundedBuffer request_buffer(b);
 
         //Keep the response buffers > 0.
         if (b < 3) {
             b = 3;
-            printf("Changed buffer size so responseBuffers have size 1");
+            printf("Client.cpp: Changed buffer size so responseBuffers have size 1\n");
         }
 
         //Store pointers to the response buffers in an array
@@ -323,7 +323,9 @@ int main(int argc, char * argv[]) {
                     break;
                 }
                 case 'q': {
+                    cout << "About to write from client to server."<<endl;
                     chan->cwrite("newchannelMQ"); //Used for sending strings to server, other commands: data <data>
+                    cout << "Sent newchannelMQ from client to server"<<endl;
                     string s = chan->cread (); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
                     workerChannels.push_back(new MQRequestChannel(s, RequestChannel::CLIENT_SIDE));
                     break;

@@ -76,8 +76,11 @@ void process_request(RequestChannel* _channel, string _request) {
 void* handle_process_loop (void* _channel) {
 	RequestChannel* channel = (RequestChannel*) _channel; //Control channel
 	for(;;) {
+	    cout << "---Server reading from control channel: "<<((MQRequestChannel*)channel)->getReadMQId() <<endl;
 		string request = channel->cread();
+		cout << "Did we get stuck reading from the control channel?"<<endl;
 		if (request.compare("quit") == 0) {
+		    cout << "--- SERVER RECEIVED QUIT ---"<<endl;
 			break;                  // break out of the loop;
 		}
 		process_request(channel, request);
@@ -94,10 +97,12 @@ int main(int argc, char * argv[]) {
     cout << "Started server!!"<<endl;
 	newchannel_lock = PTHREAD_MUTEX_INITIALIZER;
 
+    cout << "Server argv[0] "<<argv[0]<<endl;
+
     char input;
-    if (argv[1] != NULL) {
-        cout << "argv[2] "<<argv[1]<<endl;
-        input = *argv[1];
+    if (argv[0] != NULL) {
+        cout << "argv[0] "<<argv[0]<<endl;
+        input = *argv[0];
 
         switch (input) {
             case 'f': {
@@ -107,6 +112,7 @@ int main(int argc, char * argv[]) {
             }
             case 'q': {
                 MQRequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
+                handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
                 break;
             }
             case 's': {
@@ -123,8 +129,6 @@ int main(int argc, char * argv[]) {
         FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
         handle_process_loop (&control_channel); //Delete control_channel?
     }
-
-
-
+    cout << "Quitting server after finishing main"<<endl;
 }
 
