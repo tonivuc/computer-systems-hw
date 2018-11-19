@@ -122,10 +122,6 @@ string MQRequestChannel::cread() {
 
 
 MQRequestChannel::~MQRequestChannel() {
-    close(wfd);
-    close(rfd);
-    //if (my_side == SERVER_SIDE) {
-    remove(pipe_name(READ_MODE).c_str());
-    remove(pipe_name(WRITE_MODE).c_str());
-    //}
+    msgctl(writeMqId, IPC_RMID, NULL);
+    msgctl(readMqId, IPC_RMID, NULL);
 }
