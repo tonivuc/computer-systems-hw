@@ -38,7 +38,8 @@ void EXITONERROR (string msg){
 	exit (-1);
 }
 std::string FIFORequestChannel::pipe_name(Mode _mode) {
-	std::string pname = "fifo_" + my_name;
+	std::string pname = "fifo_" + my_name; //my_name being data1_
+	//Ending up with fifo_data1_1
 
 	if (my_side == CLIENT_SIDE) {
 		if (_mode == READ_MODE)

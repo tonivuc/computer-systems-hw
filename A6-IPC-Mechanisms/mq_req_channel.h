@@ -29,6 +29,9 @@ private:
     int clientToServerMqId;
     int serverToClientMqId;
     Side     my_side;
+    int writeMqId;
+    int readMqId;
+    string my_name;
 
 
 public:
@@ -36,11 +39,14 @@ public:
     MQRequestChannel ( const string _name , const Side _side);
     MQRequestChannel();
 
-    string cread() = 0;
+    string cread();
     /* Blocking read of data from the channel. Returns a string of
     characters read from the channel. Returns NULL if read failed. */
 
-    int cwrite(string msg) = 0;
+    int cwrite(string msg);
+
+    int createQueue(string mqFileName, Mode mode);
+    string mq_name(Mode _mode);
 
     ~MQRequestChannel();
     /* Write the data to the channel. The function returns

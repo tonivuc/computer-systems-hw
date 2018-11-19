@@ -12,19 +12,37 @@ void EXITONERROR (string msg){
 
 
 MQRequestChannel::MQRequestChannel(const std::string _name, const Side _side) {
+    my_name = _name;
+    my_side = _side;
 
     if (_side == SERVER_SIDE) {
-        my_side = SERVER_SIDE;
+        string mqFileName = mq_name(WRITE_MODE);
+        writeMqId = createQueue(mqFileName.c_str(), WRITE_MODE); //Open mq to write to
 
+        mqFileName = mq_name(READ_MODE);
+        readMqId = createQueue(mqFileName.c_str(), READ_MODE); //Open mq to write to
     }
     else {
-        my_side = CLIENT_SIDE;
+        string mqFileName = mq_name(READ_MODE);
+        writeMqId = createQueue(mqFileName.c_str(), READ_MODE)); //Open mq to write to
+
+        mqFileName = mq_name(WRITE_MODE);
+        readMqId = createQueue(mqFileName.c_str(), WRITE_MODE); //Open mq to write to
     }
 }
 
-MQRequestChannel::CreateQueue() {
-    //buf.mtype = 1;
-    key_t key = ftok ("a.txt", 100); // create a pseudo-random key
+int MQRequestChannel::createQueue(string mqFileName, Mode mode) {
+
+    //Programs that want to use the same queue must generate the same key, so they must pass the
+    //same parameters to ftok().
+    key_t key;
+    if (mode == READ_MODE) {
+        key = ftok (mqFileName.c_str(), 'A'); // create a pseudo-random key. 2nd argument is usually some set number
+    }
+    else {
+        key = ftok (mqFileName.c_str(), 'B'); // create a pseudo-random key. 2nd argument is usually some set number
+    }
+
     if (key == -1) {
         perror("Problem getting key");
     }
@@ -34,7 +52,27 @@ MQRequestChannel::CreateQueue() {
         return 0;
     }
     printf ("Message Queued ID: %ld\n", msqid);
+    return msqid;
 
+}
+
+std::string MQRequestChannel::mq_name(Mode _mode) {
+    std::string qname = "mq_" + my_name;
+
+    if (my_side == CLIENT_SIDE) {
+        if (_mode == READ_MODE)
+            qname += "1";
+        else
+            qname += "2";
+    }
+    else {
+        /* SERVER_SIDE */
+        if (_mode == READ_MODE)
+            qname += "2";
+        else
+            qname += "1";
+    }
+    return qname;
 }
 
 int MQRequestChannel::cwrite(string msg) {
@@ -44,6 +82,8 @@ int MQRequestChannel::cwrite(string msg) {
     else msgqID = clientToServerMqId;
 
     struct my_msgbuf msgStruct;
+    msgStruct.mtype = 1;
+
     strncpy(msgStruct.mtext, msg.c_str(), MSGMAX);
 
     int len = strlen(msgStruct.mtext);;
@@ -61,6 +101,7 @@ int MQRequestChannel::cwrite(string msg) {
 string MQRequestChannel::cread() {
 
     struct my_msgbuf msgStruct;
+    msgStruct.mtype = 1;
     int msgqID;
     if (my_side==SERVER_SIDE) msgqID = serverToClientMqId;
     else msgqID = clientToServerMqId;

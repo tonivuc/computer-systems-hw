@@ -316,7 +316,7 @@ int main(int argc, char * argv[]) {
             switch (mqType) {
                 case 'f': {
                     chan->cwrite("newchannelFIFO"); //Used for sending strings to server, other commands: data <data>
-                    string s = chan->cread (); //cread gets the response
+                    string s = chan->cread (); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
                     workerChannels.push_back(new FIFORequestChannel(s, RequestChannel::CLIENT_SIDE));
                     break;
                 }

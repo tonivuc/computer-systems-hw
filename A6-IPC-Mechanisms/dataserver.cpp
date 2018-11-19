@@ -22,7 +22,7 @@ void* handle_process_loop (void* _channel);
 void process_newchannel(RequestChannel* _channel, char mqType) {
 	nchannels ++;
 	string new_channel_name = "data" + to_string(nchannels) + "_";
-	_channel->cwrite(new_channel_name);
+	_channel->cwrite(new_channel_name); //Writing to control channel
 	RequestChannel* data_channel;
     switch (mqType) {
         case 'f': {
@@ -55,7 +55,7 @@ void process_request(RequestChannel* _channel, string _request) {
 		_channel->cwrite(to_string(rand() % 100));
 	}
 	else if (_request.compare("newchannelFIFO") == 0) {
-		process_newchannel(_channel, 'f');
+		process_newchannel(_channel, 'f'); //Passing in control channel
 	}
     else if (_request.compare("newchannelMQ") == 0) {
         process_newchannel(_channel, 'q');
@@ -72,7 +72,7 @@ void process_request(RequestChannel* _channel, string _request) {
 }
 
 void* handle_process_loop (void* _channel) {
-	RequestChannel* channel = (RequestChannel*) _channel;
+	RequestChannel* channel = (RequestChannel*) _channel; //Control channel
 	for(;;) {
 		string request = channel->cread();
 		if (request.compare("quit") == 0) {
@@ -100,7 +100,7 @@ int main(int argc, char * argv[]) {
         switch (input) {
             case 'f': {
                 FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
-                handle_process_loop (&control_channel); //Delete control_channel?
+                handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
                 break;
             }
             case 'q': {
