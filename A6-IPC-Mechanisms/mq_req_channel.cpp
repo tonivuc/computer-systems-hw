@@ -34,6 +34,7 @@ int MQRequestChannel::createQueue(string mqFileName, Mode mode) {
     key_t key;
     cout << "MQ: Creating file: " << mqFileName.c_str() << endl;
     std::ofstream file {mqFileName.c_str()}; //Use a vector to delete these later?
+    filenames.push_back(mqFileName);
     if (my_side == CLIENT_SIDE) {
         if (mode == READ_MODE)
             key = ftok(mqFileName.c_str(), 65); //Client read from 65
@@ -107,7 +108,6 @@ int MQRequestChannel::cwrite(string msg) {
 
     strncpy(msgStruct.mtext, msg.c_str(), MSGMAX);
 
-
     cout << "About to send the following to MQ "<<writeMqId<<" using MQ's cwrite: "<<endl;
     cout << "msgstruct.mtype "<<msgStruct.mtype<<" msgStruct.mtext "<<msgStruct.mtext<<endl;
 
@@ -160,6 +160,9 @@ MQRequestChannel::~MQRequestChannel() {
     cout << "DELETING A "<< clientOrServer<< " MESSAGE QUEUE with the MQ read: "<<readMqId<< " and write:"<<writeMqId<<endl;
     msgctl(writeMqId, IPC_RMID, NULL);
     msgctl(readMqId, IPC_RMID, NULL);
+    for (int i = 0; i < filenames.size(); i++) {
+        remove(filenames.at(i).c_str());
+    }
 }
 
 int MQRequestChannel::getReadMQId() {
