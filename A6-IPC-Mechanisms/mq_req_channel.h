@@ -34,6 +34,7 @@ private:
     string my_name;
     //vector<ofstream> files;
     vector<string> filenames;
+    vector<RequestChannel> kek;
 
 
 public:

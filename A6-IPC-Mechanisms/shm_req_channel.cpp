@@ -6,31 +6,16 @@
 #include "shm_req_channel.h"
 
 SHMRequestChannel::SHMRequestChannel(const std::string _name, const Side _side) {
-    key_t key;
-    int shmid;
+
+    //Make two SHMBoundedBuffer objects
+
     string filename = _name;
 
-    std::ofstream file {filename.c_str()}; //Use a vector to delete these later?
-    filenames.push_back(filename);
 
-    /* make the key: */
-    if ((key = ftok(filename.c_str(), 200)) == -1) {
-        perror("ftok");
-        exit(1);
-    }
 
-    /* Create the segment: */
-    if ((shmid = shmget(key, SHM_SIZE, 0644 | IPC_CREAT)) == -1) {
-        perror("shmget");
-        exit(1);
-    }
 
-    /* attach to the segment to get a pointer to it: */
-    data = (char*)shmat(shmid, 0, 0);
-    if (*data == -1) {
-        perror("shmat");
-        exit(1);
-    }
+
+
 }
 
 

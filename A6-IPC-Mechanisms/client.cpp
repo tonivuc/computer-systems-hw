@@ -323,13 +323,8 @@ int main(int argc, char * argv[]) {
                     break;
                 }
                 case 'q': {
-                    cout << "About to write from client to server."<<endl;
                     chan->cwrite("newchannelMQ"); //Used for sending strings to server, other commands: data <data>
-                    cout << "Sent newchannelMQ from client to server"<<endl;
                     string s = chan->cread (); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
-                    cout << "********************************************************"<<endl;
-                    cout << "******* RESPONSE FROM SERVER TO MAIN: *******************"<<s<<endl;
-                    cout << "********************************************************"<<endl;
                     workerChannels.push_back(new MQRequestChannel(s, RequestChannel::CLIENT_SIDE));
                     break;
                 }
