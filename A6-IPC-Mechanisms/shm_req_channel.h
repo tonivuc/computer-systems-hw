@@ -42,7 +42,6 @@ public:
     /* Write the data to the channel. The function returns
     the number of characters written to the channel. */
 };
-};
 
 
 #endif //A6_IPC_MECHANISMS_SHMREQUESTCHANNEL_H

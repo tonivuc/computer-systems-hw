@@ -223,7 +223,7 @@ int main(int argc, char * argv[]) {
                 break;
             }
             case 's': {
-                chan = new SHMRequestChannel("control", RequestChannel::CLIENT_SIDE);
+                //chan = new SHMRequestChannel("control", RequestChannel::CLIENT_SIDE);
                 break;
             }
             default:
@@ -298,7 +298,7 @@ int main(int argc, char * argv[]) {
                 case 's': {
                     chan->cwrite("newchannelSHM"); //Used for sending strings to server, other commands: data <data>
                     string s = chan->cread (); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
-                    workerChannels.push_back(new SHMRequestChannel(s, RequestChannel::CLIENT_SIDE));
+                    //workerChannels.push_back(new SHMRequestChannel(s, RequestChannel::CLIENT_SIDE));
                     break;
                 }
                 default:

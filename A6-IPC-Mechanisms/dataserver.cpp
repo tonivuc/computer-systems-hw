@@ -38,7 +38,7 @@ void process_newchannel(RequestChannel* _channel, char mqType) {
             break;
         }
         case 's': {
-            data_channel = new SHMRequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
+            //data_channel = new SHMRequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
             break;
         }
         default:
@@ -119,7 +119,7 @@ int main(int argc, char * argv[]) {
                 break;
             }
             case 's': {
-                control_channel = new SHMRequestChannel("control", RequestChannel::SERVER_SIDE);
+                //control_channel = new SHMRequestChannel("control", RequestChannel::SERVER_SIDE);
                 break;
             }
             default: {
