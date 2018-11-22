@@ -7,7 +7,7 @@
 #include "shm_bounded_buffer.h"
 #include "shm_req_channel.h"
 
-SHMBoundedBuffer::SHMBoundedBuffer(string name) {
+SHMBoundedBuffer::SHMBoundedBuffer(string name) { //comment
 
     filename = name;
 
