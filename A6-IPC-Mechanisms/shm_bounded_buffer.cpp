@@ -35,7 +35,23 @@ SHMBoundedBuffer::SHMBoundedBuffer(string name) {
         exit(1);
     }
 
+    f = new KernelSemaphore(0, kFull);
+    e = new KernelSemaphore(1, kEmpty);
+
 }
+
+void SHMBoundedBuffer::push(string msg) {
+    e->P();
+    strncpy(buffer,msg,msg.c_str().length())
+    f->V():
+}
+
+string SHMBoundedBuffer::pop() {
+    f->P();
+    string s = buffer;
+    f->V();
+}
+
 
 SHMBoundedBuffer::~SHMBoundedBuffer() {
     remove(filename.c_str());

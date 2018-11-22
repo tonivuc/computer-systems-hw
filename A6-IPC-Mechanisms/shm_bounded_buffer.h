@@ -17,9 +17,8 @@ class SHMBoundedBuffer {
     int shmid; // shared memory segment ID
     char* buffer;
     string filename;
-    KernelSemaphore full(0);
-
-    KernelSemaphore empty(1); // Buffer size=1 is fine;
+    KernelSemaphore* f;
+    KernelSemaphore* e; // Buffer size=1 is fine;
 
 public:
     SHMBoundedBuffer(string name);
