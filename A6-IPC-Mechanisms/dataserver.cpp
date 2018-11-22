@@ -12,6 +12,7 @@
 
 #include "fifo_req_channel.h"
 #include "mq_req_channel.h"
+#include "shm_req_channel.h"
 #include <pthread.h>
 using namespace std;
 
@@ -36,6 +37,7 @@ void process_newchannel(RequestChannel* _channel, char mqType) {
             break;
         }
         case 's': {
+            data_channel = new SHMRequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
             break;
         }
         default:
@@ -116,6 +118,8 @@ int main(int argc, char * argv[]) {
                 break;
             }
             case 's': {
+                SHMRequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
+                handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
                 break;
             }
             default: {

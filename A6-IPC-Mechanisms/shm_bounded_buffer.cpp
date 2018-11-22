@@ -42,8 +42,8 @@ SHMBoundedBuffer::SHMBoundedBuffer(string name) { //comment
 
 void SHMBoundedBuffer::push(string msg) {
     e->P();
-    strncpy(buffer,msg,msg.c_str().length())
-    f->V():
+    strncpy(buffer,msg.c_str(),msg.length());
+    f->V();
 }
 
 string SHMBoundedBuffer::pop() {
