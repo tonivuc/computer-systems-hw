@@ -4,6 +4,9 @@
 
 #ifndef A6_IPC_MECHANISMS_KERNEL_SEMAPHORE_H
 #define A6_IPC_MECHANISMS_KERNEL_SEMAPHORE_H
+#include <sys/ipc.h>
+#include <sys/types.h>
+#include <sys/sem.h>
 
 
 class KernelSemaphore {
@@ -12,7 +15,7 @@ private :
     int semid;
 public :
 /* CONSTRUCTOR/DESTRUCTOR */
-    KernelSemaphore(int value, int seed);
+    KernelSemaphore(short value, int seed);
 
     KernelSemaphore();
 

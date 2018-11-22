@@ -7,46 +7,38 @@
 
 SHMRequestChannel::SHMRequestChannel(const std::string _name, const Side _side) {
 
-    //Make two SHMBoundedBuffer objects
+    my_side = _side;
 
     string filename = _name;
+    string filename2 = _name+"_2";
 
-
-
-
-
-
+    //Make two SHMBoundedBuffer objects
+    bb1 = new SHMBoundedBuffer(filename);
+    bb2 = new SHMBoundedBuffer(filename2);
 }
 
 
 int SHMRequestChannel::cwrite(string msg) {
-    /* read or modify the segment, based on the command line: */
-    printf("writing to segment: \"%s\"\n", msg.c_str());
-    strncpy(data, msg.c_str(), SHM_SIZE);
-    return 0;
+    if (my_side == SERVER_SIDE) {
+        bb1->push(msg);
+    }
+    else {
+        bb2->push(msg);
+    }
 }
 
 string SHMRequestChannel::cread() {
-
-    /* read from the shared-memory segment: */
-    printf("***********segment contains: \"%s\"\n", data);
-
-    string s = data;
-    return s;
+    if (my_side == SERVER_SIDE) {
+        return bb2->pop();
+    }
+    else {
+        return bb1->pop();
+    }
 }
 
-
-
 SHMRequestChannel::~SHMRequestChannel() {
-    /* detach from the segment: */
-    if (shmdt(data) == -1) {
-        perror("shmdt");
-        exit(1);
-    }
-    //Remove files created
-    for (int i = 0; i < filenames.size(); i++) {
-        remove(filenames.at(i).c_str());
-    }
+    delete bb1;
+    delete bb2;
 }
 
 string SHMRequestChannel::getServerOrClient() {

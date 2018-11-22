@@ -5,6 +5,7 @@
 #ifndef A6_IPC_MECHANISMS_SHMREQUESTCHANNEL_H
 #define A6_IPC_MECHANISMS_SHMREQUESTCHANNEL_H
 #import "requestchannel.h"
+#include "shm_bounded_buffer.h"
 #include <sys/shm.h>
 #include <vector>
 
@@ -15,7 +16,9 @@ class SHMRequestChannel : public RequestChannel {
     
 private:
     Side     my_side;
-    char *data;
+    //char *data;
+    SHMBoundedBuffer* bb1;
+    SHMBoundedBuffer* bb2;
     vector<string> filenames;
 
 
