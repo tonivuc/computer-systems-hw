@@ -9,10 +9,12 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include "fifo_req_channel.h"
 #include "mq_req_channel.h"
-#include <pthread.h>
+#include "shm_req_channel.h"
+
 using namespace std;
 
 
@@ -36,6 +38,7 @@ void process_newchannel(RequestChannel* _channel, char mqType) {
             break;
         }
         case 's': {
+            data_channel = new SHMRequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
             break;
         }
         default:
@@ -99,6 +102,8 @@ int main(int argc, char * argv[]) {
 
     cout << "Server argv[0] "<<argv[0]<<endl;
 
+    RequestChannel* control_channel;
+
     char input;
     if (argv[0] != NULL) {
         cout << "argv[0] "<<argv[0]<<endl;
@@ -106,29 +111,28 @@ int main(int argc, char * argv[]) {
 
         switch (input) {
             case 'f': {
-                FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
-                handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
+                control_channel = new FIFORequestChannel("control", RequestChannel::SERVER_SIDE);
                 break;
             }
             case 'q': {
-                MQRequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
-                handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
+                control_channel = new MQRequestChannel("control", RequestChannel::SERVER_SIDE);
                 break;
             }
             case 's': {
+                control_channel = new SHMRequestChannel("control", RequestChannel::SERVER_SIDE);
                 break;
             }
             default: {
-                FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
-                handle_process_loop (&control_channel);
+                control_channel = new FIFORequestChannel("control", RequestChannel::SERVER_SIDE);
             }
         }
     }
     else {
         cout << "ELSE in dataserver"<<endl;
-        FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
-        handle_process_loop (&control_channel); //Delete control_channel?
+        control_channel = new FIFORequestChannel("control", RequestChannel::SERVER_SIDE);
     }
+    handle_process_loop (&control_channel);
     cout << "Quitting server after finishing main"<<endl;
+    delete control_channel;
 }
 
