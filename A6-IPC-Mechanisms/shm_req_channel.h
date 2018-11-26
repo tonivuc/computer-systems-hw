@@ -37,6 +37,8 @@ public:
     string mq_name(Mode _mode);
 
     string getServerOrClient();
+    int getServerWriteMemSegId();
+    int getServerReadMemSegId();
 
     ~SHMRequestChannel();
     /* Write the data to the channel. The function returns

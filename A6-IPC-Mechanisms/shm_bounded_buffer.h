@@ -25,6 +25,7 @@ public:
     void push(string s);
     string pop();
     ~SHMBoundedBuffer();
+    int getShmid();
 };
 
 

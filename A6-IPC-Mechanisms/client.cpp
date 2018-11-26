@@ -332,8 +332,11 @@ int main(int argc, char * argv[]) {
                 }
                 case 's': {
                     cout << "*** Writing newchannelSHM from client to server."<<endl;
+                    cout << "*** Client writing to memory segment "<<((SHMRequestChannel*)chan)->getServerReadMemSegId()<<endl;
                     chan->cwrite("newchannelSHM"); //Used for sending strings to server, other commands: data <data>
-                    string s = chan->cread (); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
+                    cout << "*** Should get response via memory segment "<<((SHMRequestChannel*)chan)->getServerWriteMemSegId()<<endl;
+                    string s = chan->cread(); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
+                    cout << "***Received response "<<s<<"from server."<<endl;
                     workerChannels.push_back(new SHMRequestChannel(s, RequestChannel::CLIENT_SIDE));
                     break;
                 }
