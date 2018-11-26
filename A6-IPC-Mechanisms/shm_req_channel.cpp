@@ -7,6 +7,7 @@
 
 SHMRequestChannel::SHMRequestChannel(const std::string _name, const Side _side) {
 
+    cout << "In SHMRequestChannel on "<<getServerOrClient()<<" bro!"<<endl;
     my_side = _side;
 
     string filename = _name;
@@ -19,6 +20,7 @@ SHMRequestChannel::SHMRequestChannel(const std::string _name, const Side _side) 
 
 
 int SHMRequestChannel::cwrite(string msg) {
+    cout << getServerOrClient()<<" writing "<<msg<<endl;
     if (my_side == SERVER_SIDE) {
         bb1->push(msg);
     }
@@ -28,6 +30,7 @@ int SHMRequestChannel::cwrite(string msg) {
 }
 
 string SHMRequestChannel::cread() {
+    cout << getServerOrClient()<<" about to read "<<endl;
     if (my_side == SERVER_SIDE) {
         return bb2->pop();
     }
@@ -37,6 +40,7 @@ string SHMRequestChannel::cread() {
 }
 
 SHMRequestChannel::~SHMRequestChannel() {
+    cout << "In delete part of code ayy!"<<endl;
     delete bb1;
     delete bb2;
 }

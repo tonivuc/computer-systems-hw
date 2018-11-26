@@ -79,8 +79,10 @@ void process_request(RequestChannel* _channel, string _request) {
 void* handle_process_loop (void* _channel) {
 	RequestChannel* channel = (RequestChannel*) _channel; //Control channel
 	for(;;) {
-	    cout << "---Server reading from control channel: "<<((MQRequestChannel*)channel)->getReadMQId() <<endl;
+	    //cout << "---Server reading from control channel: "<<((SHMRequestChannel*)channel).get <<endl;
+	    cout << "In server for-loop"<<endl;
 		string request = channel->cread();
+		cout << "request: "<<request<< "received on server"<<endl;
 		if (request.compare("quit") == 0) {
 		    cout << "--- SERVER RECEIVED QUIT ---"<<endl;
 			break;                  // break out of the loop;
@@ -116,11 +118,12 @@ int main(int argc, char * argv[]) {
                 MQRequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
                 handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
                 break;
-            }
+            } //test
             case 's': {
                 SHMRequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
                 handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
                 break;
+
             }
             default: {
                 FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);

@@ -13,6 +13,7 @@ SHMBoundedBuffer::SHMBoundedBuffer(string name) { //comment
 
     std::ofstream file {filename.c_str()}; //Use a vector to delete these later?
 
+    cout << "Before ftok in SHMBoundedBuffer"<<endl;
     key_t kshm = ftok(name.c_str(), 0);
     key_t kFull = ftok(name.c_str(), 1);
     key_t kEmpty = ftok(name.c_str(), 2);
@@ -21,6 +22,7 @@ SHMBoundedBuffer::SHMBoundedBuffer(string name) { //comment
         perror("ftok");
         exit(1);
     }
+    cout << "No ftok error in SHMBoundedBuffer! Yay!"<<endl;
 
     /* Create the segment: */
     if ((shmid = shmget(kshm, SHM_SIZE, 0666 | IPC_CREAT)) == -1) {
@@ -41,6 +43,7 @@ SHMBoundedBuffer::SHMBoundedBuffer(string name) { //comment
 }
 
 void SHMBoundedBuffer::push(string msg) {
+    cout << "Pushing "<<msg<<" in SHMBoundedBuffer"<<endl;
     e->P();
     strncpy(buffer,msg.c_str(),msg.length());
     f->V();
@@ -49,10 +52,18 @@ void SHMBoundedBuffer::push(string msg) {
 string SHMBoundedBuffer::pop() {
     f->P();
     string s = buffer;
-    f->V();
+    e->V();
+    return s;
 }
 
 
 SHMBoundedBuffer::~SHMBoundedBuffer() {
+    void * shmaddr = &buffer;
+    int ret = shmdt(shmaddr);
+    if (ret == -1) {
+        perror("shmdt");
+        exit(1);
+    }
+    shmctl(shmid, IPC_RMID, NULL);
     remove(filename.c_str());
 }
