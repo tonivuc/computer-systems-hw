@@ -9,7 +9,7 @@
 
 SHMBoundedBuffer::SHMBoundedBuffer(string name) { //comment
 
-    cout << "In SHMBoundedBuffer constructor with filename "<<name<<endl;
+    cout << "- SHMBB: In SHMBoundedBuffer constructor with filename "<<name<<endl;
 
     filename = name;
 
@@ -43,9 +43,9 @@ SHMBoundedBuffer::SHMBoundedBuffer(string name) { //comment
 }
 
 void SHMBoundedBuffer::push(string msg) {
-    cout << "Waiting to push "<<msg<<" in SHMBoundedBuffer"<<endl;
+    cout << "- SHMBB: Waiting to push "<<msg<<endl;
     e->P();
-    cout << "Pushing "<<msg<<" in SHMBoundedBuffer to shmid: "<<getShmid()<<endl;
+    cout << "- SHMBB: Pushing "<<msg<<" in shmid: "<<getShmid()<<endl;
     strncpy(buffer,msg.c_str(),msg.length());
     f->V();
 }

@@ -22,6 +22,7 @@ public :
     ~KernelSemaphore(); // make sure to remove all allocated resources
     void P() ; /* Acquire Lock*/
     void V() ; /* Release Lock */
+    int getSemId();
 } ;
 
 

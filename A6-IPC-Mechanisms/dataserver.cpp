@@ -27,7 +27,7 @@ void process_newchannel(RequestChannel* _channel, char mqType) {
 	//cout << "###New channel name in dataserver: "<<new_channel_name<<endl;
     //cout << "###Writing to server memory segment: "<<((SHMRequestChannel*)_channel)->getServerWriteMemSegId()<<endl;
 	_channel->cwrite(new_channel_name); //Writing to control channel. AAAH, so MAIN can get it back.
-	cout << "wrote "<<new_channel_name<<" to client via control channel"<<endl;
+	cout << "#Server: wrote "<<new_channel_name<<" to client via control channel"<<endl;
 	RequestChannel* data_channel;
     switch (mqType) {
         case 'f': {
@@ -83,9 +83,9 @@ void* handle_process_loop (void* _channel) {
 	for(;;) {
 	    //cout << "---Server reading from control channel: "<<((SHMRequestChannel*)channel).get <<endl;
         sleep(1);
-	    cout << "In server for-loop about to reads"<<endl;
+	    cout << "#Server: In server for-loop about to reads"<<endl;
 		string request = channel->cread();
-		cout << "request: "<<request<<" received on server"<<endl;
+		cout << "#Server: request: "<<request<<" received on server"<<endl;
 		if (request.compare("quit") == 0) {
 		    cout << "--- SERVER RECEIVED QUIT ---"<<endl;
 			break;                  // break out of the loop;
@@ -102,14 +102,14 @@ void* handle_process_loop (void* _channel) {
 
 
 int main(int argc, char * argv[]) {
-    cout << "Started server!!"<<endl;
+    cout << "\n#Server: Started server!!"<<endl;
 	newchannel_lock = PTHREAD_MUTEX_INITIALIZER;
 
-    cout << "Server argv[0] "<<argv[0]<<endl;
+    //cout << "Server argv[0] "<<argv[0]<<endl;
 
     char input;
     if (argv[0] != NULL) {
-        cout << "argv[0] "<<argv[0]<<endl;
+        //cout << "argv[0] "<<argv[0]<<endl;
         input = *argv[0];
 
         switch (input) {
