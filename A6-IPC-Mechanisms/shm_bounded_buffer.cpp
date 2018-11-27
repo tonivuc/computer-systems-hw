@@ -9,8 +9,6 @@
 
 SHMBoundedBuffer::SHMBoundedBuffer(string name) { //comment
 
-    cout << "- SHMBB: In SHMBoundedBuffer constructor with filename "<<name<<endl;
-
     filename = name;
 
     std::ofstream file {filename.c_str()}; //Use a vector to delete these later?
@@ -43,21 +41,13 @@ SHMBoundedBuffer::SHMBoundedBuffer(string name) { //comment
 }
 
 void SHMBoundedBuffer::push(string msg) {
-    cout << "- SHMBB: Waiting to push "<<msg<<endl;
     e->P();
-    cout << "- SHMBB: Pushing "<<msg<<" in shmid: "<<getShmid()<<endl;
     int i=0;
-    cout << "Content of buffer right now: "<<buffer<<endl;
-    cout << "Lenght of string in buffer right now: "<<strlen(buffer)<<endl;
     for(i=0;i<SHM_SIZE;i++)
     {
         buffer[i] = '\0';
-    }
-    cout << "Content of buffer right now: "<<buffer<<endl;
-    cout << "Lenght of string in buffer right now: "<<strlen(buffer)<<endl;
+    };
     strncpy(buffer,msg.c_str(),msg.length());
-    cout << "Content of buffer after strncpy: "<<buffer<<endl;
-    cout << "Lenght of string in buffer right now: "<<strlen(buffer)<<endl;
     f->V();
 }
 
@@ -72,7 +62,6 @@ string SHMBoundedBuffer::pop() {
 
 SHMBoundedBuffer::~SHMBoundedBuffer() {
     const void * shmaddr = buffer;
-    cout << "Address detached: "<<shmaddr<<endl;
     int ret = shmdt(shmaddr);
     if (ret == -1) {
         perror("shmdt");
@@ -80,6 +69,8 @@ SHMBoundedBuffer::~SHMBoundedBuffer() {
     }
     shmctl(shmid, IPC_RMID, NULL);
     remove(filename.c_str());
+    delete e;
+    delete f;
 }
 
 int SHMBoundedBuffer::getShmid() {

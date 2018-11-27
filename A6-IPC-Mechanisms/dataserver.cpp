@@ -81,13 +81,8 @@ void process_request(RequestChannel* _channel, string _request) {
 void* handle_process_loop (void* _channel) {
 
 	RequestChannel* channel = (RequestChannel*) _channel; //Control channel
-	for(;;) {
-        cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHAHAHAHAHAHAHAHAH"<<endl;
-	    //cout << "---Server reading from control channel: "<<((SHMRequestChannel*)channel).get <<endl;
-        //sleep(1);
-	    cout << "#Server: In server for-loop about to reads"<<endl;
+	for(;;) { ;
 		string request = channel->cread();
-		cout << "#Server: request: "<<request<<" received on server"<<endl;
 		if (request.compare("quit") == 0) {
 		    cout << "--- SERVER RECEIVED QUIT ---"<<endl;
 			break;                  // break out of the loop;

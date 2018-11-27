@@ -9,7 +9,7 @@
 #include <sys/shm.h>
 #include <vector>
 
-#define SHM_SIZE 1024  /* make it a 1K shared memory segment */
+#define SHM_SIZE 32  /* make it a 1K shared memory segment. Made mine 32 to have the clearing run faster. */
 
 
 class SHMRequestChannel : public RequestChannel {

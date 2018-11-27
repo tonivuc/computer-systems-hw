@@ -20,38 +20,28 @@ SHMRequestChannel::SHMRequestChannel(const std::string _name, const Side _side) 
 
 
 int SHMRequestChannel::cwrite(string msg) {
-    cout <<"SHMReqChn: "<< getServerOrClient()<<" writing In SHMRequestChannel on msg"<<endl;
     if (my_side == SERVER_SIDE) {
-        //cout << "bb1 push Writing "<<msg<<" to client from server" <<endl;
         bb1->push(msg);
-        cout <<"SHMReqChn: "<< getServerOrClient() << " Pushed "<<msg<<" via shmID: "<<getServerWriteMemSegId()<<endl;
-        //cout << "DONE bb1 push "<<msg<<" to client from server" <<endl;
     }
     else {
         bb2->push(msg);
-        cout << "SHMReqChn: "<<getServerOrClient() << " Pushed "<<msg<<" via shmID: "<<getServerReadMemSegId()<<endl;
     }
     return 0;
 }
 
 string SHMRequestChannel::cread() {
-    //cout << getServerOrClient()<<" about to read "<<endl;
     if (my_side == SERVER_SIDE) {
-        //cout << "Right before bb2 pop (on server)"<<endl;
         string temp = bb2->pop();
-        cout << "SHMReqChn: "<<getServerOrClient()<<" just popped "<<temp<<" from "<<getServerReadMemSegId()<<endl;
         return temp;
     }
     else {
         //cout << "Right before bb1 pop (on client)"<<endl;
         string temp = bb1->pop();
-        cout << "SHMReqChn: "<<getServerOrClient()<<" just popped "<<temp<<" from "<<getServerWriteMemSegId()<<endl;
         return temp;
     }
 }
 
 SHMRequestChannel::~SHMRequestChannel() {
-    cout <<"SHMReqChn: In delete part of code ayy!"<<endl;
     delete bb1;
     delete bb2;
 }
