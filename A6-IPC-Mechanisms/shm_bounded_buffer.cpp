@@ -46,7 +46,18 @@ void SHMBoundedBuffer::push(string msg) {
     cout << "- SHMBB: Waiting to push "<<msg<<endl;
     e->P();
     cout << "- SHMBB: Pushing "<<msg<<" in shmid: "<<getShmid()<<endl;
+    int i=0;
+    cout << "Content of buffer right now: "<<buffer<<endl;
+    cout << "Lenght of string in buffer right now: "<<strlen(buffer)<<endl;
+    for(i=0;i<SHM_SIZE;i++)
+    {
+        buffer[i] = '\0';
+    }
+    cout << "Content of buffer right now: "<<buffer<<endl;
+    cout << "Lenght of string in buffer right now: "<<strlen(buffer)<<endl;
     strncpy(buffer,msg.c_str(),msg.length());
+    cout << "Content of buffer after strncpy: "<<buffer<<endl;
+    cout << "Lenght of string in buffer right now: "<<strlen(buffer)<<endl;
     f->V();
 }
 
@@ -60,7 +71,8 @@ string SHMBoundedBuffer::pop() {
 
 
 SHMBoundedBuffer::~SHMBoundedBuffer() {
-    void * shmaddr = &buffer;
+    const void * shmaddr = &buffer;
+    cout << "Address detached: "<<shmaddr<<endl;
     int ret = shmdt(shmaddr);
     if (ret == -1) {
         perror("shmdt");

@@ -104,6 +104,7 @@ void* worker_thread_function(void* arg) {
 
     while(run) {
         string request = data->req_buffer->pop(); //Already has mutex in the buffer
+        cout << "*** Workerthread pushing "<<request<<endl;
         data->work_channel->cwrite(request); //Sends "requests" to the server
         if(request == "quit") {
             run = false;
@@ -369,7 +370,9 @@ int main(int argc, char * argv[]) {
 
         cout << "***Closing worker threads as they finish\n";
         for (int i = 0; i < workerChannels.size(); i++) {
+            cout << "About to join thread "<<i<<endl;
             pthread_join(threadIDs.at(i), NULL);
+            cout << "Joined thread " << i<<endl;
             delete workerChannels.at(i);
             delete workerDataVector.at(i);
         }
