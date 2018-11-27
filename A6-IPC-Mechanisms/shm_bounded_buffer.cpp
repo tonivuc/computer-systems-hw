@@ -71,7 +71,7 @@ string SHMBoundedBuffer::pop() {
 
 
 SHMBoundedBuffer::~SHMBoundedBuffer() {
-    const void * shmaddr = &buffer;
+    const void * shmaddr = buffer;
     cout << "Address detached: "<<shmaddr<<endl;
     int ret = shmdt(shmaddr);
     if (ret == -1) {
