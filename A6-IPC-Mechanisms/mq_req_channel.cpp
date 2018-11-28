@@ -15,16 +15,12 @@ MQRequestChannel::MQRequestChannel(const std::string _name, const Side _side) {
 
         writeMqId = createQueue(mqFileName.c_str(), WRITE_MODE); //Open mq to write to
         readMqId = createQueue(mqFileName.c_str(), READ_MODE); //Open mq to read from
-        cout << "Serverside MQs started!"<<endl;
     }
     else {
 
         writeMqId = createQueue(mqFileName.c_str(), WRITE_MODE); //Open mq to read from
         readMqId = createQueue(mqFileName.c_str(), READ_MODE); //Open mq to write to
-        cout << "Clientside MQs started!"<<endl;
     }
-    cout << getServerOrClient() << " writing to "<<writeMqId<<endl;
-    cout << getServerOrClient() << " reading from " << readMqId<<endl;
 }
 
 int MQRequestChannel::createQueue(string mqFileName, Mode mode) {
@@ -32,7 +28,6 @@ int MQRequestChannel::createQueue(string mqFileName, Mode mode) {
     //Programs that want to use the same queue must generate the same key, so they must pass the
     //same parameters to ftok().
     key_t key;
-    cout << "MQ: Creating file: " << mqFileName.c_str() << endl;
     std::ofstream file {mqFileName.c_str()}; //Use a vector to delete these later?
     filenames.push_back(mqFileName);
     if (my_side == CLIENT_SIDE) {
@@ -55,11 +50,9 @@ int MQRequestChannel::createQueue(string mqFileName, Mode mode) {
     int msqid;
     if (my_side == SERVER_SIDE) {
         msqid = msgget(key, 0666 | IPC_CREAT); // you want to connect to a queue, or create it if it doesn't exist //0644
-        printf ("MQ: Created server MQ with ID: %ld\n", msqid);
     }
     else {
         msqid = msgget(key, 0666 | IPC_CREAT); // you want to connect to a queue
-        printf ("MQ: Created client MQ with ID: %ld\n", msqid);
     }
 
     if (msqid < 0){
@@ -73,43 +66,15 @@ int MQRequestChannel::createQueue(string mqFileName, Mode mode) {
 
 std::string MQRequestChannel::mq_name(Mode _mode) {
     std::string qname = "mq_" + my_name;
-
-    /*
-    if (my_side == CLIENT_SIDE) {
-        if (_mode == READ_MODE)
-            qname += "1";
-        else
-            qname += "2";
-    }
-    else {
-        // SERVER_SIDE
-        if (_mode == READ_MODE)
-            qname += "2";
-        else
-            qname += "1";
-    }
-    */
     return qname;
 }
 
 int MQRequestChannel::cwrite(string msg) {
 
-    //Debug stuff
-    if (my_side == SERVER_SIDE) {
-        cout << "MQ: dataserver writing "<<msg<<" to client"<<endl;
-    }
-    else {
-        cout << "MQ: client writing "<<msg<<" to dataserver"<<endl;
-
-    }
-
     struct my_msgbuf msgStruct;
     msgStruct.mtype = 1;
 
     strncpy(msgStruct.mtext, msg.c_str(), MSGMAX);
-
-    cout << "About to send the following to MQ "<<writeMqId<<" using MQ's cwrite: "<<endl;
-    cout << "msgstruct.mtype "<<msgStruct.mtype<<" msgStruct.mtext "<<msgStruct.mtext<<endl;
 
     int len = strlen(msgStruct.mtext);;
     if (msg.size() > MSGMAX) {
@@ -130,25 +95,14 @@ string MQRequestChannel::cread() {
 
     struct my_msgbuf msgStruct;
     msgStruct.mtype = 1;
-    cout << "In cread on "<<clientOrServer<<" reading from MQ "<<readMqId<<endl;
 
     int out = msgrcv(readMqId, &msgStruct, sizeof(msgStruct.mtext), 0, 0);
-    cout << "msgrcv output: "<<out<<endl;
-    cout << "struct content "<<msgStruct.mtext<<endl;
     if (out<= 0) {
         //cout << "struct content "<<msgStruct.mtext<<endl;
         EXITONERROR ("cread error");
     }
 
     string s = msgStruct.mtext;
-
-    //Debug stuff
-    if (my_side == SERVER_SIDE) {
-        cout << "MQ: dataserver read "<<s<<" from client"<<endl;
-    }
-    else {
-        cout << "MQ: client read "<<s<<" from dataserver"<<endl;
-    }
 
     return s;
 }
@@ -157,7 +111,7 @@ string MQRequestChannel::cread() {
 
 MQRequestChannel::~MQRequestChannel() {
     string clientOrServer = (my_side == MQRequestChannel::SERVER_SIDE) ? "SERVER" : "CLIENT";
-    cout << "DELETING A "<< clientOrServer<< " MESSAGE QUEUE with the MQ read: "<<readMqId<< " and write:"<<writeMqId<<endl;
+    //cout << "DELETING A "<< clientOrServer<< " MESSAGE QUEUE with the MQ read: "<<readMqId<< " and write:"<<writeMqId<<endl;
     msgctl(writeMqId, IPC_RMID, NULL);
     msgctl(readMqId, IPC_RMID, NULL);
     for (int i = 0; i < filenames.size(); i++) {
