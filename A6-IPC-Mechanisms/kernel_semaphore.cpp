@@ -12,22 +12,19 @@ KernelSemaphore::KernelSemaphore() {}
 
 KernelSemaphore::KernelSemaphore(short value, key_t key) {
 
-
-        semid = semget(key, 1, IPC_CREAT | IPC_EXCL | 0666); //IPC_EXCL
-        if (semid < 0) {
-            perror("semget");
-            do {
-                semid = semget(key, 1, IPC_CREAT | 0666); //IPC_EXCL
-                //cout << "Error in kernelsemaphore! semid: "<<semid<<endl;
-                //exit(0);
-            } while (semid < 0);
-        }
-
+    semid = semget(key, 1, IPC_CREAT | IPC_EXCL | 0666); //IPC_EXCL
+    if (semid < 0) {
+        //perror("semget"); Ideally we wouldn't want this for-loop.
+        do {
+            semid = semget(key, 1, IPC_CREAT | 0666); //IPC_EXCL
+            //cout << "Error in kernelsemaphore! semid: "<<semid<<endl;
+            //exit(0);
+        } while (semid < 0);
+    }
 
     struct sembuf sb = {0,value,0}; //VALUE HAS TO BE POSITIVE. Only run semop when value is positive.
     if (value > 0) semop(semid, &sb, 1);
 }
-
 
 KernelSemaphore::~KernelSemaphore() {
     semctl(semid, 0, IPC_RMID);

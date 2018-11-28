@@ -24,10 +24,7 @@ void* handle_process_loop (void* _channel);
 void process_newchannel(RequestChannel* _channel, char mqType) {
 	nchannels ++;
 	string new_channel_name = "data" + to_string(nchannels);
-	//cout << "###New channel name in dataserver: "<<new_channel_name<<endl;
-    //cout << "###Writing to server memory segment: "<<((SHMRequestChannel*)_channel)->getServerWriteMemSegId()<<endl;
 	_channel->cwrite(new_channel_name); //Writing to control channel. AAAH, so MAIN can get it back.
-	cout << "#Server: wrote "<<new_channel_name<<" to client via control channel"<<endl;
 	RequestChannel* data_channel;
     switch (mqType) {
         case 'f': {
@@ -84,11 +81,10 @@ void* handle_process_loop (void* _channel) {
 	for(;;) { ;
 		string request = channel->cread();
 		if (request.compare("quit") == 0) {
-		    cout << "--- SERVER RECEIVED QUIT ---"<<endl;
+		    //cout << "--- SERVER RECEIVED QUIT ---"<<endl;
 			break;                  // break out of the loop;
 		}
 		process_request(channel, request);
-		cout<<endl;
 	}
 }
 
@@ -101,8 +97,6 @@ void* handle_process_loop (void* _channel) {
 int main(int argc, char * argv[]) {
     cout << "\n#Server: Started server!!"<<endl;
 	newchannel_lock = PTHREAD_MUTEX_INITIALIZER;
-
-    //cout << "Server argv[0] "<<argv[0]<<endl;
 
     char input;
     if (argv[0] != NULL) {
@@ -119,12 +113,11 @@ int main(int argc, char * argv[]) {
                 MQRequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
                 handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
                 break;
-            } //test
+            }
             case 's': {
                 SHMRequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
                 handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
                 break;
-
             }
             default: {
                 FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);

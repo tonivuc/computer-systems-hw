@@ -104,7 +104,6 @@ void* worker_thread_function(void* arg) {
 
     while(run) {
         string request = data->req_buffer->pop(); //Already has mutex in the buffer
-        cout << "*** Workerthread pushing "<<request<<endl;
         data->work_channel->cwrite(request); //Sends "requests" to the server
         if(request == "quit") {
             run = false;
@@ -123,10 +122,6 @@ void* worker_thread_function(void* arg) {
             else {
                 cout<<"ERROR in WorkerThread. Request data is not correct!\n";
             }
-            //Need to put request + response in the histogram buffer. Struct?
-            //data->hist->update(request, response); No longer allowed. Histogram threads do this now
-
-
         }
     }
     return NULL;
@@ -135,15 +130,6 @@ void* worker_thread_function(void* arg) {
 void* stat_thread_function(void* arg) {
 
     histogramData* data = (histogramData*)arg;
-    /*
-		Fill in this function.
-
-		There should 1 such thread for each person. Each stat thread
-        must consume from the respective statistics buffer and update
-        the histogram. Since a thread only works on its own part of
-        histogram, does the Histogram class need to be thread-safe????
-
-     */
 
     for(int i = 0; i < data->n; i++) {
 
@@ -152,32 +138,6 @@ void* stat_thread_function(void* arg) {
         data->hist->update(data->data_name,response);
 
     }
-}
-
-void pushData(int n, BoundedBuffer * request_buffer) {
-    //Start 3 local threads here
-    pthread_t johnThread;
-    pthread_t janeThread;
-    pthread_t joeThread;
-
-
-    dataForThread* john = new dataForThread(n,"data John Smith",request_buffer); //Will be destroyed by the join apparently;
-    dataForThread* jane = new dataForThread(n,"data Jane Smith",request_buffer);
-    dataForThread* joe  = new dataForThread(n,"data Joe Smith",request_buffer);
-
-    //Create the buffer pushing threads
-    pthread_create(&johnThread, NULL, request_thread_function,john);
-    pthread_create(&janeThread, NULL, request_thread_function,jane);
-    pthread_create(&joeThread, NULL, request_thread_function,joe);
-
-    //Join the buffer pushing threads
-    pthread_join(johnThread, NULL);
-    pthread_join(janeThread, NULL);
-    pthread_join(joeThread, NULL);
-
-    delete john;
-    delete jane;
-    delete joe;
 }
 
 //Runs 2 seconds after alarm(2) is called
@@ -332,12 +292,8 @@ int main(int argc, char * argv[]) {
                     break;
                 }
                 case 's': {
-                    cout << "*** Writing newchannelSHM from client to server."<<endl;
-                    cout << "*** Client writing to memory segment "<<((SHMRequestChannel*)chan)->getServerReadMemSegId()<<endl;
                     chan->cwrite("newchannelSHM"); //Used for sending strings to server, other commands: data <data>
-                    cout << "*** Should get response via memory segment "<<((SHMRequestChannel*)chan)->getServerWriteMemSegId()<<endl;
                     string s = chan->cread(); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
-                    cout << "***Received response "<<s<<"from server."<<endl;
                     workerChannels.push_back(new SHMRequestChannel(s, RequestChannel::CLIENT_SIDE));
                     break;
                 }
@@ -370,9 +326,7 @@ int main(int argc, char * argv[]) {
 
         cout << "***Closing worker threads as they finish\n";
         for (int i = 0; i < workerChannels.size(); i++) {
-            cout << "About to join thread "<<i<<endl;
             pthread_join(threadIDs.at(i), NULL);
-            cout << "Joined thread " << i<<endl;
             delete workerChannels.at(i);
             delete workerDataVector.at(i);
         }

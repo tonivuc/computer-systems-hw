@@ -8,7 +8,6 @@
 SHMRequestChannel::SHMRequestChannel(const std::string _name, const Side _side) {
 
     my_side = _side;
-    cout << "SHMReqChn: "<<getServerOrClient()<<" bro! With filename "<<_name<<endl;
 
     string filename = _name;
     string filename2 = _name+"_2";
