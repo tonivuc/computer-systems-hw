@@ -46,6 +46,7 @@ NetworkRequestChannel::NetworkRequestChannel(const std::string host_name, int po
 
         while(1) {  // main accept() loop
             sin_size = sizeof their_addr;
+            //accept() blocks the caller until a connection is present.
             new_fd = accept(sockfd, (struct sockaddr *) &their_addr, &sin_size);
             if (new_fd == -1) {
                 perror("accept");
