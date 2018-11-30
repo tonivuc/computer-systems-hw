@@ -257,11 +257,11 @@ int main(int argc, char * argv[]) {
         }
         cout << "***Finished making request and histogram threads\n";
 
+
         //Create worker threads and channels
         vector<RequestChannel*> workerChannels;
         vector<pthread_t> threadIDs;
         vector<workerData*> workerDataVector;
-
 
         for (int i = 0; i < w; i++) {
             //Socket code
@@ -274,6 +274,7 @@ int main(int argc, char * argv[]) {
         }
         cout << "***Finished making workerthreads\n";
         //pushData(n, &request_buffer);
+
 
         //Join the buffer pushing threads
         for (int i = 0; i < data.size(); i++) {

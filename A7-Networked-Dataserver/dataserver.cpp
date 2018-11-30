@@ -51,15 +51,19 @@ void process_request(RequestChannel* _channel, string _request) {
 	}
 }
 
-void* handle_process_loop (void* _channel) {
+void* handle_process_loop (void* _channel, int new_fd) {
+	char buf [1024];
 
-	RequestChannel* channel = (RequestChannel*) _channel; //Control channel
+	NetworkRequestChannel* channel = (NetworkRequestChannel*) _channel; //Control channel
 	for(;;) { ;
-		string request = channel->cread();
+		channel->cread();
+		recv (new_fd, buf, sizeof (buf), 0);
+		//string request = channel->cread();
 		if (request.compare("quit") == 0) {
 		    //cout << "--- SERVER RECEIVED QUIT ---"<<endl;
 			break;                  // break out of the loop;
 		}
+		printf("server: received msg: %s\n", buf);
 		process_request(channel, request);
 	}
 }
@@ -80,8 +84,13 @@ int main(int argc, char * argv[]) {
         input = *argv[0];
 
         //Network socket code
-        NetworkRequestChannel control_channel(localhost, hostport, RequestChannel::CLIENT_SIDE);
-        handle_process_loop (&control_channel);
+        NetworkRequestChannel control_channel(localhost, hostport, RequestChannel::SERVER_SIDE);
+        while (1) {
+			int new_fd = control_channel.accept();
+			printf("server: got connection\n");
+			handle_process_loop (&control_channel);
+        }
+
     }
     else {
         cout << "ERROR creating dataserver";

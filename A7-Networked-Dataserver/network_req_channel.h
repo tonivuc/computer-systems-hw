@@ -35,6 +35,8 @@ public:
     NetworkRequestChannel ( const string host_name, int port, const Side _side);
     NetworkRequestChannel();
 
+    int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+
     string cread();
     /* Blocking read of data from the channel. Returns a string of
     characters read from the channel. Returns NULL if read failed. */

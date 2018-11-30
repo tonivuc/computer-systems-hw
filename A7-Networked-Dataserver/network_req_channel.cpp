@@ -45,7 +45,7 @@ NetworkRequestChannel::NetworkRequestChannel(const std::string host_name, int po
         }
 
         while(1) {  // main accept() loop
-            sin_size = sizeof their_addr;
+            sin_size = sizeof their_addr; //struct sockaddr_storage their_addr; // connector's address informati
             //accept() blocks the caller until a connection is present.
             new_fd = accept(sockfd, (struct sockaddr *) &their_addr, &sin_size);
             if (new_fd == -1) {
@@ -91,6 +91,17 @@ NetworkRequestChannel::NetworkRequestChannel(const std::string host_name, int po
         }
         printf ("Successfully connected to the server %s\n", server_name);
     }
+}
+
+int NetworkRequestChannel::accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+    socklen_t sin_size;
+    sin_size = sizeof their_addr;
+    int new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+    if (new_fd == -1) {
+        perror("accept");
+        //continue;
+    }
+    return new_fd;
 }
 
 int NetworkRequestChannel::cwrite(string msg) {
