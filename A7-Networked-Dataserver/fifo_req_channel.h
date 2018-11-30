@@ -20,8 +20,8 @@ private:
 
 	/*  The current implementation uses named pipes. */ 
 
-	int wfd;
-	int rfd;
+	int socketfd1;
+	int socketfd2;
 
 	string pipe_name(Mode _mode);
 	void create_pipe (string _pipe_name);
