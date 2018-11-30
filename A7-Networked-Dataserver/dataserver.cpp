@@ -13,6 +13,7 @@
 #include "fifo_req_channel.h"
 #include "mq_req_channel.h"
 #include "shm_req_channel.h"
+#include "network_req_channel.h"
 #include <pthread.h>
 using namespace std;
 
@@ -25,23 +26,7 @@ void process_newchannel(RequestChannel* _channel, char mqType) {
 	nchannels ++;
 	string new_channel_name = "data" + to_string(nchannels);
 	_channel->cwrite(new_channel_name); //Writing to control channel. AAAH, so MAIN can get it back.
-	RequestChannel* data_channel;
-    switch (mqType) {
-        case 'f': {
-            data_channel = new FIFORequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
-            break;
-        }
-        case 'q': {
-            data_channel = new MQRequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
-            break;
-        }
-        case 's': {
-            data_channel = new SHMRequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
-            break;
-        }
-        default:
-            data_channel = new FIFORequestChannel(new_channel_name, RequestChannel::SERVER_SIDE);
-    }
+    NetworkRequestChannel* data_channel = new NetworkRequestChannel(localhost, hostport, RequestChannel::SERVER_SIDE);
 
 	pthread_t thread_id;
 	if (pthread_create(& thread_id, NULL, handle_process_loop, data_channel) < 0 ) {
@@ -58,15 +43,6 @@ void process_request(RequestChannel* _channel, string _request) {
 		usleep(1000 + (rand() % 5000));
 		_channel->cwrite(to_string(rand() % 100));
 	}
-	else if (_request.compare("newchannelFIFO") == 0) {
-		process_newchannel(_channel, 'f'); //Passing in control channel
-	}
-    else if (_request.compare("newchannelMQ") == 0) {
-        process_newchannel(_channel, 'q');
-    }
-    else if (_request.compare("newchannelSHM") == 0) {
-        process_newchannel(_channel, 's');
-    }
     else if (_request.compare("newchannel") == 0) { //Default
         process_newchannel(_channel, 'f');
     }
@@ -100,35 +76,16 @@ int main(int argc, char * argv[]) {
 
     char input;
     if (argv[0] != NULL) {
-        //cout << "argv[0] "<<argv[0]<<endl;
+        cout << "argv[0] "<<argv[0]<<endl;
         input = *argv[0];
 
-        switch (input) {
-            case 'f': {
-                FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
-                handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
-                break;
-            }
-            case 'q': {
-                MQRequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
-                handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
-                break;
-            }
-            case 's': {
-                SHMRequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
-                handle_process_loop (&control_channel); //Delete control_channel? //Control channel is passed in
-                break;
-            }
-            default: {
-                FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
-                handle_process_loop (&control_channel);
-            }
-        }
+        //Network socket code
+        NetworkRequestChannel control_channel(localhost, hostport, RequestChannel::CLIENT_SIDE);
+        handle_process_loop (&control_channel);
     }
     else {
-        cout << "ELSE in dataserver"<<endl;
-        FIFORequestChannel control_channel("control", RequestChannel::SERVER_SIDE);
-        handle_process_loop (&control_channel); //Delete control_channel?
+        cout << "ERROR creating dataserver";
+        exit(0);
     }
     cout << "Quitting server after finishing main"<<endl;
 }

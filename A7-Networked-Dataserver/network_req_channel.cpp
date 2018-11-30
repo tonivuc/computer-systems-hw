@@ -95,6 +95,7 @@ NetworkRequestChannel::NetworkRequestChannel(const std::string host_name, int po
 
 int NetworkRequestChannel::cwrite(string msg) {
 
+    printf ("Now Attempting to send a message to the server\n", server_name);
 
     if (send(sockfd, msg, strlen(msg.c_str())+1, 0) { //int sockfd, const void *msg, int len, int flags
         perror("send");

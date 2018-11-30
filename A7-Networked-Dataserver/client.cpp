@@ -37,6 +37,7 @@
 #include "BoundedBuffer.h"
 #include "Histogram.h"
 #include "shm_req_channel.h"
+#include "network_req_channel.h"
 
 #ifdef __cplusplus__
 #include <cstdlib>
@@ -165,6 +166,9 @@ int main(int argc, char * argv[]) {
     int w = 500; //default number of worker threads
     int b = 10;
     int opt = 0;
+    string hostname;
+    int hostport;
+
     char mqType = 0;
 
     vector<string> data = {"data John Smith","data Jane Smith","data Joe Smith"};
@@ -205,28 +209,9 @@ int main(int argc, char * argv[]) {
         cout << "w == " << w << endl;
         cout << "b == " << b << endl;
 
-        RequestChannel *chan;
+        NetworkRequestChannel *chan = new NetworkRequestChannel(hostname, hostport, RequestChannel::CLIENT_SIDE);
 
         cout << "Client.cpp: CLIENT STARTED:" << endl;
-        cout << "Client.cpp: Establishing control channel... "<< endl << flush; //What is this? endl. Forces it to be printed immediately.
-        switch (mqType) {
-            case 'f': {
-                chan = new FIFORequestChannel("control", RequestChannel::CLIENT_SIDE); //Have to specify client side so it knows how the object will work
-                break;
-            }
-            case 'q': {
-                chan = new MQRequestChannel("control", RequestChannel::CLIENT_SIDE);
-                break;
-            }
-            case 's': {
-                chan = new SHMRequestChannel("control", RequestChannel::CLIENT_SIDE);
-                break;
-            }
-            default:
-                chan = new FIFORequestChannel("control", RequestChannel::CLIENT_SIDE);
-        }
-
-        cout << "done." << endl<< flush;
 
         //Timing:
         gettimeofday(&start, NULL);
@@ -276,32 +261,12 @@ int main(int argc, char * argv[]) {
         vector<RequestChannel*> workerChannels;
         vector<pthread_t> threadIDs;
         vector<workerData*> workerDataVector;
-        for (int i = 0; i < w; i++) {
 
-            switch (mqType) {
-                case 'f': {
-                    chan->cwrite("newchannelFIFO"); //Used for sending strings to server, other commands: data <data>
-                    string s = chan->cread (); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
-                    workerChannels.push_back(new FIFORequestChannel(s, RequestChannel::CLIENT_SIDE));
-                    break;
-                }
-                case 'q': {
-                    chan->cwrite("newchannelMQ"); //Used for sending strings to server, other commands: data <data>
-                    string s = chan->cread (); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
-                    workerChannels.push_back(new MQRequestChannel(s, RequestChannel::CLIENT_SIDE));
-                    break;
-                }
-                case 's': {
-                    chan->cwrite("newchannelSHM"); //Used for sending strings to server, other commands: data <data>
-                    string s = chan->cread(); //cread gets the response. Response being: "data" + to_string(nchannels) + "_"; data1_
-                    workerChannels.push_back(new SHMRequestChannel(s, RequestChannel::CLIENT_SIDE));
-                    break;
-                }
-                default:
-                    chan->cwrite("newchannelFIFO"); //Used for sending strings to server, other commands: data <data>
-                    string s = chan->cread (); //cread gets the response
-                    workerChannels.push_back(new FIFORequestChannel(s, RequestChannel::CLIENT_SIDE));
-            }
+
+        for (int i = 0; i < w; i++) {
+            //Socket code
+            workerChannels.push_back(new NetworkRequestChannel(hostname, hostport, RequestChannel::CLIENT_SIDE));
+
             threadIDs.push_back(i);
             workerData* wData = new workerData(workerChannels.at(i),&request_buffer,responseBuffers); //FIFORequestChannel *work_channel_inp, BoundedBuffer *req_buffer_inp, BoundedBuffer *responseBufferInp[3])
             workerDataVector.push_back(wData);
