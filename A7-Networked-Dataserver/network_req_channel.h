@@ -26,22 +26,24 @@ class NetworkRequestChannel : public RequestChannel {
 
 private:
     Side     my_side;
+    string myHostName;
     //char *data;
-    int sockfd, new_fd;
+    int mainsockfd;
 
 
 public:
 
-    NetworkRequestChannel ( const string host_name, int port, const Side _side);
+    NetworkRequestChannel ( const string host_name, char* port, const Side _side);
+    //NetworkRequestChannel ( const string host_name, const Side _side); //Bullshit constructor
     NetworkRequestChannel();
 
-    int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+    int acceptWrap();
 
-    string cread();
+    string cread(int socketfd);
     /* Blocking read of data from the channel. Returns a string of
     characters read from the channel. Returns NULL if read failed. */
 
-    int cwrite(string msg);
+    int cwrite(string msg, int socketfd);
 
     string getServerOrClient();
 

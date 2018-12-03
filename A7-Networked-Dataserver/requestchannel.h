@@ -19,14 +19,14 @@ public:
     typedef enum {READ_MODE, WRITE_MODE} Mode ;
 
     /* CONSTRUCTOR/DESTRUCTOR */
-    RequestChannel ( const string _name , const Side _side);
+    RequestChannel (const string host_name, char* port, const Side _side);
     RequestChannel();
 
-    virtual string cread() = 0;
+    virtual string cread(int sockfd) = 0;
     /* Blocking read of data from the channel. Returns a string of
     characters read from the channel. Returns NULL if read failed. */
 
-    virtual int cwrite(string msg) = 0;
+    virtual int cwrite(string msg, int socketf) = 0;
 
     virtual ~RequestChannel();
     /* Write the data to the channel. The function returns

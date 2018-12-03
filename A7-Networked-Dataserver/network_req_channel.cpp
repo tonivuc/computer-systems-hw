@@ -6,8 +6,8 @@
 #include "network_req_channel.h"
 #include <fstream>
 
-NetworkRequestChannel::NetworkRequestChannel(const std::string host_name, int port, const Side _side) {
-    my_name = _name;
+NetworkRequestChannel::NetworkRequestChannel(const std::string host_name, char* port, const Side _side) {
+    myHostName = host_name;
     my_side = _side;
 
 
@@ -26,36 +26,20 @@ NetworkRequestChannel::NetworkRequestChannel(const std::string host_name, int po
 
         if ((rv = getaddrinfo(NULL, port, &hints, &serv)) != 0) {
             fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-            return -1;
+            EXITONERROR("getaddrinfo");
         }
-        if ((sockfd = socket(serv->ai_family, serv->ai_socktype, serv->ai_protocol)) == -1) {
-            perror("server: socket");
-            return -1;
+        if ((mainsockfd = socket(serv->ai_family, serv->ai_socktype, serv->ai_protocol)) == -1) {
+            EXITONERROR("server: socket");
         }
-        if (bind(sockfd, serv->ai_addr, serv->ai_addrlen) == -1) {
-            close(sockfd);
-            perror("server: bind");
-            return -1;
+        if (bind(mainsockfd, serv->ai_addr, serv->ai_addrlen) == -1) {
+            close(mainsockfd);
+            EXITONERROR("server: bind");
         }
         freeaddrinfo(serv); // all done with this structure
 
-        if (listen(sockfd, 20) == -1) {
-            perror("listen");
-            exit(1);
+        if (listen(mainsockfd, 20) == -1) {
+            EXITONERROR("listen");
         }
-
-        while(1) {  // main accept() loop
-            sin_size = sizeof their_addr; //struct sockaddr_storage their_addr; // connector's address informati
-            //accept() blocks the caller until a connection is present.
-            new_fd = accept(sockfd, (struct sockaddr *) &their_addr, &sin_size);
-            if (new_fd == -1) {
-                perror("accept");
-                continue;
-            }
-            //inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
-            printf("server: got connection\n");
-        }
-
     }
     else { //Client-side
         struct addrinfo hints, *res;
@@ -67,90 +51,68 @@ NetworkRequestChannel::NetworkRequestChannel(const std::string host_name, int po
         hints.ai_socktype = SOCK_STREAM;
         int status;
         //getaddrinfo("www.example.com", "3490", &hints, &res);
-        if ((status = getaddrinfo(server_name, port, &hints, &res)) != 0) {
+        if ((status = getaddrinfo(myHostName.c_str(), port, &hints, &res)) != 0) {
             fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
             exit(-1);
             //return -1;
         }
 
         // make a socket:
-        sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-        if (sockfd < 0)
+        mainsockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (mainsockfd < 0)
         {
             perror ("Error creating socket\n");
             exit(-1);
-            //return -1;
         }
 
         // connect!
-        if (connect(sockfd, res->ai_addr, res->ai_addrlen)<0)
+        if (connect(mainsockfd, res->ai_addr, res->ai_addrlen)<0)
         {
             perror ("connect error\n");
             exit(-1);
-            //return -1;
         }
-        printf ("Successfully connected to the server %s\n", server_name);
+        printf ("Successfully connected to the server %s\n", myHostName.c_str());
     }
 }
 
-int NetworkRequestChannel::accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+int NetworkRequestChannel::acceptWrap() { // struct sockaddr *their_addr, socklen_t *addrlen
+    struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;
     sin_size = sizeof their_addr;
-    int new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+    int new_fd = accept(mainsockfd, (struct sockaddr *)&their_addr, &sin_size);
     if (new_fd == -1) {
         perror("accept");
         //continue;
     }
+    printf("server: got connection\n");
     return new_fd;
 }
 
-int NetworkRequestChannel::cwrite(string msg) {
+int NetworkRequestChannel::cwrite(string msg, int socketfd) {
 
-    printf ("Now Attempting to send a message to the server\n", server_name);
+    //printf ("Now Attempting to send a message to the server\n", server_name);
 
-    if (send(sockfd, msg, strlen(msg.c_str())+1, 0) { //int sockfd, const void *msg, int len, int flags
+    if (send(socketfd, msg.c_str(), strlen(msg.c_str())+1, 0)) { //int sockfd, const void *msg, int len, int flags
         perror("send");
+        exit(1);
     }
 
-    //OLD stuff:
-    struct my_msgbuf msgStruct;
-    msgStruct.mtype = 1;
-
-    strncpy(msgStruct.mtext, msg.c_str(), MSGMAX);
-
-    int len = strlen(msgStruct.mtext);;
-    if (msg.size() > MSGMAX) {
-        EXITONERROR ("cwrite message length exceeded");
-        return -1;
-    }
-
-    if (msgsnd(writeMqId, &msgStruct, len+1, 0) == -1) {
-        EXITONERROR ("cwrite");
-        return -1;
-    }
     return 0;
 }
 
-string NetworkRequestChannel::cread() {
+string NetworkRequestChannel::cread(int sockfd) {
 
     string clientOrServer = (my_side == NetworkRequestChannel::SERVER_SIDE) ? "SERVER" : "CLIENT";
+    char buf[200];
 
-    recv (sockfd, buf, 1024, 0);
-    printf ("Received %s from the server\n", buf);
-
-    //Old stuff:
-    struct my_msgbuf msgStruct;
-    msgStruct.mtype = 1;
-
-    int out = msgrcv(readMqId, &msgStruct, sizeof(msgStruct.mtext), 0, 0);
-    if (out<= 0) {
-        //cout << "struct content "<<msgStruct.mtext<<endl;
-        EXITONERROR ("cread error");
+    if (recv (sockfd, buf, 1024, 0) == -1) {
+        EXITONERROR("recv");
     }
 
-    string s = msgStruct.mtext;
+    printf ("Received %s from the server\n", buf);
 
-    return s;
+    string str(buf);
+    return str;
 }
 
 
@@ -158,7 +120,7 @@ string NetworkRequestChannel::cread() {
 NetworkRequestChannel::~NetworkRequestChannel() {
     string clientOrServer = (my_side == NetworkRequestChannel::SERVER_SIDE) ? "SERVER" : "CLIENT";
     //cout << "DELETING A "<< clientOrServer<< " MESSAGE QUEUE with the MQ read: "<<readMqId<< " and write:"<<writeMqId<<endl;
-    close(new_fd);
+    close(mainsockfd); //Server will close the main socket, and the client will close his socket (in both directions)
 }
 
 

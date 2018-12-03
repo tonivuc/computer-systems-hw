@@ -12,7 +12,7 @@ void EXITONERROR (string msg){
 
 RequestChannel::~RequestChannel() {}
 
-RequestChannel::RequestChannel( const string _name , const Side _side) {}
+RequestChannel::RequestChannel(const string host_name, char* port, const Side _side) {}
 
 RequestChannel::RequestChannel(){};
 

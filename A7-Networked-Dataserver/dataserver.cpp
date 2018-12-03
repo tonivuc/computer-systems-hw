@@ -18,53 +18,51 @@
 using namespace std;
 
 
-int nchannels = 0;
 pthread_mutex_t newchannel_lock;
-void* handle_process_loop (void* _channel);
+void* receive_request_loop (void* _channel);
 
-void process_newchannel(RequestChannel* _channel, char mqType) {
-	nchannels ++;
-	string new_channel_name = "data" + to_string(nchannels);
-	_channel->cwrite(new_channel_name); //Writing to control channel. AAAH, so MAIN can get it back.
-    NetworkRequestChannel* data_channel = new NetworkRequestChannel(localhost, hostport, RequestChannel::SERVER_SIDE);
+bool finished = false;
 
-	pthread_t thread_id;
-	if (pthread_create(& thread_id, NULL, handle_process_loop, data_channel) < 0 ) {
-		EXITONERROR ("");
-	}
+struct dataForThread {    /* Used as argument to thread_start() */
+	NetworkRequestChannel* requestChannel;
+	int* filedescriptor;
 
-}
+	//Constructor
+	dataForThread(NetworkRequestChannel* requestChannelInp, int* filedescriptorInp) :
+			requestChannel(requestChannelInp), filedescriptor(filedescriptorInp)) {}
+};
 
-void process_request(RequestChannel* _channel, string _request) {
+
+void process_request(RequestChannel* _channel, string _request, int socket_fd) {
 	if (_request.compare(0, 5, "hello") == 0) {
-		_channel->cwrite("hello to you too");
+		_channel->cwrite("hello to you too", socket_fd);
 	}
 	else if (_request.compare(0, 4, "data") == 0) {
 		usleep(1000 + (rand() % 5000));
-		_channel->cwrite(to_string(rand() % 100));
+		_channel->cwrite(to_string(rand() % 100),socket_fd);
 	}
-    else if (_request.compare("newchannel") == 0) { //Default
-        process_newchannel(_channel, 'f');
-    }
     else {
-		_channel->cwrite("unknown request");
+		_channel->cwrite("unknown request", socket_fd);
 	}
 }
 
-void* handle_process_loop (void* _channel, int new_fd) {
+void* receive_request_loop (void* arg) {
+
+	dataForThread* data = (dataForThread*)arg;
+	int new_fd = *data->filedescriptor;
+
 	char buf [1024];
 
-	NetworkRequestChannel* channel = (NetworkRequestChannel*) _channel; //Control channel
+	//NetworkRequestChannel* channel = (NetworkRequestChannel*) _channel; //Control channel
 	for(;;) { ;
-		channel->cread();
-		recv (new_fd, buf, sizeof (buf), 0);
-		//string request = channel->cread();
+		string request = data->requestChannel->cread(new_fd);
 		if (request.compare("quit") == 0) {
-		    //cout << "--- SERVER RECEIVED QUIT ---"<<endl;
+		    cout << "--- SERVER RECEIVED QUIT ---"<<endl;
+		    finished = true;
 			break;                  // break out of the loop;
 		}
 		printf("server: received msg: %s\n", buf);
-		process_request(channel, request);
+		process_request(data->requestChannel, request, new_fd);
 	}
 }
 
@@ -78,17 +76,35 @@ int main(int argc, char * argv[]) {
     cout << "\n#Server: Started server!!"<<endl;
 	newchannel_lock = PTHREAD_MUTEX_INITIALIZER;
 
+	vector<int*> allFileDescriptors;
+	vector<int> allThreadIDs;
+	vector<dataForThread*> req_thread_data;
+
     char input;
     if (argv[0] != NULL) {
         cout << "argv[0] "<<argv[0]<<endl;
         input = *argv[0];
 
         //Network socket code
-        NetworkRequestChannel control_channel(localhost, hostport, RequestChannel::SERVER_SIDE);
-        while (1) {
-			int new_fd = control_channel.accept();
+        NetworkRequestChannel control_channel("localhost", "8080", RequestChannel::SERVER_SIDE);
+        while (!finished) {
+			int new_fd = control_channel.acceptWrap();
 			printf("server: got connection\n");
-			handle_process_loop (&control_channel);
+
+			//Adding new_fd to heap so I can pass the pointer to receive_request_loop.
+			int* fd_ptr = new int;
+			*fd_ptr = new_fd;
+			allFileDescriptors.push_back(fd_ptr);
+
+			dataForThread* req_t_data = new dataForThread(&control_channel,fd_ptr);
+			req_thread_data.push_back(req_t_data);
+
+			pthread_t thread_id;
+			if (pthread_create(& thread_id, NULL, receive_request_loop, req_t_data) < 0 ) {
+				EXITONERROR ("thread creation error in dataserver");
+			}
+			allThreadIDs.push_back(thread_id);
+			//receive_request_loop (&control_channel);
         }
 
     }
@@ -96,6 +112,16 @@ int main(int argc, char * argv[]) {
         cout << "ERROR creating dataserver";
         exit(0);
     }
+
+    //Cleanup of dataserver
+	cout << "***Joining request handlers as they finish\n";
+	for (int i = 0; i < allThreadIDs.size(); i++) {
+		pthread_join(allThreadIDs.at(i), NULL);
+		delete allFileDescriptors.at(i);
+		delete req_thread_data.at(i);
+	}
+	cout << "***Worker threads closed\n";
+
     cout << "Quitting server after finishing main"<<endl;
 }
 
