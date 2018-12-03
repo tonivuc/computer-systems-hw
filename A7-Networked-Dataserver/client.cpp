@@ -107,12 +107,14 @@ void* worker_thread_function(void* arg) {
 
     while(run) {
         string request = data->req_buffer->pop(); //Already has mutex in the buffer
+        cout << "About to push "<<request<<" over the network via client fd: "<<data->work_channel->getMainFD()<<endl;
         data->work_channel->cwrite(request,data->work_channel->getMainFD()); //Sends "requests" to the server
         if(request == "quit") {
             run = false;
         }
         else {
             string response = data->work_channel->cread(data->work_channel->getMainFD());
+            cout << "Client received: "<<response<<endl;
             if (request.compare("data John Smith") == 0) {
                 data->responseBuffer[0]->push(response); //ResponseBuffer already has built-in mutex
             }
@@ -164,7 +166,7 @@ int main(int argc, char * argv[]) {
     //New thread in main
     struct timeval start, end;
 
-    int n = 100000; //default number of requests per "patient"
+    int n = 100; //default number of requests per "patient"
     int w = 1; //default number of worker threads
     int b = 10;
     int opt = 0;
@@ -201,7 +203,7 @@ int main(int argc, char * argv[]) {
     cout << "w == " << w << endl;
     cout << "b == " << b << endl;
 
-    NetworkRequestChannel *chan = new NetworkRequestChannel(hostname, hostport, RequestChannel::CLIENT_SIDE);
+    //NetworkRequestChannel *chan = new NetworkRequestChannel(hostname, hostport, RequestChannel::CLIENT_SIDE);
 
     cout << "Client.cpp: CLIENT STARTED:" << endl;
 
@@ -300,8 +302,8 @@ int main(int argc, char * argv[]) {
 
     gettimeofday(&end, NULL); //Timing end
 
-    chan->cwrite("quit", chan->getMainFD());
-    delete chan;
+    //chan->cwrite("quit", chan->getMainFD());
+    //delete chan;
     cout << "All Done!!!" << endl;
     //Print time spent im microseconds
     printf("%ld\n", ((end.tv_sec * 1000000 + end.tv_usec)

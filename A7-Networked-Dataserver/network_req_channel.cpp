@@ -13,7 +13,7 @@ NetworkRequestChannel::NetworkRequestChannel(const std::string host_name, char* 
 
     if (_side == SERVER_SIDE) {
           // listen on sock_fd, new connection on new_fd
-        struct addrinfo hints, *serv;
+        struct addrinfo hints, *serv; //Serv contains portnumber because of getaddrinfo
         struct sockaddr_storage their_addr; // connector's address information
         socklen_t sin_size;
         char s[INET6_ADDRSTRLEN];
@@ -24,7 +24,7 @@ NetworkRequestChannel::NetworkRequestChannel(const std::string host_name, char* 
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_PASSIVE; // use my IP
 
-        if ((rv = getaddrinfo(NULL, port, &hints, &serv)) != 0) {
+        if ((rv = getaddrinfo(NULL, port, &hints, &serv)) != 0) { //Needed for the datastructures (port number)
             fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
             EXITONERROR("getaddrinfo");
         }
@@ -92,7 +92,7 @@ int NetworkRequestChannel::cwrite(string msg, int socketfd) {
 
     //printf ("Now Attempting to send a message to the server\n", server_name);
 
-    if (send(socketfd, msg.c_str(), strlen(msg.c_str())+1, 0)) { //int sockfd, const void *msg, int len, int flags
+    if (send(socketfd, msg.c_str(), strlen(msg.c_str())+1, 0) == -1) { //int sockfd, const void *msg, int len, int flags
         perror("send");
         exit(1);
     }
@@ -105,11 +105,9 @@ string NetworkRequestChannel::cread(int sockfd) {
     string clientOrServer = (my_side == NetworkRequestChannel::SERVER_SIDE) ? "SERVER" : "CLIENT";
     char buf[200];
 
-    if (recv (sockfd, buf, 1024, 0) == -1) {
+    if (recv (sockfd, buf, sizeof(buf), 0) == -1) {
         EXITONERROR("recv");
     }
-
-    printf ("Received %s from the server\n", buf);
 
     string str(buf);
     return str;
