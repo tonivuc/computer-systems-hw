@@ -29,7 +29,7 @@ struct dataForThread {    /* Used as argument to thread_start() */
 
 	//Constructor
 	dataForThread(NetworkRequestChannel* requestChannelInp, int* filedescriptorInp) :
-			requestChannel(requestChannelInp), filedescriptor(filedescriptorInp)) {}
+			requestChannel(requestChannelInp), filedescriptor(filedescriptorInp) {}
 };
 
 

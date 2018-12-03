@@ -47,6 +47,8 @@ public:
 
     string getServerOrClient();
 
+    int getMainFD();
+
     ~NetworkRequestChannel();
     /* Write the data to the channel. The function returns
     the number of characters written to the channel. */

@@ -130,4 +130,8 @@ string NetworkRequestChannel::getServerOrClient() {
 // Created by toni on 11/29/18.
 //
 
+int NetworkRequestChannel::getMainFD() {
+    return  mainsockfd;
+}
+
 
