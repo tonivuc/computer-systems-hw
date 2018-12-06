@@ -31,12 +31,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <bits/signum.h>
-
-#include "fifo_req_channel.h"
-#include "mq_req_channel.h"
 #include "BoundedBuffer.h"
 #include "Histogram.h"
-#include "shm_req_channel.h"
 #include "network_req_channel.h"
 
 #ifdef __cplusplus__
@@ -107,14 +103,14 @@ void* worker_thread_function(void* arg) {
 
     while(run) {
         string request = data->req_buffer->pop(); //Already has mutex in the buffer
-        cout << "About to push "<<request<<" over the network via client fd: "<<data->work_channel->getMainFD()<<endl;
+        //cout << "About to push "<<request<<" over the network via client fd: "<<data->work_channel->getMainFD()<<endl;
         data->work_channel->cwrite(request,data->work_channel->getMainFD()); //Sends "requests" to the server
         if(request == "quit") {
             run = false;
         }
         else {
             string response = data->work_channel->cread(data->work_channel->getMainFD());
-            cout << "Client received: "<<response<<endl;
+            //cout << "Client received: "<<response<<endl;
             if (request.compare("data John Smith") == 0) {
                 data->responseBuffer[0]->push(response); //ResponseBuffer already has built-in mutex
             }
@@ -166,18 +162,18 @@ int main(int argc, char * argv[]) {
     //New thread in main
     struct timeval start, end;
 
-    int n = 100; //default number of requests per "patient"
-    int w = 1; //default number of worker threads
+    int n = 10000; //default number of requests per "patient"
+    int w = 10; //default number of worker threads
     int b = 10;
     int opt = 0;
     string hostname;
-    char* hostport;
+    string hostportString;
 
     char mqType = 0;
 
     vector<string> data = {"data John Smith","data Jane Smith","data Joe Smith"};
 
-    while ((opt = getopt(argc, argv, "n:w:b:i:")) != -1) {
+    while ((opt = getopt(argc, argv, "n:w:b:i:h:p:")) != -1) {
         switch (opt) {
             case 'n':
                 n = atoi(optarg);
@@ -191,11 +187,19 @@ int main(int argc, char * argv[]) {
             case 'i':
                 mqType = *optarg; //This won't do a whole lot until you fill in the worker thread function
                 break;
+            case 'h':
+                hostname = optarg; //This won't do a whole lot until you fill in the worker thread function
+                break;
+            case 'p':
+                hostportString = optarg; //This won't do a whole lot until you fill in the worker thread function
+                break;
         }
     }
 
-    hostname = "localhost";
-    hostport = "8080";
+    char* hostport = (char*)hostportString.c_str();
+    //hostname = "localhost";
+    //hostport = "8080";
+    sleep(1);
 
     cout << "***: mqType is: "<<mqType<<endl;
 

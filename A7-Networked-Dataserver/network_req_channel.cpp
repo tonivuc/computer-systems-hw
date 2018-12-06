@@ -71,7 +71,6 @@ NetworkRequestChannel::NetworkRequestChannel(const std::string host_name, char* 
             perror ("connect error\n");
             exit(-1);
         }
-        printf ("Successfully connected to the server %s\n", myHostName.c_str());
     }
 }
 
